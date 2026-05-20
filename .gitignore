@@ -1,0 +1,74 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+
+# Builds / dist
+build/
+dist/
+*.egg-info/
+.eggs/
+__pypackages__/
+
+# Logs e artefatos de runtime
+logs/
+downloads/
+*.log
+*.log.*
+*.pid
+
+# Arquivos temporários
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+*.py,cover
+.pytest_cache/
+cover/
+
+# Environments
+.venv/
+venv/
+.env
+.conda/
+.python-version
+
+# IDE / OS
+.idea/
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+*:Zone.Identifier
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Configurações sensíveis
+.env
+.env.local
+.env.production
+
+# Ruff
+.ruff_cache/
+.pre-commit-config.local.yaml
+
+# UV
+.uv/
+
+# Lockfiles
+*.lock
+!uv.lock
