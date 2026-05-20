@@ -11,7 +11,13 @@ The team uses Claude for client research, financial analysis, document drafting,
 ## Directory Structure
 
 ```
-report.py                    # generates reports/report.html from all data sources
+report.py                    # thin entrypoint — imports and calls core.main.main()
+core/                        # report logic split into focused modules
+  config.py                  # ROOT / DATA / REPORTS paths and CLAUDE_CODE_TOOLS constant
+  fetch.py                   # all load_* functions (users, conversations, CSV files, etc.)
+  metrics.py                 # compute_metrics() orchestrator + private helper functions
+  render.py                  # render_html() — CSS, HTML template, JS (no external deps)
+  main.py                    # main() — loads data, calls compute_metrics, writes output file
 data/                        # gitignored — all raw Claude export files live here
   conversations.json         # all org conversations — 188 MB, NEVER load in full
   users.json                 # all org members (@g5partners.com); may include removed/unassigned accounts
@@ -20,13 +26,37 @@ data/                        # gitignored — all raw Claude export files live h
   design_chats/              # 6 design/artifact conversation files (small, safe to read)
   members-<uuid>-<date>.csv  # team member roster exported from Anthropic admin dashboard
                              # authoritative source for seat tier and active membership
-                             # report.py always picks the alphabetically-last (most recent) file
+                             # fetch.py always picks the alphabetically-last (most recent) file
   claude_code_team_*.csv     # Claude Code CLI usage export from Anthropic Console
                              # filename encodes the period: claude_code_team_YYYY_MM_DD_to_YYYY_MM_DD.csv
-                             # report.py always picks the alphabetically-last (most recent) file
+                             # fetch.py always picks the alphabetically-last (most recent) file
 reports/                     # gitignored — generated output files
   report.html                # self-contained HTML executive report (do not edit directly)
 ```
+
+## Code Architecture
+
+The pipeline is a straight line: `fetch → metrics → render → write`.
+
+```
+report.py
+  └── core/main.py          main()
+        ├── core/fetch.py   load_users(), load_members(), load_conversations(), load_claude_code(), …
+        ├── core/metrics.py compute_metrics(users, members, memories, projects, design_chats,
+        │                                   conversations, claude_code_data, cc_period)
+        │     ├── _filter_users()        billable-only filtering; email→tier map
+        │     ├── _project_metrics()     project/design-chat pass; proj_per_user counter
+        │     ├── _conversation_pass()   single loop over all conversations; returns all counters
+        │     ├── _build_user_rows()     per-user activity table rows (web-active only)
+        │     ├── _adoption_funnel()     funnel list; CC + web union logic
+        │     ├── _feature_rows()        feature adoption rows in display order
+        │     ├── _cc_web_metrics()      CC tool-use stats from web export
+        │     ├── _cc_csv_metrics()      Claude Code CLI stats from CSV; returns cc_uids
+        │     └── _inactive_rows()       users with no web and no CLI activity
+        └── core/render.py  render_html(m) → self-contained HTML string
+```
+
+When editing report logic, go directly to the relevant helper in `core/metrics.py` rather than reading the whole file. `_conversation_pass()` is the largest function (~80 lines); everything else is under 30 lines.
 
 ---
 
@@ -58,10 +88,10 @@ For any analysis on `data/conversations.json`, write a Python script that calls 
 
 ## Report Script
 
-`report.py` is the primary analysis script. Run with:
+`report.py` is the entrypoint. Run with:
 
 ```bash
-python3 report.py        # writes reports/report.html, prints summary to stdout
+python3 report.py        # writes reports/report-YYYY-MM-DD.html, prints summary to stdout
 ```
 
 **Dependencies:** Python stdlib only (`json`, `csv`, `re`, `glob`, `collections`, `datetime`, `pathlib`). No pip installs required.
