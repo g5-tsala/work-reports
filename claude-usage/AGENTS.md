@@ -288,15 +288,19 @@ CSV export from Anthropic Console. Report uses the **most recent file** (alphabe
 
 ```csv
 User,Lines this Month
-middle_dev@g5partners.com,114.666
-gestao@g5partners.com,61.108
+middle_dev@g5partners.com,64.230
+gestao@g5partners.com,48.165
+mmedeiros@g5partners.com,526
+tcitro@g5partners.com,317
 ...
 ```
 
 | Column | Type | Description |
 |---|---|---|
 | `User` | string | User email; joins to `users[].email_address` |
-| `Lines this Month` | float | **Value is in thousands** — 114.666 = 114,666 lines of code generated or modified via Claude Code CLI |
+| `Lines this Month` | integer (Brazilian formatting) | **Raw line count where `.` is the thousands separator** — `64.230` = 64,230 lines, `526` = 526 lines. Lines of code generated or modified via Claude Code CLI. |
+
+**Number format gotcha:** the value is NOT a decimal. The `.` is a thousands separator (pt-BR formatting), so values ≥ 1000 always show exactly three digits after the dot (`64.230`) while values < 1000 have no separator (`526`, `317`). `core/fetch.py` strips the `.` to recover the true integer, then divides by 1000 to express it in thousands (K) — the representation the rest of the pipeline (render, funnel thresholds) expects. Parsing the value with a plain `float()` is wrong: it happens to work for values ≥ 1000 but inflates sub-1000 counts by 1000× (e.g. `317` would render as 317K instead of 0.3K).
 
 Only users with CLI activity appear. Users absent here had zero CLI usage in the period.
 

@@ -72,8 +72,13 @@ def load_claude_code():
     with open(latest, newline='', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             email = row.get("User", "").strip()
+            # "Lines this Month" is a raw integer line count in Brazilian formatting,
+            # where "." is the thousands separator (e.g. "64.230" = 64,230 lines,
+            # "317" = 317 lines). Strip the separators to get the true count, then
+            # express it in thousands (K) to match the rest of the pipeline.
+            raw = row.get("Lines this Month", "0").strip().replace(".", "")
             try:
-                lines = float(row.get("Lines this Month", 0))  # already in thousands
+                lines = int(raw) / 1000 if raw else 0.0
             except ValueError:
                 lines = 0.0
             if email:
