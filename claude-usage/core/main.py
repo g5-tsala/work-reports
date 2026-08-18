@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from .config import REPORTS
-from .fetch import (load_users, load_members, load_memories, load_projects,
-                    load_design_chats, load_conversations, load_claude_code)
+from .fetch import (load_users, load_members, load_projects,
+                    load_design_chats, load_conversations, load_claude_code,
+                    load_members_analytics)
 from .metrics import compute_metrics
 from .render import render_html
 
@@ -12,19 +13,21 @@ def main():
     print("Loading data...")
     users = load_users()
     members = load_members()
-    memories = load_memories()
     projects = load_projects()
     design_chats = load_design_chats()
 
-    print("Loading conversations.json (may take a moment)...")
+    print("Loading members analytics CSV...")
+    analytics, analytics_period = load_members_analytics()
+
+    print("Loading conversations batches (may take a moment)...")
     conversations = load_conversations()
 
     print("Loading Claude Code CSV...")
     claude_code_data, cc_period = load_claude_code()
 
     print("Computing metrics...")
-    m = compute_metrics(users, members, memories, projects, design_chats, conversations,
-                        claude_code_data, cc_period)
+    m = compute_metrics(users, members, projects, design_chats, conversations,
+                        claude_code_data, cc_period, analytics, analytics_period)
 
     print("Rendering report...")
     html = render_html(m)
@@ -35,7 +38,10 @@ def main():
 
     print(f"\n✓ Report written to {out}")
     print(f"  Period       : {m['date_start']} – {m['date_end']}")
-    print(f"  Users        : {m['active_users']} active / {m['total_users']} registered")
+    print(f"  Users        : {m['active_users']} active (any channel) / {m['total_users']} registered")
+    print(f"  Inactive     : {len(m['inactive_rows'])} with zero chat, Cowork and Code")
+    print(f"  Cowork       : {m['cowork_users']} users, {m['cowork_total_sessions']} sessions "
+          f"({m['cowork_only_users']} would read as inactive without it)")
     print(f"  Conversations: {m['total_conversations']}")
     print(f"  Messages     : {m['total_messages']}")
     print(f"  Code/auto    : {m['cc_total_users']} users, {m['cc_total_calls']:,} tool calls")
