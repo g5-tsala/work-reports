@@ -1,0 +1,5 @@
+# Dados
+inputs/
+outputs/
+*.xlsm
+*.xlsx

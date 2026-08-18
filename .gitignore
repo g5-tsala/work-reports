@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 *.so
 *.dylib
+*.pyc
 
 # Builds / dist
 build/
@@ -26,6 +27,10 @@ downloads/
 *.swp
 *.swo
 
+# Specs
+.specs
+openspec
+
 # Unit test / coverage reports
 .coverage
 .coverage.*
@@ -37,8 +42,16 @@ cover/
 .venv/
 venv/
 .env
+*.env.*
 .conda/
 .python-version
+
+# Packages
+*.7z
+*.iso
+*.jar
+*.rar
+*.zip
 
 # IDE / OS
 .idea/

@@ -1,0 +1,17 @@
+[project]
+name = "gerencial-mfo"
+version = "1.0.0"
+description = "Gerador do dashboard HTML mensal do relatorio Gerencial MFO - G5 Partners"
+requires-python = ">=3.11"
+dependencies = [
+    "openpyxl>=3.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
