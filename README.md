@@ -1,16 +1,17 @@
 # work-reports
 
-Scripts that generate self-contained HTML reports.
+Scripts que geram relatórios HTML autocontidos.
 
-## Reports
+## Relatórios
 
-| Directory | Description |
+| Diretório | Descrição |
 |---|---|
-| [`claude-usage/`](claude-usage/) | Claude AI usage across the G5 Partners org — active users, conversations, Claude Code activity, adoption funnel |
+| [`claude-usage/`](claude-usage/) | Uso de Claude AI na G5 Partners — usuários ativos, conversas, atividade no Claude Code, funil de adoção |
+| [`gerencial-mfo/`](gerencial-mfo/) | Dashboard gerencial mensal da área de MFO a partir da planilha Gerencial MFO |
 
-## Usage
+## Uso
 
-Each report is self-contained. Navigate to the directory and run its script:
+Cada relatório é autocontido. Entre no diretório e rode o script correspondente:
 
 ```bash
 cd claude-usage
@@ -18,4 +19,4 @@ python3 report.py
 # → reports/report-YYYY-MM-DD.html
 ```
 
-See the directory's `AGENTS.md` for data sources, schema reference, and gotchas.
+Consulte o `AGENTS.md` do diretório para fontes de dados, referência de schema e armadilhas.

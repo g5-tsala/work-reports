@@ -1,49 +1,49 @@
-# Claude Team Usage Data
+# Dados de Uso do Claude Team
 
-This directory contains a snapshot of Claude usage data exported by a G5 Partners organization admin. It covers users across the `@g5partners.com` domain, primarily investment banking and operations staff.
+Este diretório contém um snapshot dos dados de uso do Claude exportados por um admin da organização G5 Partners. Cobre usuários do domínio `@g5partners.com`, principalmente times de investment banking e operações.
 
-## Context
+## Contexto
 
-G5 Partners is the largest independent financial services firm in Brazil, operating in Multi-Family Office (MFO), Financial Strategic Advisory for Mergers and Acquisitions (FSA), DCM Capital Solutions, and alternative investments in judicial credit rights (G5 JUS).
+A G5 Partners é a maior empresa independente de serviços financeiros do Brasil, atuando em Multi-Family Office (MFO), Assessoria Estratégica Financeira para Fusões e Aquisições (FSA), DCM Capital Solutions e investimentos alternativos em direitos creditórios judiciais (G5 JUS).
 
-The team uses Claude for client research, financial analysis, document drafting, origination workflows, IT support, and software engineering.
+O time usa Claude para pesquisa sobre clientes, análise financeira, redação de documentos, fluxos de originação, suporte de TI e engenharia de software.
 
-## Directory Structure
+## Estrutura de diretórios
 
 ```
-report.py                    # thin entrypoint — imports and calls core.main.main()
-core/                        # report logic split into focused modules
-  config.py                  # ROOT / DATA / REPORTS paths and CLAUDE_CODE_TOOLS constant
-  fetch.py                   # all load_* functions (users, conversations, CSV files, etc.)
-  metrics.py                 # compute_metrics() orchestrator + private helper functions
-  render.py                  # render_html() — CSS, HTML template, JS (no external deps)
-  main.py                    # main() — loads data, calls compute_metrics, writes output file
-data/                        # gitignored — all raw Claude export files live here
-  conversations-NNNN.json    # org conversations, delivered in BATCHES — 650 MB, NEVER load in full
-                             # fetch.py globs conversations*.json and concatenates every batch
-                             # batches can go missing from an export; treat counts as a lower bound
-  users.json                 # all org members (@g5partners.com); may include removed/unassigned accounts
-  memories.json              # per-user memory summaries (7 users with entries)
-  projects/                  # 71 project JSON files (small, safe to read)
-  design_chats/              # 6 design/artifact conversation files (small, safe to read)
-  members-<uuid>-<date>.csv  # team member roster exported from Anthropic admin dashboard
-                             # authoritative source for seat tier and active membership
-                             # fetch.py always picks the alphabetically-last (most recent) file
+report.py                    # entrypoint enxuto — importa e chama core.main.main()
+core/                        # lógica do relatório dividida em módulos focados
+  config.py                  # caminhos ROOT / DATA / REPORTS e constante CLAUDE_CODE_TOOLS
+  fetch.py                   # todas as funções load_* (usuários, conversas, arquivos CSV, etc.)
+  metrics.py                 # orquestrador compute_metrics() + funções auxiliares privadas
+  render.py                  # render_html() — CSS, template HTML, JS (sem dependências externas)
+  main.py                    # main() — carrega dados, chama compute_metrics, escreve o arquivo de saída
+data/                        # fora do git — todos os arquivos brutos da exportação Claude ficam aqui
+  conversations-NNNN.json    # conversas da org, entregues em LOTES — 650 MB, NUNCA carregar por inteiro
+                             # fetch.py faz glob de conversations*.json e concatena todos os lotes
+                             # lotes podem faltar em uma exportação; trate as contagens como piso
+  users.json                 # todos os membros da org (@g5partners.com); pode incluir contas removidas/sem assento
+  memories.json              # resumos de memória por usuário (7 usuários com entradas)
+  projects/                  # 71 arquivos JSON de projeto (pequenos, seguro ler)
+  design_chats/              # 6 arquivos de conversas de design/artifact (pequenos, seguro ler)
+  members-<uuid>-<date>.csv  # roster de membros exportado do admin dashboard da Anthropic
+                             # fonte autoritativa de seat tier e vínculo ativo
+                             # fetch.py sempre pega o último arquivo em ordem alfabética (mais recente)
   members-analytics-<uuid>-<from>-to-<to>.csv
-                             # per-member activity export from Anthropic Console — PRIMARY source
-                             # for user activity: the ONLY export that reports Cowork usage
-                             # covers every member, including those absent from the conversations batches
-                             # fetch.py always picks the alphabetically-last (most recent) file
-  claude_code_team_*.csv     # Claude Code CLI usage export from Anthropic Console
-                             # filename encodes the period: claude_code_team_YYYY_MM_DD_to_YYYY_MM_DD.csv
-                             # fetch.py always picks the alphabetically-last (most recent) file
-reports/                     # gitignored — generated output files
-  report.html                # self-contained HTML executive report (do not edit directly)
+                             # exportação de atividade por membro do Anthropic Console — fonte PRIMÁRIA
+                             # de atividade do usuário: a ÚNICA exportação que reporta uso de Cowork
+                             # cobre todos os membros, inclusive os ausentes dos lotes de conversas
+                             # fetch.py sempre pega o último arquivo em ordem alfabética (mais recente)
+  claude_code_team_*.csv     # exportação de uso do Claude Code CLI do Anthropic Console
+                             # o nome do arquivo codifica o período: claude_code_team_YYYY_MM_DD_to_YYYY_MM_DD.csv
+                             # fetch.py sempre pega o último arquivo em ordem alfabética (mais recente)
+reports/                     # fora do git — arquivos de saída gerados
+  report.html                # relatório executivo HTML autocontido (não editar diretamente)
 ```
 
-## Code Architecture
+## Arquitetura do código
 
-The pipeline is a straight line: `fetch → metrics → render → write`.
+O pipeline é uma linha reta: `fetch → metrics → render → write`.
 
 ```
 report.py
@@ -53,46 +53,46 @@ report.py
         ├── core/metrics.py compute_metrics(users, members, memories, projects, design_chats,
         │                                   conversations, claude_code_data, cc_period,
         │                                   analytics, analytics_period)
-        │     ├── _filter_users()        billable-only filtering; email→tier map
-        │     ├── _project_metrics()     project/design-chat pass; proj_per_user counter
-        │     ├── _conversation_pass()   single loop over all conversations; returns all counters
-        │     ├── _channel_active()      uids active on ANY channel — the one activity rule
-        │     ├── _build_user_rows()     per-user activity rows; analytics-backed columns
-        │     ├── _cowork_metrics()      Cowork section rows + totals
-        │     ├── _adoption_funnel()     funnel list; days-active thresholds
-        │     ├── _feature_rows()        feature adoption rows in display order
-        │     ├── _cc_web_metrics()      CC tool-use stats from web export
-        │     ├── _cc_csv_metrics()      Claude Code CLI stats from CSV; returns cc_uids
-        │     └── _inactive_rows()       complement of _channel_active()
-        └── core/render.py  render_html(m) → self-contained HTML string
+        │     ├── _filter_users()        filtra só quem é billable; mapa email→tier
+        │     ├── _project_metrics()     passada por projetos/design chats; contador proj_per_user
+        │     ├── _conversation_pass()   loop único sobre todas as conversas; devolve todos os contadores
+        │     ├── _channel_active()      uids ativos em QUALQUER canal — a regra única de atividade
+        │     ├── _build_user_rows()     linhas de atividade por usuário; colunas vindas do analytics
+        │     ├── _cowork_metrics()      linhas e totais da seção Cowork
+        │     ├── _adoption_funnel()     lista do funil; thresholds de dias ativos
+        │     ├── _feature_rows()        linhas de adoção de features na ordem de exibição
+        │     ├── _cc_web_metrics()      estatísticas de uso de ferramentas CC vindas da exportação web
+        │     ├── _cc_csv_metrics()      estatísticas do Claude Code CLI vindas do CSV; devolve cc_uids
+        │     └── _inactive_rows()       complemento de _channel_active()
+        └── core/render.py  render_html(m) → string HTML autocontida
 ```
 
-### Which source feeds which column
+### Qual fonte alimenta qual coluna
 
-The members-analytics CSV is the primary source for *whether and how much* someone used Claude;
-the conversations batches remain the only source for *what happened inside* a chat.
+O CSV members-analytics é a fonte primária para *se e quanto* alguém usou Claude;
+os lotes de conversas continuam sendo a única fonte para *o que aconteceu dentro* de um chat.
 
-| From members-analytics CSV | From conversations*.json |
+| Do CSV members-analytics | Do conversations*.json |
 |---|---|
-| Days Active, Chats, Messages Sent | Projects, Files Uploaded (+ upload detail modal) |
-| Cowork Sessions / Messages | Feature Adoption, Top Tools |
-| Code Sessions, File Edits, PRs | Daily Volume, Conversation Depth |
-| Last Active, activity/inactivity verdict | — |
+| Dias ativos, Chats, Mensagens enviadas | Projetos, Arquivos enviados (+ modal de detalhe dos uploads) |
+| Sessões / Mensagens Cowork | Adoção de features, top ferramentas |
+| Sessões Code, File Edits, PRs | Volume diário, profundidade das conversas |
+| Último acesso, veredito de atividade/inatividade | — |
 
-`Estimated Spend (USD)` is present in the CSV but reads `0.00` for every member — not used.
+`Estimated Spend (USD)` existe no CSV mas vem `0.00` para todo mundo — não é usado.
 
-When editing report logic, go directly to the relevant helper in `core/metrics.py` rather than reading the whole file. `_conversation_pass()` is the largest function (~80 lines); everything else is under 30 lines.
+Ao editar a lógica do relatório, vá direto ao helper relevante em `core/metrics.py` em vez de ler o arquivo inteiro. `_conversation_pass()` é a maior função (~80 linhas); todo o resto tem menos de 30.
 
 ---
 
-## CRITICAL: Never Read Full JSON Files
+## CRÍTICO: nunca leia os arquivos JSON por inteiro
 
-**The `conversations-NNNN.json` batches are very big text files. Loading them will exhaust your context window.**
+**Os lotes `conversations-NNNN.json` são arquivos de texto enormes. Carregá-los esgota sua janela de contexto.**
 
-Always use targeted tools to inspect data:
+Use sempre ferramentas direcionadas para inspecionar os dados:
 
 ```bash
-# Inspect first conversation structure (safe — reads only 500KB of one batch)
+# Inspecionar a estrutura da primeira conversa (seguro — lê só 500KB de um lote)
 python3 -c "
 import json, glob
 f = open(sorted(glob.glob('data/conversations*.json'))[0]); chunk = f.read(500000); f.close()
@@ -100,113 +100,118 @@ obj, _ = json.JSONDecoder().raw_decode(chunk[1:])
 print(json.dumps(obj, indent=2, ensure_ascii=False)[:3000])
 "
 
-# Search conversations by keyword (streaming, no full load)
-grep -i "keyword" data/conversations*.json | head -5
+# Buscar conversas por palavra-chave (streaming, sem carga completa)
+grep -i "palavra-chave" data/conversations*.json | head -5
 
-# For projects and design_chats — files are small, safe to read directly
+# Para projects e design_chats — arquivos pequenos, seguro ler direto
 cat data/projects/019d9c7d-ebcb-725b-9755-a109ab3b8d4d.json
 
-# For per-user activity questions, read the analytics CSV instead — 9 KB, always safe
+# Para perguntas de atividade por usuário, leia o CSV de analytics — 9 KB, sempre seguro
 cat data/members-analytics-*.csv
 ```
 
-For any analysis on the conversation batches, write a Python script that loops over
-`glob.glob('data/conversations*.json')` and calls `json.load()` per file, freeing each batch
-before the next (`del convs; gc.collect()`). It fits in memory (~3 GB peak across all batches
-if held at once) but must never be printed or injected into the LLM context.
+Para qualquer análise sobre os lotes de conversas, escreva um script Python que itere sobre
+`glob.glob('data/conversations*.json')` e chame `json.load()` por arquivo, liberando cada lote
+antes do próximo (`del convs; gc.collect()`). Cabe na memória (~3 GB de pico se todos forem
+mantidos ao mesmo tempo), mas nunca deve ser impresso nem injetado no contexto do LLM.
 
-**Prefer `members-analytics-*.csv` whenever the question is per-user activity.** It answers most
-"who used what, how much" questions in 9 KB instead of 650 MB, and it is the only source that
-sees Cowork.
+**Prefira `members-analytics-*.csv` sempre que a pergunta for atividade por usuário.** Ele responde
+a maioria das perguntas de "quem usou o quê, e quanto" em 9 KB em vez de 650 MB, e é a única fonte
+que enxerga Cowork.
 
 ---
 
-## Report Script
+## Script do relatório
 
-`report.py` is the entrypoint. Run with:
+`report.py` é o entrypoint. Rode com:
 
 ```bash
-python3 report.py        # writes reports/report-YYYY-MM-DD.html, prints summary to stdout
+python3 report.py        # escreve reports/report-YYYY-MM-DD.html e imprime o resumo no stdout
 ```
 
-**Dependencies:** Python stdlib only (`json`, `csv`, `re`, `glob`, `collections`, `datetime`, `pathlib`). No pip installs required.
+**Dependências:** apenas a stdlib do Python (`json`, `csv`, `re`, `glob`, `collections`, `datetime`, `pathlib`). Nenhum pip install necessário.
 
-### Report sections (in order)
+### Seções do relatório (em ordem)
 
-| Section | Source | Notes |
+A interface do relatório é toda em pt-BR, com números no padrão brasileiro (`.` no milhar, `,` no
+decimal, escala em `mil`) e datas em `dd/mm/aaaa`. Nomes de coluna dos CSV de origem permanecem em
+inglês — são chaves literais dos arquivos, não rótulos de tela.
+
+| Seção | Fonte | Observações |
 |---|---|---|
-| Overview (KPIs) | all sources | Active users = any channel (chat, Cowork, Code) |
-| User Activity | members-analytics CSV + conversations | Sortable table; click file count to see modal |
-| Cowork | members-analytics CSV | Only export that sees Cowork; flags Cowork-only users |
-| Claude Code | data/claude_code_team_*.csv | Lines in thousands (K); cross-refs web convs |
-| Inactive Accounts | members-analytics CSV | Zero on all three channels |
-| Adoption Funnel | members-analytics CSV | See thresholds below |
-| Daily Conversation Volume | conversations*.json | Column chart, 30-day window |
-| Conversation Depth | conversations*.json | Distribution by message count |
+| Visão geral (KPIs) | todas as fontes | Usuários ativos = qualquer canal (chat, Cowork, Code) |
+| Atividade por usuário | CSV members-analytics + conversas | Tabela ordenável; clique na contagem de arquivos para abrir o modal |
+| Cowork | CSV members-analytics | Única exportação que enxerga Cowork; sinaliza usuários só-Cowork |
+| Claude Code | data/claude_code_team_*.csv | Linhas em milhares (`mil`); cruza com as conversas web |
+| Contas inativas | CSV members-analytics | Zero nos três canais |
+| Funil de adoção | CSV members-analytics | Veja os thresholds abaixo |
+| Volume diário de conversas | conversations*.json | Gráfico de colunas, janela de 30 dias |
+| Distribuição de profundidade | conversations*.json | Distribuição por quantidade de mensagens |
 
-### Adoption funnel thresholds
+### Thresholds do funil de adoção
 
-Graded on `Days Active`, which counts a person the same whether they worked in chat, Cowork or Code.
+Medidos por `Days Active`, que conta a pessoa igual tendo ela trabalhado em chat, Cowork ou Code.
 
-| Tier | Threshold |
+| Nível | Threshold |
 |---|---|
-| Active | ≥1 use on any channel (chat, Cowork, Code) |
-| Engaged | ≥10 days active |
-| Power user | ≥20 days active (recurring user) |
+| Ativos | ≥1 uso em qualquer canal (chat, Cowork, Code) |
+| Engajados | ≥10 dias ativos |
+| Power users | ≥20 dias ativos (usuário recorrente) |
 
-Each funnel stage also shows its share of registered users. Memory is intentionally excluded
-from the tiering — it is created too passively to signal intensity of adoption.
+Cada estágio do funil também mostra sua participação sobre os usuários registrados. Memória é
+deliberadamente excluída do escalonamento — ela é criada de forma passiva demais para sinalizar
+intensidade de adoção.
 
-If no members-analytics CSV is present, `_adoption_funnel()` falls back to the older
-conversation-count / lines-of-code union (≥1/≥5 convs, ≥1K/≥5K/≥10K lines; power = ≥10K lines).
+Se não houver CSV members-analytics, `_adoption_funnel()` cai no critério antigo, pela união de
+contagem de conversas e linhas de código (≥1/≥5 convs, ≥1K/≥5K/≥10K linhas; power = ≥10K linhas).
 
-### Active user definition
+### Definição de usuário ativo
 
-**A user is active if they interacted on ANY channel: chat, Cowork, or Claude Code.**
-`_channel_active()` is the single implementation; the KPI card, user table, adoption funnel and
-inactive list all derive from it, and `_inactive_rows()` is its exact complement.
+**Um usuário é ativo se interagiu em QUALQUER canal: chat, Cowork ou Claude Code.**
+`_channel_active()` é a única implementação; o card de KPI, a tabela de usuários, o funil de adoção
+e a lista de inativos derivam dela, e `_inactive_rows()` é seu complemento exato.
 
-The verdict comes from the members-analytics CSV. Users absent from that export fall back to
-evidence from the conversation batches and the Claude Code CSV, and are tagged *not covered* in
-the Inactive Accounts table — a missing analytics row must never silently demote someone.
+O veredito vem do CSV members-analytics. Usuários ausentes dessa exportação caem para as evidências
+dos lotes de conversas e do CSV do Claude Code, e são marcados como *sem cobertura* na tabela de
+Contas inativas — a falta de uma linha no analytics nunca pode rebaixar alguém silenciosamente.
 
-**Why this matters:** before Cowork was measured, activity was inferred from the conversations
-export (web chat only) plus `Lines this Month` (code lines only). A user working exclusively in
-Cowork produced neither, so they appeared under Inactive Accounts despite daily use — and at
-least one seat was reclaimed on that false negative. Never infer inactivity from a source that
-cannot see all three channels.
+**Por que isso importa:** antes de Cowork ser medido, a atividade era inferida da exportação de
+conversas (só chat web) somada a `Lines this Month` (só linhas de código). Um usuário que trabalhava
+exclusivamente no Cowork não produzia nenhum dos dois, então aparecia em Contas inativas apesar do
+uso diário — e ao menos um assento foi recuperado com base nesse falso negativo. Nunca infira
+inatividade a partir de uma fonte que não enxerga os três canais.
 
 ---
 
-## JSON Schemas
+## Schemas JSON
 
 ### `data/users.json`
 
-Top-level: `array` of user objects.
+Nível raiz: `array` de objetos de usuário.
 
 ```jsonc
 [
   {
-    "uuid": "string (UUIDv4)",          // matches account.uuid in conversations
+    "uuid": "string (UUIDv4)",          // casa com account.uuid nas conversas
     "full_name": "string | null",
-    "email_address": "string",          // all @g5partners.com
-    "verified_phone_number": "string | null"  // E.164 format, e.g. "+5511..."
+    "email_address": "string",          // todos @g5partners.com
+    "verified_phone_number": "string | null"  // formato E.164, ex. "+5511..."
   }
 ]
 ```
 
 ### `data/memories.json`
 
-Top-level: `array` of memory objects. Only users who have accumulated conversation history have an entry.
+Nível raiz: `array` de objetos de memória. Só usuários que acumularam histórico de conversas têm entrada.
 
 ```jsonc
 [
   {
-    "account_uuid": "string (UUIDv4)",  // foreign key → users[].uuid
-    "conversations_memory": "string",   // long markdown summary Claude built from past sessions;
-                                        // covers work context, active deals, preferences, recent history
-    "project_memories": {               // per-project memory summaries (may be absent if empty)
-      "<project-uuid>": "string"        // project UUID → markdown memory for that project
+    "account_uuid": "string (UUIDv4)",  // chave estrangeira → users[].uuid
+    "conversations_memory": "string",   // resumo markdown longo que o Claude montou de sessões passadas;
+                                        // cobre contexto de trabalho, deals ativos, preferências, histórico recente
+    "project_memories": {               // resumos de memória por projeto (pode não existir se vazio)
+      "<project-uuid>": "string"        // UUID do projeto → memória markdown daquele projeto
     }
   }
 ]
@@ -214,7 +219,7 @@ Top-level: `array` of memory objects. Only users who have accumulated conversati
 
 ### `data/projects/<uuid>.json`
 
-Each file is a single project object (not an array).
+Cada arquivo é um único objeto de projeto (não um array).
 
 ```jsonc
 {
@@ -223,18 +228,18 @@ Each file is a single project object (not an array).
   "description": "string",
   "is_private": "boolean",
   "is_starter_project": "boolean",
-  "prompt_template": "string",          // system prompt / instructions for the project
+  "prompt_template": "string",          // system prompt / instruções do projeto
   "created_at": "string (ISO 8601)",
   "updated_at": "string (ISO 8601)",
   "creator": {
-    "uuid": "string (UUIDv4)",          // foreign key → users[].uuid
+    "uuid": "string (UUIDv4)",          // chave estrangeira → users[].uuid
     "full_name": "string"
   },
   "docs": [
     {
       "uuid": "string (UUIDv4)",
       "filename": "string",
-      "content": "string",              // uploaded document text
+      "content": "string",              // texto do documento enviado
       "created_at": "string (ISO 8601)"
     }
   ]
@@ -243,14 +248,14 @@ Each file is a single project object (not an array).
 
 ### `data/design_chats/<uuid>.json`
 
-Each file is a single design/artifact conversation object.
+Cada arquivo é um único objeto de conversa de design/artifact.
 
 ```jsonc
 {
   "uuid": "string (UUIDv4)",
   "title": "string",
   "project": {
-    "uuid": "string (UUIDv4)",          // foreign key → projects/<uuid>.json
+    "uuid": "string (UUIDv4)",          // chave estrangeira → projects/<uuid>.json
     "name": "string"
   },
   "created_at": "string (ISO 8601)",
@@ -263,7 +268,7 @@ Each file is a single design/artifact conversation object.
         "attachments": "array",
         "authorAccountUuid": "string",
         "authorName": "string",
-        "content": "string",            // message text
+        "content": "string",            // texto da mensagem
         "id": "string",
         "role": "string",
         "timestamp": "string (ISO 8601)"
@@ -276,44 +281,44 @@ Each file is a single design/artifact conversation object.
 
 ### `data/conversations-NNNN.json`
 
-Top-level: `array` of conversation objects, split across one or more batch files.
-**Do not load these files in full.** `load_conversations()` globs `conversations*.json` and
-concatenates every batch, so a single-file export is just the one-batch case.
+Nível raiz: `array` de objetos de conversa, dividido em um ou mais arquivos de lote.
+**Não carregue esses arquivos por inteiro.** `load_conversations()` faz glob de `conversations*.json`
+e concatena todos os lotes, então uma exportação de arquivo único é só o caso de um lote só.
 
-Batches can be lost when re-exporting; when analytics-CSV chat counts exceed what the batches
-show, the batches are incomplete, not the CSV.
+Lotes podem se perder em uma reexportação; quando a contagem de chats do CSV de analytics supera o que
+os lotes mostram, os lotes é que estão incompletos, não o CSV.
 
 ```jsonc
 [
   {
     "uuid": "string (UUIDv4)",
-    "name": "string",                   // conversation title
-    "summary": "string",                // may be empty
+    "name": "string",                   // título da conversa
+    "summary": "string",                // pode vir vazio
     "created_at": "string (ISO 8601)",
     "updated_at": "string (ISO 8601)",
     "account": {
-      "uuid": "string (UUIDv4)"         // foreign key → users[].uuid
+      "uuid": "string (UUIDv4)"         // chave estrangeira → users[].uuid
     },
     "chat_messages": [
       {
         "uuid": "string (UUIDv4)",
-        "text": "string",               // full plain-text of the message
+        "text": "string",               // texto puro completo da mensagem
         "content": [
           {
             "start_timestamp": "string (ISO 8601)",
             "stop_timestamp": "string (ISO 8601)",
             "flags": "null | object",
             "type": "text | tool_use | tool_result | thinking | ...",
-            "text": "string"            // present when type == "text"
-            // additional fields vary by type; see gotchas below
+            "text": "string"            // presente quando type == "text"
+            // campos adicionais variam por tipo; veja as armadilhas abaixo
           }
         ],
         "sender": "human | assistant",
         "created_at": "string (ISO 8601)",
         "updated_at": "string (ISO 8601)",
-        "attachments": "array",         // file/image attachments
-        "files": "array",               // structured file list; see gotchas below
-        "parent_message_uuid": "string (UUIDv4)"  // thread parent; root messages use null UUID
+        "attachments": "array",         // anexos de arquivo/imagem
+        "files": "array",               // lista estruturada de arquivos; veja as armadilhas abaixo
+        "parent_message_uuid": "string (UUIDv4)"  // pai na thread; mensagens raiz usam UUID nulo
       }
     ]
   }
@@ -322,7 +327,7 @@ show, the batches are incomplete, not the CSV.
 
 ### `data/members-<uuid>-<date>.csv`
 
-Exported from the Anthropic team admin dashboard. This is the **authoritative membership source** — use email as the join key. If a user appears in `data/users.json` but not here, they have been removed from the org.
+Exportado do admin dashboard de team da Anthropic. Esta é a **fonte autoritativa de vínculo** — use o e-mail como chave de join. Se um usuário aparece em `data/users.json` mas não aqui, ele foi removido da org.
 
 ```csv
 Name,Email,Role,Status,Seat Tier
@@ -331,27 +336,27 @@ Leonardo,lzambello@g5partners.com,User,Active,Standard
 ...
 ```
 
-| Column | Type | Description |
+| Coluna | Tipo | Descrição |
 |---|---|---|
-| `Name` | string | Display name |
-| `Email` | string | Join key → `users[].email_address` and `claude_code_team_*.csv User` |
+| `Name` | string | Nome de exibição |
+| `Email` | string | Chave de join → `users[].email_address` e coluna `User` de `claude_code_team_*.csv` |
 | `Role` | string | `Primary Owner`, `Admin`, `User`, etc. |
-| `Status` | string | `Active` or `Inactive` |
-| `Seat Tier` | string | `Standard`, `Premium`, or `Unassigned` |
+| `Status` | string | `Active` ou `Inactive` |
+| `Seat Tier` | string | `Standard`, `Premium` ou `Unassigned` |
 
-**`Seat Tier = Unassigned`** means the seat is not assigned to a billable user (e.g., shared/service accounts). These are excluded from all report metrics — active counts, inactive counts, funnel, and KPIs. They are not billed and should not be tracked.
+**`Seat Tier = Unassigned`** significa que o assento não está atribuído a um usuário billable (ex.: contas compartilhadas/de serviço). Esses são excluídos de todas as métricas do relatório — contagem de ativos, de inativos, funil e KPIs. Não são faturados e não devem ser acompanhados.
 
 ---
 
 ### `data/members-analytics-<uuid>-<from>-to-<to>.csv`
 
-Per-member activity export from the Anthropic Console. **Primary source for user activity** and
-the only export that reports Cowork. Covers every org member, including those with no rows in the
-conversation batches. Report uses the most recent file (alphabetically last). The filename encodes
-the window: `...-2026-06-23-to-2026-07-22.csv`.
+Exportação de atividade por membro do Anthropic Console. **Fonte primária de atividade do usuário** e
+a única exportação que reporta Cowork. Cobre todos os membros da org, inclusive os que não têm linha
+nos lotes de conversas. O relatório usa o arquivo mais recente (último em ordem alfabética). O nome do
+arquivo codifica a janela: `...-2026-06-23-to-2026-07-22.csv`.
 
-Written **with a UTF-8 BOM** — open with `encoding='utf-8-sig'`, otherwise the first header
-becomes `﻿Name` and the `Name` column silently reads as empty.
+Gravado **com BOM UTF-8** — abra com `encoding='utf-8-sig'`, senão o primeiro cabeçalho vira
+`﻿Name` e a coluna `Name` passa a ler vazio silenciosamente.
 
 ```csv
 "Name","Email","Role","Seat Tier","Last Active","Days Active","Chats","Messages",
@@ -361,34 +366,34 @@ becomes `﻿Name` and the `Name` column silently reads as empty.
 "0","0","0","0","0","25","61","0","0.00"
 ```
 
-| Column | Type | Description |
+| Coluna | Tipo | Descrição |
 |---|---|---|
-| `Email` | string | Join key → `users[].email_address` |
-| `Last Active` | date `YYYY-MM-DD` | Across all channels; may be empty |
-| `Days Active` | integer | Distinct days with any interaction — the engagement metric the funnel grades on |
-| `Chats` | integer | Web/desktop conversations touched in the window |
-| `Messages` | integer | **Human messages only** — matches `user_human_msgs`, not `len(chat_messages)` |
-| `Cowork Sessions` / `Cowork Messages` | integer | Cowork usage; **invisible to every other export** |
-| `Code sessions` / `File Edits` / `Pull Requests` | integer | Claude Code activity, richer than the lines CSV |
-| `Projects Created` / `Projects Used` | integer | Cross-checks the `projects/` JSON pass |
-| `Artifacts Created` | integer | Artifact count |
-| `Estimated Spend (USD)` | decimal | Reads `0.00` for every member on this plan — not used |
+| `Email` | string | Chave de join → `users[].email_address` |
+| `Last Active` | data `YYYY-MM-DD` | Considerando todos os canais; pode vir vazia |
+| `Days Active` | inteiro | Dias distintos com alguma interação — a métrica de engajamento que o funil usa |
+| `Chats` | inteiro | Conversas web/desktop tocadas na janela |
+| `Messages` | inteiro | **Só mensagens humanas** — corresponde a `user_human_msgs`, não a `len(chat_messages)` |
+| `Cowork Sessions` / `Cowork Messages` | inteiro | Uso de Cowork; **invisível em qualquer outra exportação** |
+| `Code sessions` / `File Edits` / `Pull Requests` | inteiro | Atividade do Claude Code, mais rica que o CSV de linhas |
+| `Projects Created` / `Projects Used` | inteiro | Cruza com a passada sobre os JSON de `projects/` |
+| `Artifacts Created` | inteiro | Quantidade de artifacts |
+| `Estimated Spend (USD)` | decimal | Vem `0.00` para todo mundo neste plano — não é usado |
 
-Counts are plain integers today; `_csv_int()` also strips `.` in case large values arrive with
-pt-BR thousands separators, as `claude_code_team_*.csv` already does.
+Hoje as contagens são inteiros simples; `_csv_int()` também remove `.` caso valores grandes cheguem
+com separador de milhar pt-BR, como já acontece em `claude_code_team_*.csv`.
 
-`Chats` here can exceed the batch count for the same user: the CSV counts chats *touched* in the
-window (a June chat used in July counts), while the JSON is filtered on `created_at`. It also runs
-higher when conversation batches are missing from an export.
+O `Chats` aqui pode superar a contagem dos lotes para o mesmo usuário: o CSV conta chats *tocados* na
+janela (um chat de junho usado em julho conta), enquanto o JSON é filtrado por `created_at`. Também
+fica mais alto quando faltam lotes de conversas na exportação.
 
-**`Seat Tier` in this file can lag the roster.** Use `members-*.csv` as the authority for tier and
-status; use this file for activity.
+**O `Seat Tier` deste arquivo pode estar defasado em relação ao roster.** Use `members-*.csv` como
+autoridade para tier e status; use este arquivo para atividade.
 
 ---
 
 ### `data/claude_code_team_*.csv`
 
-CSV export from Anthropic Console. Report uses the **most recent file** (alphabetically last by filename). A new export replaces the old one by naming convention.
+Exportação CSV do Anthropic Console. O relatório usa o **arquivo mais recente** (último em ordem alfabética por nome). Uma nova exportação substitui a antiga por convenção de nome.
 
 ```csv
 User,Lines this Month
@@ -399,56 +404,56 @@ tcitro@g5partners.com,317
 ...
 ```
 
-| Column | Type | Description |
+| Coluna | Tipo | Descrição |
 |---|---|---|
-| `User` | string | User email; joins to `users[].email_address` |
-| `Lines this Month` | integer (Brazilian formatting) | **Raw line count where `.` is the thousands separator** — `64.230` = 64,230 lines, `526` = 526 lines. Lines of code generated or modified via Claude Code CLI. |
+| `User` | string | E-mail do usuário; faz join com `users[].email_address` |
+| `Lines this Month` | inteiro (formatação brasileira) | **Contagem bruta de linhas em que `.` é separador de milhar** — `64.230` = 64.230 linhas, `526` = 526 linhas. Linhas de código geradas ou modificadas via Claude Code CLI. |
 
-**Number format gotcha:** the value is NOT a decimal. The `.` is a thousands separator (pt-BR formatting), so values ≥ 1000 always show exactly three digits after the dot (`64.230`) while values < 1000 have no separator (`526`, `317`). `core/fetch.py` strips the `.` to recover the true integer, then divides by 1000 to express it in thousands (K) — the representation the rest of the pipeline (render, funnel thresholds) expects. Parsing the value with a plain `float()` is wrong: it happens to work for values ≥ 1000 but inflates sub-1000 counts by 1000× (e.g. `317` would render as 317K instead of 0.3K).
+**Armadilha de formato numérico:** o valor NÃO é decimal. O `.` é separador de milhar (formatação pt-BR), então valores ≥ 1000 sempre mostram exatamente três dígitos depois do ponto (`64.230`), enquanto valores < 1000 não têm separador (`526`, `317`). `core/fetch.py` remove o `.` para recuperar o inteiro verdadeiro e depois divide por 1000 para expressar em milhares (K) — a representação que o resto do pipeline (render, thresholds do funil) espera. Parsear o valor com um `float()` simples é errado: funciona por acaso para valores ≥ 1000, mas infla em 1000× as contagens abaixo de 1000 (ex.: `317` renderizaria como 317K em vez de 0,3K).
 
-Only users with CLI activity appear. Users absent here had zero CLI usage in the period.
+Só aparecem usuários com atividade no CLI. Usuários ausentes daqui tiveram zero uso de CLI no período.
 
 ---
 
-## Key Relationships
+## Relacionamentos-chave
 
 ```
 data/users[].uuid
-  ↳ data/conversations[].account.uuid     (who had the conversation)
-  ↳ data/memories[].account_uuid          (whose memory summary)
-  ↳ data/projects[].creator.uuid          (who owns the project)
+  ↳ data/conversations[].account.uuid     (de quem é a conversa)
+  ↳ data/memories[].account_uuid          (de quem é o resumo de memória)
+  ↳ data/projects[].creator.uuid          (de quem é o projeto)
 
 data/projects[].uuid
-  ↳ data/design_chats[].project.uuid      (which project a design chat belongs to)
+  ↳ data/design_chats[].project.uuid      (a que projeto pertence a conversa de design)
 
 data/users[].email_address
-  ↳ data/members-*.csv Email column           (seat tier, authoritative membership)
-  ↳ data/members-analytics-*.csv Email column (all-channel activity, incl. Cowork)
-  ↳ data/claude_code_team_*.csv User col      (CLI lines of code)
+  ↳ coluna Email de data/members-*.csv            (seat tier, vínculo autoritativo)
+  ↳ coluna Email de data/members-analytics-*.csv  (atividade em todos os canais, incl. Cowork)
+  ↳ coluna User de data/claude_code_team_*.csv    (linhas de código no CLI)
 ```
 
 ---
 
-## Gotchas
+## Armadilhas
 
-**Cowork usage appears in exactly one export.**
-Neither the conversation batches nor `claude_code_team_*.csv` see it. A Cowork-only user reads as
-zero everywhere except `members-analytics-*.csv`. Any activity/inactivity judgement built on the
-other two sources is wrong by construction — see "Active user definition".
+**Uso de Cowork aparece em exatamente uma exportação.**
+Nem os lotes de conversas nem `claude_code_team_*.csv` o enxergam. Um usuário só-Cowork lê como zero
+em tudo, exceto em `members-analytics-*.csv`. Qualquer julgamento de atividade/inatividade construído
+sobre as outras duas fontes está errado por construção — veja "Definição de usuário ativo".
 
-**`tool_use` blocks in the conversation batches are NOT Claude Code CLI.**
-Tools like `bash_tool`, `view`, `str_replace`, `create_file` appear in `content` blocks from the claude.ai web interface's built-in code execution environment. They share names with Claude Code CLI tools but are separate. There is no way to distinguish Claude Code CLI sessions from this export — that data only appears in the CSV.
+**Blocos `tool_use` nos lotes de conversas NÃO são Claude Code CLI.**
+Ferramentas como `bash_tool`, `view`, `str_replace`, `create_file` aparecem em blocos de `content` vindos do ambiente de execução de código embutido na interface web do claude.ai. Elas compartilham o nome com ferramentas do Claude Code CLI, mas são coisas separadas. Não há como distinguir sessões de Claude Code CLI a partir desta exportação — esse dado só aparece no CSV.
 
-**File uploads are inflated by document conversion.**
-When a user uploads a PDF or PowerPoint, Claude converts each page/slide into an individual image (`slide-1.jpg`, `slide-2.jpg`, …). Each image appears as a separate entry in `msg.files`. A single 30-page document generates 30 file entries. The `files_uploaded` count in the report reflects this.
+**Uploads de arquivo são inflados pela conversão de documentos.**
+Quando um usuário envia um PDF ou PowerPoint, o Claude converte cada página/slide em uma imagem individual (`slide-1.jpg`, `slide-2.jpg`, …). Cada imagem aparece como uma entrada separada em `msg.files`. Um único documento de 30 páginas gera 30 entradas de arquivo. A contagem `files_uploaded` do relatório reflete isso.
 
-**Conversations inside claude.ai Projects are included in the conversation batches.**
-There is no `project_uuid` field on conversation objects — it is not possible to determine from this export which conversations belong to which project.
+**Conversas dentro de Projects do claude.ai estão incluídas nos lotes de conversas.**
+Não existe campo `project_uuid` nos objetos de conversa — não é possível determinar por esta exportação quais conversas pertencem a qual projeto.
 
-**"Inactive" means truly inactive — among billable users only.**
-The Inactive Accounts section only shows users with zero chats AND zero Cowork sessions AND zero Code sessions. Any activity on any channel excludes a user from the list.
+**"Inativo" significa realmente inativo — e só entre usuários billable.**
+A seção Contas inativas só mostra usuários com zero chats E zero sessões de Cowork E zero sessões de Code. Qualquer atividade em qualquer canal tira o usuário da lista.
 
-Unassigned seats are excluded from the report entirely and never appear as inactive — including someone whose seat was *reclaimed* after being wrongly judged inactive. Once the tier flips to `Unassigned` they vanish from every table, so reassignment mistakes are not self-correcting. Check `members-analytics-*.csv` directly before reclaiming a seat.
+Assentos Unassigned são excluídos do relatório por completo e nunca aparecem como inativos — inclusive alguém cujo assento foi *recuperado* depois de ter sido julgado inativo por engano. Assim que o tier vira `Unassigned`, a pessoa some de todas as tabelas, então erros de atribuição não se autocorrigem. Confira `members-analytics-*.csv` diretamente antes de recuperar um assento.
 
-**`data/users.json` may contain stale or unassigned accounts.**
-Always cross-reference with `data/members-*.csv` (email join) to determine current membership and seat tier. Users absent from the members CSV have been removed from the org and are excluded from all metrics.
+**`data/users.json` pode conter contas obsoletas ou sem assento.**
+Sempre cruze com `data/members-*.csv` (join por e-mail) para determinar vínculo atual e seat tier. Usuários ausentes do CSV de members foram removidos da org e são excluídos de todas as métricas.

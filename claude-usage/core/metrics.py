@@ -5,7 +5,7 @@ from .config import CLAUDE_CODE_TOOLS
 
 
 def parse_dt(s):
-    """Parse an ISO-8601 datetime string, stripping timezone suffixes. Returns None on failure."""
+    """Lê um datetime ISO-8601, removendo o sufixo de timezone. Devolve None se não conseguir."""
     if not s:
         return None
     s = s.rstrip("Z").split("+")[0]
@@ -18,7 +18,7 @@ def parse_dt(s):
 
 
 def _filter_users(users, members):
-    """Return (billable_users, email_to_tier), excluding Unassigned seats and removed members."""
+    """Devolve (usuários billable, email_to_tier), excluindo assentos Unassigned e membros removidos."""
     billable_uids = {
         uid for uid, u in users.items()
         if members.get(u["email_address"], {}).get("tier", "Unassigned") != "Unassigned"
@@ -30,7 +30,7 @@ def _filter_users(users, members):
 
 
 def _project_metrics(projects, design_chats, users):
-    """Return (metrics_dict, proj_per_user counter) from project and design chat data."""
+    """Devolve (dict de métricas, contador proj_per_user) a partir dos projetos e design chats."""
     proj_per_user = Counter()
     proj_with_docs = 0
     proj_private = 0
@@ -66,7 +66,7 @@ def _project_metrics(projects, design_chats, users):
 
 
 def _conversation_pass(conversations):
-    """Single pass over all conversations; returns a dict of counters and sets for downstream use."""
+    """Passada única sobre todas as conversas; devolve um dict de contadores e sets para uso posterior."""
     active_users = set()
     conv_dates = []
     daily_counts = Counter()
@@ -90,7 +90,8 @@ def _conversation_pass(conversations):
     depth_buckets = Counter()
     total_messages = 0
 
-    # Keys are Claude's internal content block types; MIME-style entries are artifact block types.
+    # As chaves são os tipos internos de bloco de conteúdo do Claude; entradas em estilo MIME são
+    # tipos de bloco de artifact.
     FEATURE_MAP = {
         "tool_use":                    "Tool / Skill Calls",
         "thinking":                    "Extended Thinking",
@@ -136,7 +137,7 @@ def _conversation_pass(conversations):
         else:
             depth_buckets["21+"] += 1
 
-        conv_has_cc = False  # tracks whether this conv had any CC tool call; avoids counting one conv multiple times
+        conv_has_cc = False  # marca se a conversa teve alguma chamada de ferramenta CC; evita contar a mesma conversa mais de uma vez
         for msg in msgs:
             if msg.get("sender") == "human":
                 user_human_msgs[uid] += 1
@@ -150,10 +151,10 @@ def _conversation_pass(conversations):
                 msg_dt_raw = msg.get("created_at") or ""
                 msg_dt = parse_dt(msg_dt_raw)
                 msg_datetime = msg_dt.strftime("%Y-%m-%d %H:%M") if msg_dt else msg_dt_raw[:16]
-                conv_name = conv.get("name") or "(untitled)"
+                conv_name = conv.get("name") or "(sem título)"
                 for fi in files:
                     user_file_details[uid].append({
-                        "name": fi.get("file_name") or "(unnamed)",
+                        "name": fi.get("file_name") or "(sem nome)",
                         "date": msg_datetime,
                         "conv": conv_name,
                     })
@@ -207,12 +208,12 @@ CHANNEL_KEYS = ("chats", "messages", "cowork_sessions", "cowork_messages",
 
 
 def _channel_active(users, analytics, web_active, cc_uids):
-    """Return the set of uids that interacted on ANY channel — chat, Cowork, or Claude Code.
+    """Devolve o conjunto de uids que interagiram em QUALQUER canal — chat, Cowork ou Claude Code.
 
-    The members-analytics export is authoritative because it is the only source covering all
-    three channels; a user with zero chats but non-zero Cowork sessions is active. Users absent
-    from that export fall back to evidence from the conversations batches and the Claude Code
-    CSV, so a partial analytics file can never silently demote someone to inactive.
+    A exportação members-analytics é a autoridade porque é a única fonte que cobre os três
+    canais; um usuário com zero chats mas com sessões de Cowork está ativo. Usuários ausentes
+    dessa exportação caem para as evidências dos lotes de conversas e do CSV do Claude Code,
+    então um arquivo de analytics parcial nunca rebaixa alguém a inativo silenciosamente.
     """
     active = set()
     for uid, user in users.items():
@@ -227,12 +228,12 @@ def _channel_active(users, analytics, web_active, cc_uids):
 
 def _build_user_rows(users, analytics, active_uids, user_convs, proj_per_user,
                      user_files, user_last_active, email_to_tier):
-    """Build the per-user activity table rows for every user active on any channel.
+    """Monta as linhas da tabela de atividade para cada usuário ativo em qualquer canal.
 
-    Chats/messages/last-active come from the members-analytics export rather than the
-    conversations batches: the export covers chat, Cowork and Code in one consistent window,
-    while the JSON batches only cover web chat and may arrive incomplete. Projects and file
-    uploads still come from the JSON side, which is their only source.
+    Chats/mensagens/último acesso vêm da exportação members-analytics, e não dos lotes de
+    conversas: a exportação cobre chat, Cowork e Code em uma janela consistente, enquanto os
+    lotes JSON cobrem só o chat web e podem chegar incompletos. Projetos e uploads de arquivo
+    continuam vindo do lado JSON, sua única fonte.
     """
     rows = []
     for uid, user in users.items():
@@ -266,10 +267,10 @@ def _build_user_rows(users, analytics, active_uids, user_convs, proj_per_user,
 
 
 def _cowork_metrics(users, analytics, email_to_tier):
-    """Return the Cowork section: per-user sessions/messages plus totals.
+    """Devolve a seção Cowork: sessões/mensagens por usuário mais os totais.
 
-    Cowork is invisible to both the conversations export and the Claude Code lines CSV, so
-    this section exists to surface users whose entire usage would otherwise read as zero.
+    O Cowork é invisível tanto para a exportação de conversas quanto para o CSV de linhas do
+    Claude Code, então esta seção existe para expor usuários cujo uso inteiro leria como zero.
     """
     rows = []
     for user in users.values():
@@ -297,14 +298,14 @@ def _cowork_metrics(users, analytics, email_to_tier):
 
 
 def _adoption_funnel(users, analytics, active_uids, user_convs, uid_cc_lines):
-    """Return the adoption funnel as a list of (label, count, pct) tuples.
+    """Devolve o funil de adoção como uma lista de tuplas (rótulo, contagem, pct).
 
-    pct is the share of registered users, so every stage is read against the same base.
-    With the analytics export present the funnel is graded on days active, which counts a
-    person the same whether they worked in chat, Cowork or Code. Without it, fall back to the
-    older conversation-count/lines-of-code union. A power user is a recurring user, graded on
-    days active (≥20); memory is intentionally ignored as it is created too passively to signal
-    intensity of adoption.
+    pct é a participação sobre os usuários registrados, então todo estágio é lido contra a
+    mesma base. Com a exportação de analytics disponível, o funil é medido por dias ativos, que
+    contam a pessoa igual tendo ela trabalhado em chat, Cowork ou Code. Sem ela, cai no critério
+    antigo, pela união de contagem de conversas e linhas de código. Power user é o usuário
+    recorrente, medido por dias ativos (≥20); memória é ignorada de propósito, por ser criada de
+    forma passiva demais para sinalizar intensidade de adoção.
     """
     total = len(users)
 
@@ -318,29 +319,29 @@ def _adoption_funnel(users, analytics, active_uids, user_convs, uid_cc_lines):
         engaged = {uid for uid in active_uids if days.get(uid, 0) >= 10}
         power = {uid for uid in active_uids if days.get(uid, 0) >= 20}
         return rows([
-            ("Registered", total),
-            ("Active (≥1 use on any channel)", len(active_uids)),
-            ("Engaged (≥10 days active)", len(engaged)),
-            ("Power users (≥20 days active)", len(power)),
+            ("Registrados", total),
+            ("Ativos (≥1 uso em qualquer canal)", len(active_uids)),
+            ("Engajados (≥10 dias ativos)", len(engaged)),
+            ("Power users (≥20 dias ativos)", len(power)),
         ])
 
-    # Values are in thousands (CSV column "Lines this Month" is already in K);
-    # thresholds (1, 5, 10) therefore mean 1K, 5K, 10K lines.
+    # Os valores estão em milhares (a coluna "Lines this Month" do CSV já vem em K);
+    # os thresholds (1, 5, 10) portanto significam 1K, 5K e 10K linhas.
     cc_funnel_engaged = {uid for uid, l in uid_cc_lines.items() if l >= 5}
     cc_funnel_power   = {uid for uid, l in uid_cc_lines.items() if l >= 10}
 
     funnel_engaged = {uid for uid, c in user_convs.items() if c >= 5} | cc_funnel_engaged
     funnel_power   = cc_funnel_power
     return rows([
-        ("Registered", total),
-        ("Active (≥1 conv or ≥1K lines)", len(active_uids)),
-        ("Engaged (≥5 convs or ≥5K lines)", len(funnel_engaged)),
-        ("Power users (≥10K lines)", len(funnel_power)),
+        ("Registrados", total),
+        ("Ativos (≥1 conversa ou ≥1 mil linhas)", len(active_uids)),
+        ("Engajados (≥5 conversas ou ≥5 mil linhas)", len(funnel_engaged)),
+        ("Power users (≥10 mil linhas)", len(funnel_power)),
     ])
 
 
 def _feature_rows(feature_users, feature_convs, feature_block_count, active_users):
-    """Return feature adoption rows in display order, skipping features with zero usage."""
+    """Devolve as linhas de adoção de features na ordem de exibição, pulando as com uso zero."""
     feature_order = [
         "Tool / Skill Calls", "Extended Thinking", "Code Generation",
         "Web Search", "Images", "Rich Content", "File Uploads", "Knowledge Base",
@@ -359,7 +360,7 @@ def _feature_rows(feature_users, feature_convs, feature_block_count, active_user
 
 
 def _cc_web_metrics(cc_user_calls, cc_user_convs, users):
-    """Return Code & Automation metrics derived from tool_use blocks in the web export."""
+    """Devolve as métricas de Code & Automation derivadas dos blocos tool_use da exportação web."""
     cc_rows = []
     for uid, call_count in cc_user_calls.most_common():
         user = users.get(uid, {})
@@ -378,14 +379,14 @@ def _cc_web_metrics(cc_user_calls, cc_user_convs, users):
 
 
 def _cc_csv_metrics(claude_code_data, users, cc_period):
-    """Return (metrics_dict, cc_uids) from the Anthropic Console Claude Code CSV export.
+    """Devolve (dict de métricas, cc_uids) a partir do CSV do Claude Code do Anthropic Console.
 
-    cc_uids is the set of matched user UUIDs with lines > 0 (real usage); needed by the caller
-    to update the active_users KPI and exclude CLI-active users from the inactive list. Users
-    merely listed in the CSV with 0 lines don't count — otherwise they'd be marked "active" and
-    vanish from both User Activity (web-only) and Inactive Accounts. The Claude Code section
-    itself only lists users with ≥1K lines this month; cc_uids still tracks all real usage so
-    the active-user logic is unaffected.
+    cc_uids é o conjunto de UUIDs de usuário casados com linhas > 0 (uso real); o chamador
+    precisa dele para atualizar o KPI de active_users e tirar quem usa o CLI da lista de
+    inativos. Usuários que apenas constam no CSV com 0 linhas não contam — senão seriam
+    marcados como "ativos" e sumiriam tanto de Atividade por usuário (só web) quanto de Contas
+    inativas. A seção Claude Code em si só lista usuários com ≥1K linhas no mês; o cc_uids
+    continua registrando todo uso real, então a lógica de usuário ativo não é afetada.
     """
     email_to_user = {u["email_address"]: u for u in users.values()}
     cc_csv_rows = []
@@ -397,7 +398,7 @@ def _cc_csv_metrics(claude_code_data, users, cc_period):
         uid = user.get("uuid", "")
         if uid and lines > 0:
             cc_uids.add(uid)
-        if lines < 1.0:  # lines are in K; hide sub-1K users from the section
+        if lines < 1.0:  # linhas estão em K; esconde da seção quem tem menos de 1K
             continue
         cc_csv_rows.append({
             "name": user.get("full_name") or email,
@@ -414,12 +415,12 @@ def _cc_csv_metrics(claude_code_data, users, cc_period):
 
 
 def _inactive_rows(users, active_uids, analytics, email_to_tier):
-    """Return users who interacted on no channel at all — chat, Cowork and Code all zero.
+    """Devolve os usuários que não interagiram em canal nenhum — chat, Cowork e Code zerados.
 
-    This is the exact complement of _channel_active. Before Cowork was measured, a Cowork-only
-    user showed up here as inactive and could get their seat reclaimed; the "covered" flag
-    records whether the verdict is backed by the analytics export or only inferred from the
-    conversations batches, which do not see Cowork.
+    É o complemento exato de _channel_active. Antes de o Cowork ser medido, um usuário só-Cowork
+    aparecia aqui como inativo e podia ter o assento recuperado; a flag "covered" registra se o
+    veredito é sustentado pela exportação de analytics ou apenas inferido dos lotes de conversas,
+    que não enxergam Cowork.
     """
     rows = []
     for uid, user in users.items():
@@ -438,17 +439,17 @@ def _inactive_rows(users, active_uids, analytics, email_to_tier):
 
 def compute_metrics(users, members, projects, design_chats, conversations,
                     claude_code_data=None, cc_period="", analytics=None, analytics_period=""):
-    """Aggregate all source data into a flat metrics dict consumed by render_html.
+    """Agrega todos os dados de origem em um dict plano de métricas consumido por render_html.
 
-    Delegates to private helpers for each logical section; this function is an orchestrator.
-    Returns a dict with keys for KPIs, table rows, funnel, daily activity, and feature adoption.
+    Delega a helpers privados por seção lógica; esta função é apenas o orquestrador. Devolve um
+    dict com chaves para KPIs, linhas de tabela, funil, atividade diária e adoção de features.
     """
     users, email_to_tier = _filter_users(users, members)
     analytics = analytics or {}
     m = {"total_users": len(users), "analytics_period": analytics_period}
 
-    # Values are in thousands (CSV column "Lines this Month" is already in K);
-    # funnel thresholds below (1, 5, 10) therefore mean 1K, 5K, 10K lines.
+    # Os valores estão em milhares (a coluna "Lines this Month" do CSV já vem em K);
+    # os thresholds do funil abaixo (1, 5, 10) portanto significam 1K, 5K e 10K linhas.
     _email_to_uid = {u["email_address"]: uid for uid, u in users.items()}
     uid_cc_lines = {
         _email_to_uid[e["email"]]: e["lines"]
@@ -474,15 +475,15 @@ def compute_metrics(users, members, projects, design_chats, conversations,
 
     conv_dates = conv["conv_dates"]
     if conv_dates:
-        m["date_start"] = min(conv_dates).strftime("%b %d, %Y")
-        m["date_end"] = max(conv_dates).strftime("%b %d, %Y")
+        m["date_start"] = min(conv_dates).strftime("%d/%m/%Y")
+        m["date_end"] = max(conv_dates).strftime("%d/%m/%Y")
     else:
         m["date_start"] = m["date_end"] = "—"
 
     cc_csv, cc_uids = _cc_csv_metrics(claude_code_data, users, cc_period)
 
-    # Single source of truth for "is this person using Claude at all", spanning chat, Cowork
-    # and Code; every downstream table below is keyed off it.
+    # Fonte única de verdade para "essa pessoa está usando o Claude", cobrindo chat, Cowork e
+    # Code; todas as tabelas abaixo derivam daqui.
     active_uids = _channel_active(users, analytics, active_users, cc_uids)
 
     m["user_rows"] = _build_user_rows(
@@ -516,7 +517,7 @@ def compute_metrics(users, members, projects, design_chats, conversations,
     m["depth_rows"] = [(b, conv["depth_buckets"][b]) for b in depth_order]
 
     m.update(cc_csv)
-    # Overrides the earlier web-only count: the headline KPI counts any channel.
+    # Sobrescreve a contagem só-web feita antes: o KPI de destaque conta qualquer canal.
     m["active_users"] = len(active_uids)
     m["web_active_users"] = len(active_users)
 

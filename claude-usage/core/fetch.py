@@ -36,11 +36,11 @@ def load_design_chats():
 
 
 def load_conversations():
-    """Load and concatenate every conversations*.json batch in data/.
+    """Carrega e concatena todos os lotes conversations*.json de data/.
 
-    The org export is delivered in batches (conversations-0001.json, -0002.json, …); a
-    single-file export is just the one-batch case. Batches are loaded in filename order and
-    flattened into one list, matching the shape _conversation_pass() expects.
+    A exportação da org é entregue em lotes (conversations-0001.json, -0002.json, …); uma
+    exportação de arquivo único é só o caso de um lote só. Os lotes são carregados em ordem de
+    nome de arquivo e achatados em uma lista só, no formato que _conversation_pass() espera.
     """
     conversations = []
     for path in sorted(glob.glob(str(DATA / "conversations*.json"))):
@@ -50,9 +50,9 @@ def load_conversations():
 
 
 def load_members():
-    """Load the most recent members-*.csv; returns email→{tier, role, status} map."""
-    # members-analytics-*.csv also matches "members-*"; it is a different schema loaded
-    # separately by load_members_analytics(), so filter it out explicitly.
+    """Carrega o members-*.csv mais recente; devolve o mapa email→{tier, role, status}."""
+    # members-analytics-*.csv também casa com "members-*"; é outro schema, carregado à parte
+    # por load_members_analytics(), então precisa ser filtrado explicitamente.
     files = sorted(p for p in glob.glob(str(DATA / "members-*.csv"))
                    if not Path(p).name.startswith("members-analytics"))
     if not files:
@@ -71,7 +71,7 @@ def load_members():
 
 
 def _csv_int(raw):
-    """Parse an integer count from the analytics CSV, tolerating pt-BR thousands separators."""
+    """Lê uma contagem inteira do CSV de analytics, tolerando separador de milhar pt-BR."""
     try:
         return int((raw or "0").strip().replace(".", "") or 0)
     except ValueError:
@@ -79,11 +79,11 @@ def _csv_int(raw):
 
 
 def load_members_analytics():
-    """Load the most recent members-analytics-*.csv; returns (email→metrics map, period string).
+    """Carrega o members-analytics-*.csv mais recente; devolve (mapa email→métricas, string do período).
 
-    This is the Console per-member activity export and the only source that reports Cowork
-    usage, so it is the authoritative answer to "did this person use Claude at all". It also
-    covers every org member, including those absent from the conversations export.
+    É a exportação de atividade por membro do Console e a única fonte que reporta uso de Cowork,
+    então é a resposta autoritativa para "essa pessoa chegou a usar o Claude". Também cobre todos
+    os membros da org, inclusive os ausentes da exportação de conversas.
     """
     files = sorted(glob.glob(str(DATA / "members-analytics-*.csv")))
     if not files:
@@ -92,8 +92,8 @@ def load_members_analytics():
     match = re.search(r'(\d{4}-\d{2}-\d{2})-to-(\d{4}-\d{2}-\d{2})', Path(latest).stem)
     period = f"{match.group(1)} → {match.group(2)}" if match else Path(latest).stem
     result = {}
-    # utf-8-sig: the Console writes this file with a BOM, which would otherwise corrupt
-    # the first header name and make the "Name" column unreachable.
+    # utf-8-sig: o Console grava este arquivo com BOM, que senão corrompe o nome do primeiro
+    # cabeçalho e torna a coluna "Name" inacessível.
     with open(latest, newline='', encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
             email = row.get("Email", "").strip()
@@ -120,7 +120,7 @@ def load_members_analytics():
 
 
 def load_claude_code():
-    """Load the most recent claude_code_team_*.csv; returns (rows, period_string)."""
+    """Carrega o claude_code_team_*.csv mais recente; devolve (linhas, string_do_período)."""
     files = sorted(glob.glob(str(DATA / "claude_code_team_*.csv")))
     if not files:
         return [], ""
@@ -133,10 +133,10 @@ def load_claude_code():
     with open(latest, newline='', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             email = row.get("User", "").strip()
-            # "Lines this Month" is a raw integer line count in Brazilian formatting,
-            # where "." is the thousands separator (e.g. "64.230" = 64,230 lines,
-            # "317" = 317 lines). Strip the separators to get the true count, then
-            # express it in thousands (K) to match the rest of the pipeline.
+            # "Lines this Month" é uma contagem inteira de linhas em formatação brasileira,
+            # em que "." é o separador de milhar (ex.: "64.230" = 64.230 linhas,
+            # "317" = 317 linhas). Remove os separadores para obter a contagem verdadeira e
+            # depois expressa em milhares (K), como o resto do pipeline espera.
             raw = row.get("Lines this Month", "0").strip().replace(".", "")
             try:
                 lines = int(raw) / 1000 if raw else 0.0

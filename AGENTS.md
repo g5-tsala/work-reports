@@ -1,14 +1,28 @@
 # Work Reports
 
-This repository hosts scripts that generate self-contained HTML reports from exported or collected data. Each report lives in its own subdirectory with its own dependencies, data, and output.
+Este repositório reúne scripts que geram relatórios HTML autocontidos a partir de dados exportados ou coletados. Cada relatório fica em seu próprio subdiretório, com dependências, dados e saída próprios.
 
-## Reports
+## Idioma
+
+**Escreva em português (pt-BR) por padrão** — documentação, comentários e docstrings de código,
+rótulos de interface, textos dos relatórios gerados e mensagens de saída no terminal.
+
+Permanecem em inglês apenas os identificadores literais, porque são chaves reais e traduzi-los
+quebra o código: nomes de arquivo, colunas de CSV e campos de JSON das exportações de origem
+(`Days Active`, `Lines this Month`, `Seat Tier`, `account_uuid`), além de nomes de variáveis,
+funções e módulos.
+
+Um documento tem um idioma só. Números e datas seguem o mesmo locale do texto — em pt-BR, `.` no
+milhar, `,` no decimal, escala em `mil`/`MM`/`bi` e datas em `dd/mm/aaaa`.
+
+## Relatórios
 
 ### `claude-usage/`
 
-Generates an executive HTML report of Claude AI usage across the G5 Partners org — active users, conversation volume, Claude Code CLI activity, adoption funnel, and more.
+Gera um relatório executivo em HTML sobre o uso de Claude AI na G5 Partners — usuários ativos,
+volume de conversas, atividade no Claude Code CLI, funil de adoção e mais.
 
-See [`claude-usage/AGENTS.md`](claude-usage/AGENTS.md) for full context.
+Leia [`claude-usage/AGENTS.md`](claude-usage/AGENTS.md) para o contexto todo.
 
 ### `gerencial-mfo/`
 

@@ -167,6 +167,29 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def fmt_int(n):
+    """Formata um inteiro no padrão pt-BR: ponto como separador de milhar."""
+    return f"{int(n):,}".replace(",", ".")
+
+
+def fmt_dec(x, casas=1):
+    """Formata um decimal no padrão pt-BR: ponto no milhar, vírgula na casa decimal."""
+    return f"{x:,.{casas}f}".replace(",", "@").replace(".", ",").replace("@", ".")
+
+
+def fmt_date(iso):
+    """Converte uma data ISO 'YYYY-MM-DD' para dd/mm/aaaa; devolve a original se não casar."""
+    try:
+        return datetime.strptime(str(iso)[:10], "%Y-%m-%d").strftime("%d/%m/%Y")
+    except ValueError:
+        return str(iso)
+
+
+def fmt_period(period):
+    """Converte um período 'YYYY-MM-DD → YYYY-MM-DD' para o formato pt-BR de datas."""
+    return " → ".join(fmt_date(p.strip()) for p in str(period).split("→"))
+
+
 def kpi_card(val, label):
     return f'<div class="kpi"><div class="val">{esc(val)}</div><div class="lbl">{esc(label)}</div></div>'
 
@@ -179,26 +202,26 @@ def bar_row(day, count, max_count, bar_width=220):
 
 
 def render_html(m):
-    """Render the full report HTML from the metrics dict produced by compute_metrics.
+    """Renderiza o HTML completo do relatório a partir do dict de métricas de compute_metrics.
 
-    Returns a self-contained HTML string with inlined CSS and JS (no external dependencies
-    beyond the Google Fonts import). Includes a sortable user table and a file-uploads modal.
+    Devolve uma string HTML autocontida, com CSS e JS inline (sem dependência externa além do
+    import do Google Fonts). Inclui uma tabela de usuários ordenável e um modal de uploads.
     """
-    generated = datetime.now().strftime("%Y-%m-%d %H:%M")
+    generated = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    row1 = (kpi_card(m["total_users"], "Registered Users") +
-            kpi_card(m["active_users"], "Active Users"))
-    row2 = (kpi_card(m["total_projects"], "Projects") +
-            kpi_card(m["total_conversations"], "Conversations") +
-            kpi_card(m["total_messages"], "Messages"))
-    row3 = (kpi_card(m["avg_convs_per_active_user"], "Avg Convs / Active User") +
-            kpi_card(m["avg_msgs_per_conv"], "Avg Msgs / Conv"))
+    row1 = (kpi_card(fmt_int(m["total_users"]), "Usuários registrados") +
+            kpi_card(fmt_int(m["active_users"]), "Usuários ativos"))
+    row2 = (kpi_card(fmt_int(m["total_projects"]), "Projetos") +
+            kpi_card(fmt_int(m["total_conversations"]), "Conversas") +
+            kpi_card(fmt_int(m["total_messages"]), "Mensagens"))
+    row3 = (kpi_card(fmt_dec(m["avg_convs_per_active_user"]), "Média de conversas / usuário ativo") +
+            kpi_card(fmt_dec(m["avg_msgs_per_conv"]), "Média de mensagens / conversa"))
 
     user_table_rows = ""
     for r in m["user_rows"]:
         files_cell = (
             f'<span class="clickable" onclick="openModal(\'{esc(r["uid"])}\',\'{esc(r["name"])}\')">'
-            f'{r["files_uploaded"]}</span>'
+            f'{fmt_int(r["files_uploaded"])}</span>'
             if r["files_uploaded"] else "—"
         )
         tier = r.get("tier", "")
@@ -209,18 +232,18 @@ def render_html(m):
             f'<td data-val="{esc(r["name"])}">{esc(r["name"])}</td>'
             f'<td style="color:#64748b;font-size:12px" data-val="{esc(r["email"])}">{esc(r["email"])}</td>'
             f'<td style="text-align:center" data-val="{esc(tier)}">{tier_cell}</td>'
-            f'<td style="text-align:center" data-val="{r["days_active"]}"><span class="tag">{r["days_active"]}</span></td>'
-            f'<td style="text-align:center" data-val="{r["conversations"]}">{r["conversations"] or "—"}</td>'
-            f'<td style="text-align:center" data-val="{r["human_msgs"]}">{r["human_msgs"] or "—"}</td>'
-            f'<td style="text-align:center" data-val="{r["cowork_sessions"]}">{r["cowork_sessions"] or "—"}</td>'
-            f'<td style="text-align:center" data-val="{r["code_sessions"]}">{r["code_sessions"] or "—"}</td>'
-            f'<td style="text-align:center" data-val="{r["projects"]}">{r["projects"] or "—"}</td>'
+            f'<td style="text-align:center" data-val="{r["days_active"]}"><span class="tag">{fmt_int(r["days_active"])}</span></td>'
+            f'<td style="text-align:center" data-val="{r["conversations"]}">{fmt_int(r["conversations"]) if r["conversations"] else "—"}</td>'
+            f'<td style="text-align:center" data-val="{r["human_msgs"]}">{fmt_int(r["human_msgs"]) if r["human_msgs"] else "—"}</td>'
+            f'<td style="text-align:center" data-val="{r["cowork_sessions"]}">{fmt_int(r["cowork_sessions"]) if r["cowork_sessions"] else "—"}</td>'
+            f'<td style="text-align:center" data-val="{r["code_sessions"]}">{fmt_int(r["code_sessions"]) if r["code_sessions"] else "—"}</td>'
+            f'<td style="text-align:center" data-val="{r["projects"]}">{fmt_int(r["projects"]) if r["projects"] else "—"}</td>'
             f'<td style="text-align:center" data-val="{r["files_uploaded"]}">{files_cell}</td>'
-            f'<td style="color:var(--g5-slate);font-size:11px" data-val="{esc(str(r["last_active_ts"]))}">{esc(r["last_active"])}</td>'
+            f'<td style="color:var(--g5-slate);font-size:11px" data-val="{esc(str(r["last_active_ts"]))}">{esc(fmt_date(r["last_active"]))}</td>'
             f'</tr>'
         )
 
-    analytics_note = (f"Period: <strong>{esc(m['analytics_period'])}</strong>. "
+    analytics_note = (f"Período: <strong>{esc(fmt_period(m['analytics_period']))}</strong>. "
                       if m.get("analytics_period") else "")
 
     if m["cowork_rows"]:
@@ -228,7 +251,7 @@ def render_html(m):
         cowork_table_rows = ""
         for i, r in enumerate(m["cowork_rows"], 1):
             pct = round(100 * r["sessions"] / max_cw)
-            flag = (' <span class="tag" style="background:var(--g5-data-wine);color:#fff">Cowork only</span>'
+            flag = (' <span class="tag" style="background:var(--g5-data-wine);color:#fff">Só Cowork</span>'
                     if r["chat_only_zero"] else "")
             cowork_table_rows += (
                 f'<tr>'
@@ -237,16 +260,16 @@ def render_html(m):
                 f'<td style="color:var(--g5-slate);font-size:12px;white-space:nowrap">{esc(r["email"])}</td>'
                 f'<td style="width:100%"><div class="bar-wrap" style="width:100%">'
                 f'<div class="bar" style="width:{pct}%;background:var(--g5-data-wine);flex-shrink:0"></div>'
-                f'<span class="bar-lbl">{r["sessions"]}</span>'
+                f'<span class="bar-lbl">{fmt_int(r["sessions"])}</span>'
                 f'</div></td>'
-                f'<td style="text-align:center;color:var(--g5-slate);white-space:nowrap">{r["messages"]}</td>'
-                f'<td style="text-align:center;color:var(--g5-slate);white-space:nowrap">{r["chats"] or "—"}</td>'
+                f'<td style="text-align:center;color:var(--g5-slate);white-space:nowrap">{fmt_int(r["messages"])}</td>'
+                f'<td style="text-align:center;color:var(--g5-slate);white-space:nowrap">{fmt_int(r["chats"]) if r["chats"] else "—"}</td>'
                 f'</tr>'
             )
         cowork_kpi_row = (
-            kpi_card(m["cowork_users"], "Cowork Users") +
-            kpi_card(m["cowork_total_sessions"], "Cowork Sessions") +
-            kpi_card(m["cowork_total_messages"], "Cowork Messages")
+            kpi_card(fmt_int(m["cowork_users"]), "Usuários Cowork") +
+            kpi_card(fmt_int(m["cowork_total_sessions"]), "Sessões Cowork") +
+            kpi_card(fmt_int(m["cowork_total_messages"]), "Mensagens Cowork")
         )
         cowork_section = f"""
   <!-- Cowork -->
@@ -254,16 +277,16 @@ def render_html(m):
     <h2>Cowork</h2>
     <div class="kpi-row kpi-row-3" style="margin-bottom:18px">{cowork_kpi_row}</div>
     <p class="note">
-      {analytics_note}Cowork activity appears in no other export — not in the claude.ai
-      conversations data, not in the Claude Code lines CSV.
-      <strong>{m["cowork_only_users"]}</strong> of these users have zero chats and zero Code
-      sessions, so before this section existed their entire usage read as inactive.
+      {analytics_note}A atividade de Cowork não aparece em nenhuma outra exportação — nem nos
+      dados de conversas do claude.ai, nem no CSV de linhas do Claude Code.
+      <strong>{fmt_int(m["cowork_only_users"])}</strong> desses usuários têm zero chats e zero
+      sessões de Code, ou seja, antes desta seção existir todo o uso deles lia como inativo.
     </p>
     <table>
       <thead><tr>
-        <th style="width:32px">#</th><th>Name</th><th>Email</th>
-        <th style="width:100%">Sessions</th>
-        <th style="text-align:center">Messages</th>
+        <th style="width:32px">#</th><th>Nome</th><th>E-mail</th>
+        <th style="width:100%">Sessões</th>
+        <th style="text-align:center">Mensagens</th>
         <th style="text-align:center">Chats</th>
       </tr></thead>
       <tbody>{cowork_table_rows}</tbody>
@@ -272,7 +295,8 @@ def render_html(m):
     else:
         cowork_section = ""
 
-    cc_period_note = f"Period: <strong>{esc(m['cc_period'])}</strong>. " if m["cc_period"] else ""
+    cc_period_note = (f"Período: <strong>{esc(fmt_period(m['cc_period']))}</strong>. "
+                      if m["cc_period"] else "")
     if m["cc_csv_rows"]:
         max_cc_lines = m["cc_csv_rows"][0]["lines"] if m["cc_csv_rows"] else 1
         cc_table_rows = ""
@@ -285,13 +309,13 @@ def render_html(m):
                 f'<td style="color:var(--g5-slate);font-size:12px;white-space:nowrap">{esc(r["email"])}</td>'
                 f'<td style="width:100%"><div class="bar-wrap" style="width:100%">'
                 f'<div class="bar" style="width:{pct}%;background:var(--g5-data-wine);flex-shrink:0"></div>'
-                f'<span class="bar-lbl">{r["lines"]:.1f}K</span>'
+                f'<span class="bar-lbl">{fmt_dec(r["lines"])} mil</span>'
                 f'</div></td>'
                 f'</tr>'
             )
         cc_kpi_row = (
-            kpi_card(m["cc_csv_users"], "Claude Code Users") +
-            kpi_card(f'{m["cc_total_lines"]:.1f}K', "Total Lines this Month")
+            kpi_card(fmt_int(m["cc_csv_users"]), "Usuários do Claude Code") +
+            kpi_card(f'{fmt_dec(m["cc_total_lines"])} mil', "Total de linhas no mês")
         )
         cc_section = f"""
   <!-- Claude Code -->
@@ -299,14 +323,14 @@ def render_html(m):
     <h2>Claude Code</h2>
     <div class="kpi-row kpi-row-2" style="margin-bottom:18px">{cc_kpi_row}</div>
     <p class="note">
-      {cc_period_note}Data from Anthropic Console team export.
-      <strong>Lines this Month</strong> measures code generated or modified via the Claude Code CLI.
-      Only users with ≥1K lines this month are listed.
+      {cc_period_note}Dados da exportação de team do Anthropic Console.
+      <strong>Linhas no mês</strong> mede o código gerado ou modificado via Claude Code CLI.
+      Só são listados usuários com pelo menos 1 mil linhas no mês.
     </p>
     <table>
       <thead><tr>
-        <th style="width:32px">#</th><th>Name</th><th>Email</th>
-        <th style="width:100%">Lines this Month</th>
+        <th style="width:32px">#</th><th>Nome</th><th>E-mail</th>
+        <th style="width:100%">Linhas no mês</th>
       </tr></thead>
       <tbody>{cc_table_rows}</tbody>
     </table>
@@ -322,7 +346,7 @@ def render_html(m):
             f'<div class="funnel-row">'
             f'<div class="funnel-bar" style="width:{w}px"></div>'
             f'<span class="funnel-lbl">{esc(label)}</span>'
-            f'<span class="funnel-val">{val} <span class="funnel-pct">({pct:.0f}%)</span></span>'
+            f'<span class="funnel-val">{fmt_int(val)} <span class="funnel-pct">({pct:.0f}%)</span></span>'
             f'</div>'
         )
 
@@ -332,7 +356,7 @@ def render_html(m):
         dt_obj = datetime.strptime(d, "%Y-%m-%d")
         lbl = f"{dt_obj.day:02d}/{dt_obj.month:02d}"
         chart_bars += (
-            f'<div class="ccol" title="{d}: {c} conversations">'
+            f'<div class="ccol" title="{fmt_date(d)}: {c} conversas">'
             f'<div class="cbar" style="height:{h}%">'
             f'<div class="ctop">{c}</div>'
             f'</div>'
@@ -347,10 +371,10 @@ def render_html(m):
         pct_label = round(100 * cnt / depth_total) if depth_total else 0
         pct_bar = round(100 * cnt / max_depth) if max_depth else 0
         depth_rows += (
-            f'<tr><td style="white-space:nowrap">{esc(bucket)} messages</td>'
+            f'<tr><td style="white-space:nowrap">{esc(bucket)} mensagens</td>'
             f'<td style="width:100%"><div class="bar-wrap" style="width:100%">'
             f'<div class="bar" style="width:{pct_bar}%;background:var(--g5-data-blue);min-width:2px"></div>'
-            f'<span class="bar-lbl" style="white-space:nowrap;flex-shrink:0">{cnt} ({pct_label}%)</span></div></td></tr>'
+            f'<span class="bar-lbl" style="white-space:nowrap;flex-shrink:0">{fmt_int(cnt)} ({pct_label}%)</span></div></td></tr>'
         )
 
     def tier_badge(tier):
@@ -359,7 +383,7 @@ def render_html(m):
         cls = "tier-premium" if tier.lower() == "premium" else "tier-standard"
         return f'<span class="tier-badge {cls}">{esc(tier)}</span>'
 
-    not_covered_tag = '<span class="tag">not covered</span>'
+    not_covered_tag = '<span class="tag">sem cobertura</span>'
     inactive_rows_html = "".join(
         f'<tr><td>{esc(r["name"])} {"" if r.get("covered") else not_covered_tag}</td>'
         f'<td style="color:#64748b;font-size:12px">{esc(r["email"])}</td>'
@@ -367,31 +391,37 @@ def render_html(m):
         for r in m["inactive_rows"]
     )
 
-    file_data_json = json.dumps(m["user_file_details"], ensure_ascii=False)
+    # As datas chegam como "YYYY-MM-DD HH:MM" para permitir a ordenação por string em
+    # compute_metrics; a conversão para dd/mm/aaaa só acontece aqui, na exibição.
+    file_data_json = json.dumps(
+        {uid: [{**e, "date": f'{fmt_date(e["date"][:10])} {e["date"][11:]}'.strip()} for e in entries]
+         for uid, entries in m["user_file_details"].items()},
+        ensure_ascii=False,
+    )
 
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>G5 Partners — Claude Usage Report</title>
+<title>G5 Partners — Relatório de Uso do Claude</title>
 <style>{CSS}</style>
 </head>
 <body>
 
 <div class="g5-topband">
   <span class="g5-band-org">G5 Partners</span>
-  <span class="g5-band-meta">Claude Usage Report &nbsp;·&nbsp; {esc(m["date_start"])} – {esc(m["date_end"])}</span>
+  <span class="g5-band-meta">Relatório de Uso do Claude &nbsp;·&nbsp; {esc(m["date_start"])} – {esc(m["date_end"])}</span>
 </div>
 
 <div class="wrapper">
 
-  <h1 class="page-title">Claude Usage Report</h1>
-  <p class="page-subtitle">Period: {esc(m["date_start"])} – {esc(m["date_end"])} &nbsp;·&nbsp; Generated {esc(generated)}</p>
+  <h1 class="page-title">Relatório de Uso do Claude</h1>
+  <p class="page-subtitle">Período: {esc(m["date_start"])} – {esc(m["date_end"])} &nbsp;·&nbsp; Gerado em {esc(generated)}</p>
 
   <!-- KPIs -->
   <div class="section">
-    <h2>Overview</h2>
+    <h2>Visão geral</h2>
     <div class="kpi-row kpi-row-2">{row1}</div>
     <div class="kpi-row kpi-row-3">{row2}</div>
     <div class="kpi-row kpi-row-2">{row3}</div>
@@ -399,29 +429,29 @@ def render_html(m):
 
   <!-- User Activity -->
   <div class="section">
-    <h2>User Activity</h2>
+    <h2>Atividade por usuário</h2>
     <p class="note">
-      {analytics_note}<strong>Days Active</strong>, <strong>Chats</strong>, <strong>Messages Sent</strong>,
-      <strong>Cowork</strong> and <strong>Code Sessions</strong> come from the Console members-analytics
-      export, which covers all three channels in one window. <strong>Projects</strong> and
-      <strong>Files Uploaded</strong> come from the claude.ai conversations export.
-      Files Uploaded counts are inflated: when a PDF or PowerPoint is uploaded, Claude converts each
-      page or slide into a separate image file, so a 30-page document counts as 30 uploads.
+      {analytics_note}<strong>Dias ativos</strong>, <strong>Chats</strong>, <strong>Mensagens enviadas</strong>,
+      <strong>Cowork</strong> e <strong>Sessões Code</strong> vêm da exportação members-analytics do
+      Console, que cobre os três canais em uma mesma janela. <strong>Projetos</strong> e
+      <strong>Arquivos enviados</strong> vêm da exportação de conversas do claude.ai.
+      A contagem de arquivos enviados é inflada: ao subir um PDF ou PowerPoint, o Claude converte cada
+      página ou slide em um arquivo de imagem separado, então um documento de 30 páginas conta como 30 envios.
     </p>
     <div style="overflow-x:auto">
     <table id="user-table">
       <thead><tr>
-        <th class="sortable" data-col="0" data-type="str">Name</th>
-        <th class="sortable" data-col="1" data-type="str">Email</th>
-        <th class="sortable" data-col="2" data-type="str" style="text-align:center">Tier</th>
-        <th class="sortable" data-col="3" data-type="num" style="text-align:center">Days Active</th>
+        <th class="sortable" data-col="0" data-type="str">Nome</th>
+        <th class="sortable" data-col="1" data-type="str">E-mail</th>
+        <th class="sortable" data-col="2" data-type="str" style="text-align:center">Plano</th>
+        <th class="sortable" data-col="3" data-type="num" style="text-align:center">Dias ativos</th>
         <th class="sortable" data-col="4" data-type="num" style="text-align:center">Chats</th>
-        <th class="sortable" data-col="5" data-type="num" style="text-align:center">Messages Sent</th>
-        <th class="sortable" data-col="6" data-type="num" style="text-align:center">Cowork Sessions</th>
-        <th class="sortable" data-col="7" data-type="num" style="text-align:center">Code Sessions</th>
-        <th class="sortable" data-col="8" data-type="num" style="text-align:center">Projects</th>
-        <th class="sortable" data-col="9" data-type="num" style="text-align:center">Files Uploaded</th>
-        <th class="sortable" data-col="10" data-type="str">Last Active</th>
+        <th class="sortable" data-col="5" data-type="num" style="text-align:center">Mensagens enviadas</th>
+        <th class="sortable" data-col="6" data-type="num" style="text-align:center">Sessões Cowork</th>
+        <th class="sortable" data-col="7" data-type="num" style="text-align:center">Sessões Code</th>
+        <th class="sortable" data-col="8" data-type="num" style="text-align:center">Projetos</th>
+        <th class="sortable" data-col="9" data-type="num" style="text-align:center">Arquivos enviados</th>
+        <th class="sortable" data-col="10" data-type="str">Último acesso</th>
       </tr></thead>
       <tbody>{user_table_rows}</tbody>
     </table>
@@ -434,47 +464,47 @@ def render_html(m):
 
   <!-- Inactive Accounts -->
   <div class="section">
-    <h2>Inactive Accounts</h2>
+    <h2>Contas inativas</h2>
     <p class="note">
-      These {len(m["inactive_rows"])} users are registered on the org account and interacted on
-      <strong>no channel at all</strong> in this period — zero chats, zero Cowork sessions and
-      zero Code sessions. Rows marked <em>not covered</em> are absent from the members-analytics
-      export, so their Cowork usage could not be checked; verify before reclaiming a seat.
+      Estes {fmt_int(len(m["inactive_rows"]))} usuários estão registrados na conta da organização e não
+      interagiram em <strong>canal nenhum</strong> no período — zero chats, zero sessões de Cowork e
+      zero sessões de Code. Linhas marcadas como <em>sem cobertura</em> não constam da exportação
+      members-analytics, então o uso de Cowork não pôde ser verificado; confira antes de recuperar um assento.
     </p>
     <table style="width:auto">
-      <thead><tr><th>Name</th><th>Email</th><th style="text-align:center">Tier</th></tr></thead>
+      <thead><tr><th>Nome</th><th>E-mail</th><th style="text-align:center">Plano</th></tr></thead>
       <tbody>{inactive_rows_html}</tbody>
     </table>
   </div>
 
   <!-- Adoption Funnel -->
   <div class="section">
-    <h2>Adoption Funnel</h2>
+    <h2>Funil de adoção</h2>
     {funnel_html}
   </div>
 
   <!-- Daily Activity -->
   <div class="section">
-    <h2>Daily Conversation Volume</h2>
+    <h2>Volume diário de conversas</h2>
     <p style="font-size:12px;color:#64748b;margin-bottom:14px">
-      Most active day: <strong>{esc(m["most_active_day"])}</strong>
-      ({m["most_active_day_count"]} conversations)
+      Dia mais ativo: <strong>{esc(fmt_date(m["most_active_day"]))}</strong>
+      ({fmt_int(m["most_active_day_count"])} conversas)
     </p>
     <div class="chart">{chart_bars}</div>
   </div>
 
   <!-- Conversation Depth -->
   <div class="section">
-    <h2>Conversation Depth Distribution</h2>
+    <h2>Distribuição de profundidade das conversas</h2>
     <table style="width:50%">
-      <thead><tr><th>Length</th><th style="width:100%">Conversations</th></tr></thead>
+      <thead><tr><th>Tamanho</th><th style="width:100%">Conversas</th></tr></thead>
       <tbody>{depth_rows}</tbody>
     </table>
   </div>
 
 </div>
 
-<footer class="g5-footer">G5 Partners &nbsp;·&nbsp; Claude Admin Export &nbsp;·&nbsp; {esc(generated)}</footer>
+<footer class="g5-footer">G5 Partners &nbsp;·&nbsp; Exportação Admin do Claude &nbsp;·&nbsp; {esc(generated)}</footer>
 
 <!-- File uploads modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
@@ -484,17 +514,17 @@ def render_html(m):
       <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
     <input class="modal-search" id="modal-search" type="text"
-           placeholder="Filter by file name or conversation…" oninput="filterModal()">
+           placeholder="Filtrar por nome do arquivo ou conversa…" oninput="filterModal()">
     <div class="modal-body">
       <table>
         <thead><tr>
-          <th>Date &amp; Time</th>
-          <th>File Name</th>
-          <th>Conversation</th>
+          <th>Data e hora</th>
+          <th>Nome do arquivo</th>
+          <th>Conversa</th>
         </tr></thead>
         <tbody id="modal-tbody"></tbody>
       </table>
-      <p class="no-results" id="modal-no-results" style="display:none">No files match your filter.</p>
+      <p class="no-results" id="modal-no-results" style="display:none">Nenhum arquivo corresponde ao filtro.</p>
     </div>
   </div>
 </div>
@@ -507,7 +537,7 @@ let _currentFiles = [];
 function openModal(uid, name) {{
   _currentFiles = FILE_DATA[uid] || [];
   document.getElementById('modal-title').textContent =
-    name + ' — ' + _currentFiles.length + ' file upload' + (_currentFiles.length !== 1 ? 's' : '');
+    name + ' — ' + _currentFiles.length + (_currentFiles.length !== 1 ? ' arquivos enviados' : ' arquivo enviado');
   document.getElementById('modal-search').value = '';
   document.getElementById('modal-overlay').classList.add('open');
   renderRows(_currentFiles);
@@ -551,7 +581,7 @@ function filterModal() {{
   ));
 }}
 
-// Table sorting
+// Ordenação da tabela
 (function() {{
   const table = document.getElementById('user-table');
   let sortCol = -1, sortAsc = true;
