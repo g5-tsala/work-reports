@@ -3,11 +3,12 @@
 Documento derivado da leitura das fórmulas de `Gerencial MFO.xlsm`, a planilha geradora.
 **Nada aqui é inferência.** Cada regra traz a célula de origem entre colchetes.
 
-Este arquivo existe para que o `build.py` reproduza os números sem adivinhar contas.
+Este arquivo existe para que o extrator (`core/extracao/`) reproduza os números sem
+adivinhar contas.
 Consultar sempre que for implementar ou depurar uma métrica. O o [índice](../CLAUDE.md) é o guia de operação; este é o dicionário de fórmulas.
 
 > A versão mensal (`Gerencial MFO YYYY-MM.xlsx`) é um *snapshot com valores colados* da
-> geradora. O `build.py` lê os valores; este documento explica de onde eles vieram.
+> geradora. O extrator lê os valores; este documento explica de onde eles vieram.
 
 ---
 
@@ -189,10 +190,7 @@ termo remove a dupla contagem.
 
 #### Qtd. Grupos por officer e por backup
 
-`cons_officer` linhas 60 e 61. **A fórmula original estava errada** — filtrava a saída pela
-coluna 8 (Segmento) no onshore e pela coluna 6 (Backup) no offshore. Tiago corrigiu na
-geradora em 2026-08-18 e desdobrou em duas métricas; o snapshot de 2026-07 já foi regerado
-com a correção.
+`cons_officer` linhas 60 e 61 — duas métricas, uma por papel.
 
 ```
 Qtd. Grupos (officer) =
@@ -211,9 +209,10 @@ backup (col. 6), considerando apenas portfólios com AUM > 0 **ou** receita > 0 
 unindo onshore e offshore. `arrUnion` deduplica; o `SOMARPRODUTO(--NÃO(ÉERRO(...)))` conta
 os elementos válidos da união.
 
-Valores em jul/26, lidos da planilha corrigida e conferidos contra recálculo independente
-a partir de `ar_on_info`/`ar_off_info` — **os 20 officers batem exatamente**, e o total de
-361 grupos distintos confere com `resumo!AA17`:
+Valores em jul/26, conferidos contra recálculo independente a partir de
+`ar_on_info`/`ar_off_info` — **os 20 officers batem exatamente**, e o total de 361 grupos
+distintos confere com `resumo!AA17`. É o item 10 do checklist de
+[validacao.md](validacao.md):
 
 | Officer | Grupos (officer) | Grupos (backup) | | Officer | Grupos (officer) | Grupos (backup) |
 |---|---:|---:|---|---|---:|---:|
@@ -233,11 +232,8 @@ a partir de `ar_on_info`/`ar_off_info` — **os 20 officers batem exatamente**, 
 econômico pode ter portfólios sob officers diferentes. Não somar a coluna — o total correto
 de grupos vem de `resumo!AA17`, conferido em 361.
 
-**Resolvido em 2026-08-18.** A causa raiz era backup sem cadastro no de-para de nomes
-(`info!AK:AL`): faltavam `Felipe F.` (14 linhas onshore, 2 offshore) e `Mathias` (10 linhas
-offshore). Ambos cadastrados; o snapshot de `2026-07` foi regerado e a coluna Backup está
-com **zero erros** nas duas abas. Snapshots anteriores a essa data ainda trazem `#N/D` —
-tratar como "sem backup atribuído", nunca como pessoa.
+**Backup vazio é "sem backup atribuído", nunca uma pessoa.** A coluna sai de um de-para de
+nomes (`info!AK:AL`); quem não estiver cadastrado lá vira `#N/D`, e o extrator anula.
 
 **Officers e backups são conjuntos diferentes.** Cinco pessoas aparecem só na coluna
 Backup, sem carteira própria: `Yan` (47 grupos), `Felipe F.` (13), `Mathias`, `Dudu` (3) e

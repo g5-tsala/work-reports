@@ -15,8 +15,8 @@ Fonte primária: notas da aba `resumo` (B17:B22).
 | **Run Rate** | Receita mensalizada do último mês × 12. |
 | **Projeção de Receita (ano)** | Receita acumulada no ano por competência + último mês anualizado para os meses restantes. |
 | **ROA** | Receita anualizada ÷ AUM. Exibir em % com 2 casas. |
-| **ROA MFO** | Por officer: mesma conta restrita ao **segmento MFO** no onshore — ignora Institucional e Estruturado. É o ROA da carteira de famílias, sem a diluição dos veículos institucionais e estruturados. **Duas ressalvas confirmadas na fórmula:** todo o offshore entra como MFO (não há filtro de segmento sobre a base offshore), e o numerador não é mensalizado. Ver [calculos.md](calculos.md) §5.5. |
-| **Qtd. Grupos (officer / backup)** | Grupos econômicos distintos em que a pessoa é titular ou backup, contando só portfólios com AUM ou receita > 0 no mês. **Não somar entre officers** — um grupo pode ter portfólios sob titulares diferentes, então a soma (376 em jul/26) excede o total de grupos distintos (361). Ver [calculos.md](calculos.md) §5.5. |
+| **ROA MFO** | Por officer: mesma conta restrita ao **segmento MFO** no onshore — ignora Institucional e Estruturado. É o ROA da carteira de famílias, sem a diluição dos veículos institucionais e estruturados. **Duas ressalvas confirmadas na fórmula:** todo o offshore entra como MFO (não há filtro de segmento sobre a base offshore), e o numerador não é mensalizado. Ver [calculos.md](calculos.md) §3.5. |
+| **Qtd. Grupos (officer / backup)** | Grupos econômicos distintos em que a pessoa é titular ou backup, contando só portfólios com AUM ou receita > 0 no mês. **Não somar entre officers** — um grupo pode ter portfólios sob titulares diferentes, então a soma (376 em jul/26) excede o total de grupos distintos (361). Ver [calculos.md](calculos.md) §3.5. |
 | **NET** | IN − OUT do período. |
 | **IN** | Decomposto em **Início (no ano)** (primeiro aporte de grupo novo no ano) e **Clientes antigos**. |
 | **OUT** | Decomposto em **Uso pessoal** e **Saída para concorrência**. Esta decomposição entra no dashboard — é o dado mais acionável do relatório. |
@@ -37,7 +37,7 @@ longa — jul/26 teve 23.
 Consequência para o build: a coluna "Receita (R$)" da `CEO-Dashboard` **já é mensalizada**
 na parte onshore. Não mensalizar de novo.
 
-Detalhe das fórmulas e das exceções em [calculos.md](calculos.md) §5.1.
+Detalhe das fórmulas e das exceções em [calculos.md](calculos.md) §3.1.
 
 ## 2. Fundos de Alocação
 

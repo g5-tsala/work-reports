@@ -6,24 +6,33 @@ qualquer sessão** e atualizar sempre que uma decisão for tomada ou um fato mud
 Este arquivo substitui a memória de sessão do Claude: o conhecimento do projeto vive aqui,
 versionado junto com o código, não em um armazenamento externo.
 
+**Só entra o que ainda vale.** Defeito corrigido na fonte, cujo snapshot foi regerado, sai
+daqui — carregar história morta em todo início de sessão custa atenção e não muda decisão
+nenhuma. O histórico de quem mudou o quê é trabalho do `git log`.
+
 > [← Índice](../CLAUDE.md)
 
 ## 1. Estado atual
 
-**2026-08-18** — documentação e scaffolding do ambiente concluídos.
+**2026-08-18** — etapa 1 do pipeline (planilha → JSON) pronta e validada sobre `2026-07`.
 
 | Item | Situação |
 |---|---|
-| `CLAUDE.md` + `docs/` | pronto |
+| `AGENTS.md` + `docs/` | pronto |
 | `gerar-dashboard.bat`, `pyproject.toml`, `.gitignore` | pronto |
-| `gerar-dashboard.sh` (Linux/WSL) | pronto — testado até o ponto em que falta o `build.py` |
-| `uv.lock` | gerado no primeiro `uv sync` (2026-08-18) — versionado |
-| `build.py` | **não iniciado** |
+| `gerar-dashboard.sh` (Linux/WSL) | pronto |
+| `uv.lock` | versionado |
+| `dashboard.py` + `core/` | pronto para extração e validação |
+| **Etapa 1 — extração** | **pronta.** `outputs/2026-07/data-2026-07.json`, ~1,8 MB |
+| **Etapa 2 — renderização** | **não iniciada.** `core/render.py` é um stub que falha explícito |
 | `template/` | **não iniciado** |
-| Primeiro protótipo sobre `2026-07` | **não iniciado** |
 
-Próximo passo: `build.py` e o JSON intermediário, onde os números se provam antes de
-qualquer pixel.
+O build de `2026-07` passa nos **10 itens do checklist** de
+[validacao.md](validacao.md) §1, incluindo os dois caros: 1.051 portfólios batem entre
+`resumo`, `CEO-Dashboard` e a contagem nas bases; e o recálculo de Qtd. Grupos reproduz os
+20 officers e os 361 grupos distintos.
+
+Próximo passo: `core/render.py` e `template/`.
 
 ## 2. Decisões fechadas
 
@@ -37,15 +46,22 @@ Não reabrir sem motivo novo.
 - Ponto de entrada é o `.bat`, dois cliques, sem terminal. **ASCII puro e CRLF** — acento
   vira lixo no console corporativo e terminação LF quebra `goto` em silêncio.
 - **Existe também o `gerar-dashboard.sh`**, para desenvolvimento em Linux/WSL, com o mesmo
-  fluxo do `.bat` (2026-08-18). Os dois são irmãos: mudou o fluxo em um, muda no outro.
-  O `.bat` continua sendo o entregável do usuário final.
+  fluxo do `.bat`. Os dois são irmãos: mudou o fluxo em um, muda no outro. O `.bat`
+  continua sendo o entregável do usuário final.
 - **Nenhum dos dois scripts abre o HTML.** A função deles acaba na geração; imprimem o
-  caminho absoluto e param (2026-08-18). No `.bat`, o `pause` virou um
-  `set /p "DUMMY=Digite ENTER para finalizar..."`, só para a janela não fechar antes de o
-  usuário ler as mensagens.
+  caminho absoluto e param. O `.bat` fecha com `set /p "DUMMY=Digite ENTER para
+  finalizar..."`, só para a janela não sumir antes de o usuário ler as mensagens.
 - `inputs/` e `outputs/` fora do git. Só código é versionado.
 - Pipeline em três estágios: extração → validação → renderização, com
   `data-YYYY-MM.json` auditável no meio.
+- **`dashboard.py` na raiz orquestra; `core/` faz o trabalho.** Um módulo de extração por
+  domínio, cada um dono das coordenadas que lê — sem mapa central de layout.
+  O contrato do JSON está em [contrato-json.md](contrato-json.md).
+- **A validação roda sobre o JSON, não sobre a planilha.** Assim `--etapa validar` confere
+  uma base já gerada e a renderização nunca recebe base reprovada.
+- **Rótulo e hierarquia vêm da planilha, não do código.** As linhas viram
+  `{rotulo, chave, nivel, pai}`, com `nivel` lido do recuo da célula. Uma quebra nova na
+  geradora aparece no JSON sem alterar o extrator.
 
 ### Produto
 
@@ -79,19 +95,13 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
   segmento) e não mensaliza o numerador. Replicar assim para os números baterem, e
   sinalizar na interface que as duas colunas não são estritamente comparáveis.
 - **Câmbio arredondado.** `resumo!B4` exibe 5,08; as contas usam 5,0773 (`info!AQ3`).
-- **Rótulo de data errado** em `aum_receita!C5` e `roa_historico!C5`: dizem `2019-06`, mas a
-  série é `2018-06`. Corrigir na extração, avisar, não alterar a planilha.
+- **O intervalo de cada bloco de `cons_officer` invade o nome do bloco seguinte.**
+  `$C$31:$O$63` termina na linha 63, que é o rótulo `Alexandre` do próximo officer. Sem
+  descartar essa linha, o JSON ganha uma "métrica" com o nome de uma pessoa.
+- **`resumo!X` e `resumo!AH` (Qtd 0)** são a contagem de veículos zerados já descontada do
+  `Qtd` exibido — extrair como `qtd_zerados`, nunca somar de volta.
 
-## 4. Correções aplicadas na geradora
-
-Registro do que mudou na fonte, para saber a partir de quando cada snapshot é confiável.
-
-| Data | O que mudou | Efeito nos snapshots |
-|---|---|---|
-| 2026-08-18 | `cons_officer` linha 60 tinha fórmula errada (filtrava pela coluna Segmento no onshore e Backup no offshore). Substituída por duas métricas nas linhas 60 e 61: **Qtd. Grupos (Officer)** e **Qtd. Grupos (Backup)**. | Snapshots anteriores trazem o valor antigo numa única linha 60. O de `2026-07` foi regerado. |
-| 2026-08-18 | Dois officers/backups sem cadastro no de-para de nomes (`info!AK:AL`) geravam `#N/D` na coluna Backup: `Felipe F.` (14 linhas onshore, 2 offshore) e `Mathias` (10 linhas offshore). Ambos cadastrados. | `2026-07` regerado. **Zero erros na coluna Backup.** |
-
-## 5. Fatos de negócio úteis
+## 4. Fatos de negócio úteis
 
 - **Officers e backups são conjuntos diferentes.** Cinco pessoas aparecem só como backup,
   sem carteira própria: `Yan` (47 grupos), `Felipe F.` (13), `Mathias`, `Dudu` (3),
@@ -105,9 +115,9 @@ Registro do que mudou na fonte, para saber a partir de quando cada snapshot é c
 - **Fdos Alocação** são ~33% do AUM (R$ 14,2 bi em jul/26) com ROA de 0,12%, uma ordem de
   grandeza abaixo dos officers reais. É o que justifica o toggle.
 
-## 6. Pendências e backlog
+## 5. Pendências e backlog
 
-- [ ] `build.py` e `template/`.
+- [ ] `core/render.py` e `template/` — etapa 2.
 - [ ] Revalidar a decisão de gráficos SVG próprios após o primeiro protótipo.
 - [ ] Página **Performance da Base** a partir da aba oculta `cotas` — cotiza o AUM como se
       fosse um portfólio e compara com CDI desde 2018-01. Prioridade baixa, mas é a análise

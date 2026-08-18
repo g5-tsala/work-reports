@@ -135,9 +135,9 @@ PLANILHA="inputs/$MES/Gerencial MFO $MES.xlsx"
     "$PLANILHA" \
     "O nome do arquivo precisa seguir exatamente esse padrao."
 
-[[ -f build.py ]] || erro \
-    "build.py nao encontrado na pasta do projeto." \
-    "Este script so orquestra o ambiente; o build em si vive no build.py."
+[[ -f dashboard.py ]] || erro \
+    "dashboard.py nao encontrado na pasta do projeto." \
+    "Este script so orquestra o ambiente; o build em si vive no dashboard.py."
 
 # ------------------------------------------------------------
 #  4. Rodar o build
@@ -148,7 +148,7 @@ echo " Processando $MES..."
 echo "------------------------------------------------------------"
 echo
 
-"${UV[@]}" run python build.py "$MES" || erro \
+"${UV[@]}" run python dashboard.py "$MES" || erro \
     "O processamento falhou. Veja as mensagens acima." \
     "Nenhum dashboard foi gerado para $MES."
 

@@ -89,7 +89,7 @@ echo  Processando !MES!...
 echo ------------------------------------------------------------
 echo.
 
-!UV! run python build.py "!MES!"
+!UV! run python dashboard.py "!MES!"
 if errorlevel 1 goto :erro_build
 
 echo.

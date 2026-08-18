@@ -15,7 +15,12 @@ em um dashboard HTML autocontido, no padrão visual G5 e com leitura de BI.
 - **Linux / WSL:** `./gerar-dashboard.sh` (ou `./gerar-dashboard.sh 2026-07`).
 
 Os dois instalam o `uv` se preciso, sincronizam o ambiente, pedem o mês e geram.
-Para desenvolvimento: `uv run python build.py 2026-07`.
+Para desenvolvimento:
+
+```bash
+uv run python dashboard.py 2026-07                  # pipeline completo
+uv run python dashboard.py 2026-07 --etapa extrair  # só planilha -> JSON (+ validação)
+```
 
 ## Onde está o quê
 
@@ -28,6 +33,7 @@ Para desenvolvimento: `uv run python build.py 2026-07`.
 | [docs/calculos.md](docs/calculos.md) | Implementar ou depurar o cálculo de um número. |
 | [docs/dashboard.md](docs/dashboard.md) | Mexer em navegação, filtros, drill-down ou layout. |
 | [docs/visual.md](docs/visual.md) | Escolher cor, tipografia, formato numérico ou tipo de gráfico. |
+| [docs/contrato-json.md](docs/contrato-json.md) | Ler ou escrever o `data-YYYY-MM.json` — a fronteira entre extrator e template. |
 | [docs/validacao.md](docs/validacao.md) | Um número não bater, ou antes de dar um build por bom. |
 
 ## Estrutura
@@ -39,7 +45,12 @@ gerencial-mfo/
 ├── gerar-dashboard.bat                  # ponto de entrada Windows (2 cliques)
 ├── gerar-dashboard.sh                   # ponto de entrada Linux/WSL
 ├── pyproject.toml · uv.lock             # ambiente (uv)
-├── build.py                             # extrator + renderizador
+├── dashboard.py                         # script centralizador do build (CLI)
+├── core/                                # etapas do pipeline
+│   ├── config.py · planilha.py · json_io.py
+│   ├── extracao/                        # etapa 1 — xlsx -> JSON, um módulo por domínio
+│   ├── validacao.py                     # checklist bloqueante
+│   └── render.py                        # etapa 2 — JSON -> HTML (a implementar)
 ├── template/                            # base.html, styles.css, app.js, charts.js
 ├── inputs/                              # FORA do git
 │   ├── Gerencial MFO.xlsm                # geradora (macros) — origem das fórmulas
@@ -55,8 +66,8 @@ gerencial-mfo/
    célula de origem de cada regra. Se algo não estiver lá, ler a geradora e documentar —
    nunca inferir.
 2. **Código é versionado; dado não.** `inputs/` e `outputs/` estão no `.gitignore` porque
-   carregam nomes reais de clientes. Versiona-se `build.py`, `template/`, `docs/`,
-   `pyproject.toml` e `uv.lock`.
+   carregam nomes reais de clientes. Versiona-se `dashboard.py`, `core/`, `template/`,
+   `docs/`, `pyproject.toml` e `uv.lock`.
 3. **Um build lê apenas o mês dele.** `inputs/YYYY-MM/`, nunca meses anteriores; escreve
    apenas em `outputs/YYYY-MM/`. A planilha já traz todo o histórico e o comparativo M-1.
 4. **O mês de fechamento vem do nome da pasta**, não do conteúdo. Colunas de meses futuros
@@ -64,8 +75,10 @@ gerencial-mfo/
 5. **Build não gera dashboard sobre base inconsistente.** O checklist de
    [docs/validacao.md](docs/validacao.md) é bloqueante.
 6. **Sem CDN.** HTML autocontido, offline, e funcional dentro de um `<iframe>`.
-7. **A fronteira extrator/template é sagrada.** Mudou a planilha, mexe só no extrator;
-   mudou o layout, mexe só no template. O `data-YYYY-MM.json` é o contrato entre os dois.
+7. **A fronteira extrator/template é sagrada.** Mudou a planilha, mexe só em
+   `core/extracao/`; mudou o layout, mexe só em `core/render.py` e `template/`. O
+   `data-YYYY-MM.json` é o contrato entre os dois — ver
+   [docs/contrato-json.md](docs/contrato-json.md).
 8. **Documentação anda junto com o código.** Alterou comportamento, atualiza o doc na mesma
    leva e registra em [docs/MEMORY.md](docs/MEMORY.md).
 

@@ -7,7 +7,8 @@ de base inconsistente.
 
 ## 1. Checklist do build
 
-O build falha se qualquer item não passar.
+Implementado em `core/validacao.py`, um item por função, na mesma numeração desta lista.
+Roda sobre o `data-YYYY-MM.json` já gerado. O build falha se qualquer item não passar.
 
 1. **Checks da planilha zerados** — `CEO-Dashboard!C2:L3`, `Dashboard!K16:L32`,
    `net_in_out!R:S`, `aum_receita!AG`. A planilha se autoconfere; se algum check não for
@@ -55,47 +56,24 @@ base inconsistente e o build deve falhar.
 ## 3. Armadilhas e defeitos da fonte
 
 1. **`in_out` vs `info_net_in_out`** — ver [modelo-de-dados.md](modelo-de-dados.md). A mais perigosa.
-2. **`ROA MFO`** — offshore inteiro conta como MFO, e o numerador não é mensalizado. Ver 5.5.
+2. **`ROA MFO`** — offshore inteiro conta como MFO, e o numerador não é mensalizado. Ver [calculos.md](calculos.md) §3.5.
 3. **Mensalização só no onshore.** Aplicar ao offshore infla a receita em `21/nwdays`.
 4. **Câmbio arredondado no texto.** `resumo!B4` mostra 5,08; as contas usam 5,0773.
-5. **Rótulo de data errado.** `aum_receita!C5` e `roa_historico!C5` dizem `2019-06`, mas a
-   série é `2018-06` — há `2019-06` duplicado em `E5`. Corrigir na extração, avisar, não
-   alterar a planilha.
-6. **`cons_officer` linhas 60/61 — corrigido em 2026-08-18.** A fórmula original filtrava
-   pela coluna errada. Foi substituída por duas métricas (grupos como officer, grupos como
-   backup) e o snapshot de 2026-07 foi regerado. **Snapshots anteriores a essa data trazem
-   o valor antigo em uma única linha 60.** Ver [calculos.md §3.5](calculos.md).
-7. **`#N/D` na coluna Backup — resolvido em 2026-08-18.** Era backup sem cadastro no
-   de-para `info!AK:AL` (`Felipe F.` e `Mathias`). Snapshots anteriores a essa data ainda
-   trazem `#N/D`; tratar como "sem backup atribuído", nunca como pessoa.
-8. **Colunas de meses futuros vêm zeradas**, não vazias. Truncar pelo mês-base.
-9. **`#DIV/0!`, `#N/A` e `TBD`** aparecem em células de check e em `aum_receita` linha 32.
+5. **Backup vazio ou `#N/D`** é "sem backup atribuído", nunca uma pessoa. Vem do de-para
+   `info!AK:AL`.
+6. **Colunas de meses futuros vêm zeradas**, não vazias. Truncar pelo mês-base.
+7. **`#DIV/0!`, `#N/A` e `TBD`** aparecem em células de check e em `aum_receita` linha 32.
    Tratar como nulo na extração; nunca propagar ao JSON.
 
-## 4. Outros pontos de atenção na extração
+## 4. Onde cada armadilha aparece
 
-- **Rótulo de data errado.** Em `aum_receita` e `roa_historico`, a primeira coluna de datas
-  (C5) está rotulada `2019-06`, mas a sequência e os valores indicam `2018-06` — há um
-  `2019-06` duplicado em E5. Tratar como 2018-06 no build, emitir aviso no console, **não**
-  alterar a planilha.
-- **Meses futuros zerados.** Colunas de meses ainda não fechados vêm com `0`, não vazias.
-  Truncar pelo mês da pasta.
-- **`#DIV/0!` e `#N/A`** aparecem em células de check e em `ar_adm_off!C145`. Tratar como
-  nulo na extração, nunca propagar para o JSON.
-- **Câmbio arredondado no texto.** `resumo!B4` exibe "US$ 1 = R$ 5,08"; as contas usam o
-  valor cheio (5,0773). Extrair de `info!AQ3` ou `resumo!U26`, nunca do texto.
-- **`cons_officer` linhas 60/61** tinham fórmula errada, corrigida em 2026-08-18 e
-  desdobrada em duas métricas (grupos como officer, grupos como backup). O snapshot de
-  2026-07 já saiu corrigido; snapshots anteriores trazem o valor antigo numa única linha 60.
-- **`#N/D` na coluna Backup** aparece em snapshots anteriores a 2026-08-18. Tratar como
-  "sem backup atribuído", nunca como pessoa.
+Complementos da seção 3, sem repetir o que já está lá.
+
+- **Câmbio cheio** também está em `resumo!U26`, além de `info!AQ3`.
+- **Erros do Excel** aparecem em células de check e em `ar_adm_off!C145`; `TBD` em
+  `aum_receita` linha 32 (Icatu, 2026 — fora de escopo).
 - **Officers e backups são conjuntos diferentes.** `Yan`, `Felipe F.`, `Dudu` e `Luiz`
   aparecem só como backup e não constam na lista de officers. Não assumir subconjunto.
-- **`in_out` vs `info_net_in_out`** são duas bases de schema idêntico e conteúdo diferente —
-  a segunda exclui as movimentações do próprio grupo G5. Trocar uma pela outra produz
-  números plausíveis e errados. É a armadilha número um do modelo; ver
-  [modelo-de-dados.md](modelo-de-dados.md).
-- **`TBD`** em `aum_receita` linha 32 (Icatu, 2026). Fora de escopo.
 - **Nota de rodapé** na `CEO-Dashboard` B41: "Ainda existem clientes vinculados" — replicar
   como observação da página de officers.
 

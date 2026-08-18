@@ -48,7 +48,7 @@ O usuário final não abre terminal. **Dois cliques no `.bat` fazem tudo**, nest
 2. `uv sync` — cria a venv e sincroniza as dependências a partir do lock.
 3. Lista as subpastas `inputs/YYYY-MM` existentes, marcando quais já têm a planilha no lugar.
 4. Pede o mês-base por `set /p` e valida: pasta existe e planilha com o nome exato existe.
-5. `uv run python build.py <YYYY-MM>`.
+5. `uv run python dashboard.py <YYYY-MM>`.
 6. Em caso de sucesso, mostra os caminhos absolutos do JSON e do HTML gerados.
 7. `set /p` com "Digite ENTER para finalizar..." no final — a janela nunca fecha sozinha,
    nem no caminho de erro, e o usuário consegue ler as mensagens antes de fechar.
@@ -86,20 +86,60 @@ Os mesmos passos do `.bat`, adaptados ao Linux/WSL. As diferenças que importam:
 Para desenvolvimento, o atalho direto continua valendo:
 
 ```bash
-uv run python build.py 2026-07
+uv run python dashboard.py 2026-07                     # pipeline completo
+uv run python dashboard.py 2026-07 --etapa extrair     # planilha -> JSON + validação
+uv run python dashboard.py 2026-07 --etapa validar     # revalida o JSON já gerado
+uv run python dashboard.py 2026-07 --etapa renderizar  # JSON -> HTML
 ```
+
+Códigos de saída: `2` erro de uso (mês inválido, planilha ausente), `3` base reprovada no
+checklist, `4` etapa de renderização ainda não implementada.
 
 ## 3. Pipeline
 
-Três estágios, nesta ordem:
+Três estágios, nesta ordem, orquestrados por `dashboard.py`:
 
 1. **Extração** — lê `inputs/YYYY-MM/Gerencial MFO YYYY-MM.xlsx` com `openpyxl`
    (`data_only=True`, os valores calculados já estão gravados) e emite
    `outputs/YYYY-MM/data-YYYY-MM.json`.
 2. **Validação** — confere os checks embutidos na planilha e a consistência de totais
-   (seção 9). Falha ruidosamente; nunca gera HTML a partir de base inconsistente.
+   ([validacao.md](validacao.md) §1). Falha ruidosamente; nunca gera HTML a partir de base
+   inconsistente.
 3. **Renderização** — injeta o JSON e os assets de `template/` em `base.html` e escreve
    `outputs/YYYY-MM/dashboard-YYYY-MM.html`.
+
+## 3.1 Organização do código
+
+`dashboard.py` na raiz só orquestra e trata argumentos e códigos de saída. O trabalho vive
+em `core/`:
+
+| Módulo | Papel |
+|---|---|
+| `core/config.py` | caminhos, versões e tolerâncias. Sem layout de planilha. |
+| `core/planilha.py` | abertura do xlsx, intervalos, nomes definidos e limpeza de valores. |
+| `core/extracao/` | etapa 1, um módulo por domínio (ver abaixo). |
+| `core/validacao.py` | o checklist bloqueante, rodando **sobre o JSON**, não sobre o xlsx. |
+| `core/render.py` | etapa 2 — ainda não implementada. |
+| `core/json_io.py` | leitura e escrita do JSON intermediário. |
+
+Dentro de `core/extracao/`: `parametros` (aba `info`), `consolidado` (`resumo` +
+`CEO-Dashboard`), `historico` (`aum_receita`, `roa_historico`), `officers`
+(`cons_officer`), `carteira` (bases de posição, grupos, regiões), `captacao` (`net_in_out`,
+`io_*`, blocos do `Dashboard`), `estrutura` (administradores, `G5JUS`), `checks` (os checks
+embutidos) e `comum` (leitura de blocos rotulados, compartilhada).
+
+**Cada extrator carrega as coordenadas que ele lê**, como constantes no topo do próprio
+módulo e com a referência da célula no comentário. Nenhum mapa central de layout: quando a
+geradora mexer numa aba, a mudança fica confinada a um arquivo.
+
+Duas coisas são lidas da planilha em vez de escritas no código, e não devem virar lista
+fixa: os **rótulos de linha** (viram `rotulo` + `chave`) e o **recuo da célula**, que dá o
+nível de hierarquia usado no drill-down. Detalhe em
+[contrato-json.md](contrato-json.md) §3.1.
+
+A validação roda sobre o JSON — e não sobre a planilha — de propósito: assim
+`--etapa validar` confere uma base já gerada, e a etapa de renderização nunca recebe base
+que não passou pelo checklist.
 
 **Regras invioláveis do pipeline:**
 
