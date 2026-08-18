@@ -87,6 +87,14 @@ serem lidos: uma coluna trocada na geradora viraria uma série invertida sem sin
 `backup` vem `null` quando a planilha traz `#N/D` — é "sem backup atribuído", nunca uma
 pessoa.
 
+### 3.3 Bloco de administrador
+
+`estrutura.administradores.{onshore,offshore}.blocos[]` traz, além das linhas rotuladas, o
+campo **`agrupamento`** — o marcador que a planilha escreve na linha acima do nome do bloco.
+Quando dois administradores compartilham o mesmo marcador (`GVA/Daycoval`), a geradora
+**repete o AUM e a receita** entre eles; só os custos são próprios. Somar a coluna nesse
+caso superestima o AUM.
+
 ## 4. Pontos de atenção do consumidor
 
 - **`captacao.net_in_out` e `captacao.captacao_cliente` são cliente (sem G5);

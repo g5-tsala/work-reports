@@ -119,7 +119,7 @@ em `core/`:
 | `core/planilha.py` | abertura do xlsx, intervalos, nomes definidos e limpeza de valores. |
 | `core/extracao/` | etapa 1, um módulo por domínio (ver abaixo). |
 | `core/validacao.py` | o checklist bloqueante, rodando **sobre o JSON**, não sobre o xlsx. |
-| `core/render.py` | etapa 2 — ainda não implementada. |
+| `core/render/` | etapa 3, o HTML (ver abaixo). |
 | `core/json_io.py` | leitura e escrita do JSON intermediário. |
 
 Dentro de `core/extracao/`: `parametros` (aba `info`), `consolidado` (`resumo` +
@@ -140,6 +140,36 @@ nível de hierarquia usado no drill-down. Detalhe em
 A validação roda sobre o JSON — e não sobre a planilha — de propósito: assim
 `--etapa validar` confere uma base já gerada, e a etapa de renderização nunca recebe base
 que não passou pelo checklist.
+
+## 3.2 O renderizador — `core/render/`
+
+| Módulo | Papel |
+|---|---|
+| `paginas/<aba>.py` | **uma aba do dashboard por arquivo.** É o único arquivo a abrir para mudar o que aparece numa aba. |
+| `paginas/comum.py` | o que abas irmãs (onshore/offshore) usam do mesmo jeito. Não é aba, não se registra. |
+| `pagina.py` | o registro: decorador `@pagina(...)`, grupos do menu e ordenação. |
+| `ui.py` | componentes — seção, KPI, tabela, cartão, legenda, nota de fonte. |
+| `graficos.py` | SVG inline gerado no build, sem biblioteca. |
+| `formato.py` | números e datas em PT-BR. |
+| `contexto.py` | atalhos de leitura do JSON. |
+| `layout.py` | esqueleto, menu e a costura do HTML final. |
+
+Uma aba nova são três passos: escrever `paginas/nome.py`, decorar a função de render com
+`@pagina(identificador=…, titulo=…, grupo=…, ordem=…)` e importar o módulo em
+`paginas/__init__.py`. O menu, o roteamento e a impressão vêm de graça.
+
+**Todo texto vindo da planilha é escapado por padrão.** A célula de tabela escapa sozinha; o
+fragmento de HTML montado por nós precisa pedir explicitamente, com `ui.html(...)`, e aí é
+responsabilidade de quem chama passar `esc()` em cada pedaço que veio do dado. Não é
+paranoia: a base de hoje já traz `Rose & Oud`, `Grupo DD&L` e `Heitor Sant'anna Martins` —
+sem escapar, o `&` corrompe o HTML, e um nome com marcação viraria execução de script num
+arquivo que carrega nome de cliente.
+
+Os assets ficam em `template/` (`base.html`, `styles.css`, `app.js`, `logo-g5.txt`) e são
+**inlined** no HTML final. O logo é data URI porque caminho relativo some quando o arquivo é
+enviado por e-mail. O `app.js` faz quatro coisas e nada mais: navegar, filtrar, ordenar e
+abrir detalhe — sem `localStorage` e sem `window.top`, para funcionar dentro de um
+`<iframe>`.
 
 **Regras invioláveis do pipeline:**
 

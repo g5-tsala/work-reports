@@ -21,7 +21,7 @@ from collections.abc import Sequence
 
 from core import config, json_io
 from core.extracao import extrair
-from core.render import EtapaNaoImplementada, renderizar
+from core.render import renderizar
 from core.validacao import Relatorio, validar
 
 CODIGO_ERRO_USO = 2
@@ -111,10 +111,10 @@ def _renderizar(mes: str, caminho_json) -> int:
     dados = json_io.carregar(caminho_json)
     try:
         caminho_html = renderizar(dados, config.caminho_html(mes))
-    except EtapaNaoImplementada as erro:
-        print(f"      [pendente] {erro}", file=sys.stderr)
-        return CODIGO_ERRO_RENDER
-    print(f"      dashboard gravado em {caminho_html}")
+    except (FileNotFoundError, KeyError, RuntimeError) as erro:
+        return _erro(f"falha ao renderizar o dashboard: {erro}", CODIGO_ERRO_RENDER)
+    tamanho = caminho_html.stat().st_size / 1024
+    print(f"      dashboard gravado em {caminho_html} ({tamanho:,.0f} KB)".replace(",", "."))
     return 0
 
 

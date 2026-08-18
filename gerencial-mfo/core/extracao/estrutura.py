@@ -75,6 +75,10 @@ def _administradores(ctx, aba: str, moeda: str) -> dict[str, Any]:
         blocos.append(
             {
                 "administrador": nome,
+                # Marcador acima do nome do bloco. Quando dois administradores
+                # compartilham o mesmo (`GVA/Daycoval`), a geradora repete o AUM
+                # e a receita nos dois — só os custos diferem.
+                "agrupamento": texto(ws.cell(inicio - 1, COL_ROTULO).value) if inicio > 1 else None,
                 "meses": meses_ok,
                 "dias_uteis": series_ok[0],
                 "linhas": linhas,

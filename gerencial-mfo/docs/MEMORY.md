@@ -14,25 +14,28 @@ nenhuma. O histórico de quem mudou o quê é trabalho do `git log`.
 
 ## 1. Estado atual
 
-**2026-08-18** — etapa 1 do pipeline (planilha → JSON) pronta e validada sobre `2026-07`.
+**2026-08-18** — pipeline completo. Planilha → JSON → HTML, rodando ponta a ponta sobre
+`2026-07`.
 
 | Item | Situação |
 |---|---|
 | `AGENTS.md` + `docs/` | pronto |
-| `gerar-dashboard.bat`, `pyproject.toml`, `.gitignore` | pronto |
-| `gerar-dashboard.sh` (Linux/WSL) | pronto |
-| `uv.lock` | versionado |
-| `dashboard.py` + `core/` | pronto para extração e validação |
+| `gerar-dashboard.bat` · `gerar-dashboard.sh` · `pyproject.toml` · `uv.lock` | pronto |
 | **Etapa 1 — extração** | **pronta.** `outputs/2026-07/data-2026-07.json`, ~1,8 MB |
-| **Etapa 2 — renderização** | **não iniciada.** `core/render.py` é um stub que falha explícito |
-| `template/` | **não iniciado** |
+| **Etapa 2 — validação** | **pronta.** 10/10 no checklist |
+| **Etapa 3 — renderização** | **pronta.** 16 abas, `dashboard-2026-07.html`, ~1,7 MB |
+| Filtros combináveis e toggle Ex-Fdos | **não iniciados** (backlog) |
 
 O build de `2026-07` passa nos **10 itens do checklist** de
 [validacao.md](validacao.md) §1, incluindo os dois caros: 1.051 portfólios batem entre
 `resumo`, `CEO-Dashboard` e a contagem nas bases; e o recálculo de Qtd. Grupos reproduz os
 20 officers e os 361 grupos distintos.
 
-Próximo passo: `core/render.py` e `template/`.
+O HTML foi conferido em navegador: as 16 abas trocam, a busca filtra, a ordenação numérica
+lê o valor cru, o drill-down abre e não há erro de console.
+
+Próximo passo: revalidar a decisão dos gráficos SVG (agora que existe protótipo) e decidir
+se os filtros combináveis entram.
 
 ## 2. Decisões fechadas
 
@@ -62,6 +65,18 @@ Não reabrir sem motivo novo.
 - **Rótulo e hierarquia vêm da planilha, não do código.** As linhas viram
   `{rotulo, chave, nivel, pai}`, com `nivel` lido do recuo da célula. Uma quebra nova na
   geradora aparece no JSON sem alterar o extrator.
+- **Uma aba do dashboard = um arquivo em `core/render/paginas/`**, registrado por decorador.
+  O menu e o roteamento saem do registro; mexer numa aba não encosta em nenhuma outra.
+- **Texto da planilha é escapado por padrão no HTML.** A célula escapa sozinha; HTML montado
+  por nós entra só por `ui.html(...)`, e quem chama escapa os pedaços que vieram do dado. A
+  base já tem `&` e apostrofo em nome de grupo — não é hipótese.
+- **Barra ancorada no zero, linha com eixo ajustado, segundo eixo só com unidades
+  distintas.** Detalhe e motivo em [visual.md](visual.md) §2.1 — as três já erraram uma vez.
+- **A faixa de parâmetros do fechamento** (mês · dias úteis · câmbio · CDI) é page furniture
+  fixa, não decoração: é o regime que governa metade dos números da tela.
+- **Gráficos são SVG gerado no build, em Python** — não `charts.js`. Os dados são fixos
+  quando o HTML é escrito, então vetor estático basta: imprime, abre sem JS e não depende de
+  rede. Biblioteca só se aparecer necessidade de interatividade real.
 
 ### Produto
 
@@ -100,6 +115,13 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
   descartar essa linha, o JSON ganha uma "métrica" com o nome de uma pessoa.
 - **`resumo!X` e `resumo!AH` (Qtd 0)** são a contagem de veículos zerados já descontada do
   `Qtd` exibido — extrair como `qtd_zerados`, nunca somar de volta.
+- **`GV Atacama` e `Daycoval` repetem o mesmo AUM e a mesma receita** em `ar_adm_on`; só os
+  custos são próprios. A planilha marca o par com `GVA/Daycoval` na linha acima do nome do
+  bloco. **A soma da coluna de AUM por administrador não é o AUM da casa** — o extrator
+  guarda o marcador em `agrupamento` e a página avisa.
+- **A variação M-1 da linha `Total Ex- Fdos Alocação`** (`CEO-Dashboard` D39/G39) compara o
+  ex-fundos do mês contra o **total** do mês anterior (`Z39` ≈ total). Dá -31% sem
+  significado. O dashboard exibe "—" nessas duas células.
 
 ## 4. Fatos de negócio úteis
 
@@ -117,8 +139,15 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
 
 ## 5. Pendências e backlog
 
-- [ ] `core/render.py` e `template/` — etapa 2.
-- [ ] Revalidar a decisão de gráficos SVG próprios após o primeiro protótipo.
+- [ ] **Toggle global Ex-Fdos Alocação** — exige recalcular proporções, ROA médio e
+      rankings no cliente. Hoje cada página mostra a linha `Total Ex- Fdos Alocação` da
+      planilha como referência.
+- [ ] **Filtros combináveis** (officer · tipo · segmento · on/offshore). Existe busca
+      textual e ordenação por coluna em cada tabela.
+- [ ] **Drill-down de terceiro nível na captação** — as movimentações individuais vivem na
+      aba oculta `info_grupos`, que **ainda não é extraída**. Hoje o detalhe para no mês a
+      mês do grupo.
+- [ ] Revalidar a decisão de gráficos SVG próprios agora que há protótipo.
 - [ ] Página **Performance da Base** a partir da aba oculta `cotas` — cotiza o AUM como se
       fosse um portfólio e compara com CDI desde 2018-01. Prioridade baixa, mas é a análise
       mais interessante que nenhuma aba visível mostra hoje.

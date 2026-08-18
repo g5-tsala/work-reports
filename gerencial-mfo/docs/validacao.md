@@ -61,8 +61,13 @@ base inconsistente e o build deve falhar.
 4. **Câmbio arredondado no texto.** `resumo!B4` mostra 5,08; as contas usam 5,0773.
 5. **Backup vazio ou `#N/D`** é "sem backup atribuído", nunca uma pessoa. Vem do de-para
    `info!AK:AL`.
-6. **Colunas de meses futuros vêm zeradas**, não vazias. Truncar pelo mês-base.
-7. **`#DIV/0!`, `#N/A` e `TBD`** aparecem em células de check e em `aum_receita` linha 32.
+6. **`GV Atacama` e `Daycoval` compartilham AUM e receita** em `ar_adm_on` — a planilha
+   marca o par com `GVA/Daycoval`. Só os custos são próprios de cada um. Somar a coluna de
+   AUM por administrador **não** dá o AUM da casa.
+7. **A variação M-1 de `Total Ex- Fdos Alocação`** compara o ex-fundos contra o total do mês
+   anterior (`CEO-Dashboard!Z39`). O número existe, mas não significa nada — não exibir.
+8. **Colunas de meses futuros vêm zeradas**, não vazias. Truncar pelo mês-base.
+9. **`#DIV/0!`, `#N/A` e `TBD`** aparecem em células de check e em `aum_receita` linha 32.
    Tratar como nulo na extração; nunca propagar ao JSON.
 
 ## 4. Onde cada armadilha aparece

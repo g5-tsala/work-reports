@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{titulo}}</title>
+<meta name="robots" content="noindex, nofollow">
+<style>{{estilos}}</style>
+</head>
+<body>
+<a class="g5-pular" href="#conteudo">Pular para o conteúdo</a>
+
+<aside class="g5-sidebar" id="menu">
+  <div class="g5-sidebar__topo">
+    <img class="g5-logo" src="{{logo}}" alt="G5 Partners">
+    <p class="g5-sidebar__produto">Gerencial MFO</p>
+    <p class="g5-sidebar__mes">{{mes_extenso}}</p>
+  </div>
+  <nav class="g5-nav" aria-label="Seções do dashboard">
+    {{menu}}
+  </nav>
+  <p class="g5-sidebar__rodape">Uso interno restrito</p>
+</aside>
+
+<main class="g5-main" id="conteudo">
+  <header class="g5-topbar">
+    <div>
+      <h1 class="g5-topbar__titulo" data-titulo-pagina>{{primeira_pagina}}</h1>
+      <p class="g5-topbar__contexto">Gerencial MFO · {{mes_extenso}}</p>
+    </div>
+    <div class="g5-topbar__acoes">
+      <span class="g5-selo">Confidencial — uso interno</span>
+      <button type="button" class="g5-btn g5-btn--secondary" data-imprimir>Imprimir</button>
+    </div>
+  </header>
+
+  {{parametros}}
+
+  <div class="g5-marca-impressao" aria-hidden="true">CONFIDENCIAL — USO INTERNO · Gerencial MFO · {{mes_extenso}}</div>
+
+  {{paginas}}
+
+  <footer class="g5-rodape">
+    <span>Gerado em {{gerado_em}} a partir de {{arquivo_origem}}.</span>
+    <span>G5 Partners · documento de uso interno restrito · não distribuir.</span>
+  </footer>
+</main>
+
+<script>{{script}}</script>
+</body>
+</html>

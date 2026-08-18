@@ -27,13 +27,40 @@ Pontos que este projeto reforça:
 
 ## 2. Gráficos
 
-**Decisão provisória**, a revalidar depois do primeiro modelo de dashboard: módulo SVG
-próprio (`charts.js`), sem biblioteca externa. Justificativa: controle total do design
-system, arquivo leve, zero dependência de rede, e cada ajuste futuro acontece em código
-nosso em vez de contornar defaults de terceiros. Tipos necessários: linha, barra vertical e
-horizontal, barra empilhada, combo linha+barra, donut, waterfall (captação). Se o custo de
-manutenção se mostrar alto no protótipo, a alternativa é embarcar uma biblioteca minificada
-inline — nunca via CDN.
+Módulo SVG próprio, sem biblioteca externa — **gerado no build, em Python**
+(`core/render/graficos.py`), não em JavaScript no cliente. Os dados são fixos no momento em
+que o HTML é escrito, então o gráfico pode ser vetor estático: imprime bem, abre com o JS
+desligado e não depende de rede.
+
+Tipos disponíveis: linha, barra vertical (agrupada e empilhada), combo barra + linha com
+segundo eixo, barra horizontal e donut. Waterfall ainda não existe — a captação usa barra
+empilhada com linha de NET.
+
+As cores saem como `var(--g5-*)` dentro do SVG inline, que herda os tokens do CSS: trocar a
+paleta continua sendo mexer num arquivo só. Se algum dia for preciso interatividade real
+(tooltip, brushing, seletor que redesenha), aí sim entra biblioteca — minificada e inline,
+nunca via CDN.
+
+### 2.1 Regras de eixo
+
+Quatro decisões que já custaram uma rodada de conserto:
+
+- **Barra é ancorada no zero; linha não.** Barra codifica magnitude por área — cortar a base
+  mente. Linha codifica variação: forçar o zero num AUM que anda 2% ao mês achata a série
+  numa reta e esconde justamente o que ela existe para mostrar. `barras()` não tem opção;
+  `linhas()` tem `ancorar_zero`, que nasce `False`.
+- **A última marca do eixo é sempre ≥ o maior valor.** Se ficar abaixo, a barra sai da área
+  de plotagem e o `viewBox` corta — sem nenhum sinal visível de que faltou dado.
+- **Segundo eixo só quando as unidades são mesmo diferentes.** `combo()` compartilha o eixo
+  por padrão; `eixo_proprio=True` é para o caso legítimo (G5 JUS: AUM em R$ mi contra
+  receita em R$). IN, OUT e NET são todos R$ mi — dois eixos ali fariam a mesma grandeza
+  medir duas alturas no mesmo desenho.
+- **Cor por sinal só em série que oscila em torno do zero** — variação, fluxo, resultado.
+  Em nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
+
+O valor do último ponto sai rotulado direto na linha (`rotular_ultimo`), com halo branco: é
+o que dispensa o vaivém até a legenda e o que mantém o gráfico legível impresso em preto e
+branco, onde o azul e o wine viram o mesmo cinza.
 
 ---
 

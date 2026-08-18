@@ -50,8 +50,11 @@ gerencial-mfo/
 │   ├── config.py · planilha.py · json_io.py
 │   ├── extracao/                        # etapa 1 — xlsx -> JSON, um módulo por domínio
 │   ├── validacao.py                     # checklist bloqueante
-│   └── render.py                        # etapa 2 — JSON -> HTML (a implementar)
-├── template/                            # base.html, styles.css, app.js, charts.js
+│   └── render/                          # etapa 2 — JSON -> HTML
+│       ├── paginas/                     # UMA ABA DO DASHBOARD POR ARQUIVO
+│       ├── ui.py · graficos.py · formato.py
+│       └── layout.py · pagina.py · contexto.py
+├── template/                            # base.html, styles.css, app.js, logo-g5.txt
 ├── inputs/                              # FORA do git
 │   ├── Gerencial MFO.xlsm                # geradora (macros) — origem das fórmulas
 │   └── YYYY-MM/Gerencial MFO YYYY-MM.xlsx
@@ -76,9 +79,11 @@ gerencial-mfo/
    [docs/validacao.md](docs/validacao.md) é bloqueante.
 6. **Sem CDN.** HTML autocontido, offline, e funcional dentro de um `<iframe>`.
 7. **A fronteira extrator/template é sagrada.** Mudou a planilha, mexe só em
-   `core/extracao/`; mudou o layout, mexe só em `core/render.py` e `template/`. O
+   `core/extracao/`; mudou o layout, mexe só em `core/render/` e `template/`. O
    `data-YYYY-MM.json` é o contrato entre os dois — ver
-   [docs/contrato-json.md](docs/contrato-json.md).
+   [docs/contrato-json.md](docs/contrato-json.md). Dentro do renderizador vale a mesma
+   regra em escala menor: **mudou uma aba, mexe só no arquivo dela** em
+   `core/render/paginas/`.
 8. **Documentação anda junto com o código.** Alterou comportamento, atualiza o doc na mesma
    leva e registra em [docs/MEMORY.md](docs/MEMORY.md).
 

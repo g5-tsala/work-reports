@@ -1,0 +1,509 @@
+/* Gerencial MFO — folha unica, inlined no HTML final.
+   Tokens conforme o design system da G5. Sem dark mode, sem gradiente.
+   Wine so pontua: regra de secao, item ativo do menu e pouco mais. */
+
+:root {
+  --g5-navy: #23246B;
+  --g5-navy-deep: #1A1B50;
+  --g5-wine: #852240;
+  --g5-wine-tint: #C99AA5;
+
+  --g5-ink: #1A1A1A;
+  --g5-graphite: #4A4A4A;
+  --g5-slate-aa: #6E7480;
+  --g5-slate: #8A8A8A;
+  --g5-line: #D9DDE3;
+  --g5-bg-soft: #F4F6F9;
+  --g5-bg-band: #E8ECF1;
+  --g5-white: #FFFFFF;
+
+  --g5-positive: #1F6B3A;
+  --g5-negative: #B82C1E;
+
+  --g5-data-blue: #1E4D8C;
+  --g5-data-wine: #852240;
+  --g5-data-neutral: #9AA3B0;
+  --g5-data-blue-light: #5B7FB0;
+  --g5-data-wine-light: #C46B7E;
+
+  --g5-space-1: 8px;
+  --g5-space-2: 16px;
+  --g5-space-3: 24px;
+  --g5-space-4: 32px;
+  --g5-space-5: 48px;
+  --g5-space-6: 64px;
+
+  --g5-radius-sm: 2px;
+  --g5-radius-md: 4px;
+  --g5-shadow-card: 0 1px 3px rgba(35, 36, 107, 0.08);
+
+  --g5-sans: "Inter", "Aptos", "Calibri", "Carlito", -apple-system, "Segoe UI", Arial, sans-serif;
+  --g5-serif: "Source Serif 4", Georgia, "Liberation Serif", "Times New Roman", serif;
+  --g5-sidebar: 248px;
+}
+
+* { box-sizing: border-box; }
+
+/* Foco visível é requisito, não enfeite: o contorno do navegador é preto e
+   some sobre o navy do cabeçalho de tabela. */
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--g5-wine);
+  outline-offset: 2px;
+  border-radius: var(--g5-radius-sm);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--g5-white);
+  color: var(--g5-ink);
+  font: 400 15px/1.6 var(--g5-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4, p, figure { margin: 0; }
+
+.g5-pular {
+  position: absolute;
+  left: -9999px;
+  background: var(--g5-navy);
+  color: var(--g5-white);
+  padding: var(--g5-space-1) var(--g5-space-2);
+}
+.g5-pular:focus { left: var(--g5-space-2); top: var(--g5-space-2); z-index: 20; }
+
+/* ---------------------------------------------------------------- menu */
+
+.g5-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--g5-sidebar);
+  background: var(--g5-white);
+  border-right: 1px solid var(--g5-line);
+  padding: var(--g5-space-3) 0 var(--g5-space-2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.g5-sidebar__topo { padding: 0 var(--g5-space-3) var(--g5-space-3); }
+.g5-logo { height: 32px; width: auto; display: block; }
+.g5-sidebar__produto {
+  margin-top: var(--g5-space-2);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g5-navy);
+}
+.g5-sidebar__mes { font-size: 12px; color: var(--g5-slate-aa); }
+.g5-sidebar__rodape {
+  margin-top: auto;
+  padding: var(--g5-space-2) var(--g5-space-3) 0;
+  font-size: 11px;
+  color: var(--g5-slate-aa);
+}
+
+.g5-nav__grupo {
+  padding: var(--g5-space-2) var(--g5-space-3) var(--g5-space-1);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g5-slate-aa);
+}
+.g5-nav__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  padding: 9px var(--g5-space-3);
+  font: 500 14px/1.4 var(--g5-sans);
+  color: var(--g5-navy);
+  cursor: pointer;
+}
+.g5-nav__item:hover { background: var(--g5-bg-soft); }
+.g5-nav__item[aria-current="page"] {
+  border-left-color: var(--g5-wine);
+  background: var(--g5-bg-soft);
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------- layout */
+
+.g5-main {
+  margin-left: var(--g5-sidebar);
+  padding: var(--g5-space-4) var(--g5-space-5) var(--g5-space-6);
+  max-width: 1440px;
+}
+
+.g5-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--g5-space-3);
+  padding-bottom: var(--g5-space-3);
+  border-bottom: 1px solid var(--g5-line);
+  margin-bottom: var(--g5-space-4);
+}
+.g5-topbar__titulo { font: 400 32px/1.2 var(--g5-serif); color: var(--g5-navy); }
+.g5-topbar__contexto { font-size: 13px; color: var(--g5-slate-aa); margin-top: 4px; }
+.g5-topbar__acoes { display: flex; align-items: center; gap: var(--g5-space-2); }
+.g5-selo {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g5-wine);
+  border: 1px solid var(--g5-wine);
+  border-radius: var(--g5-radius-sm);
+  padding: 4px 8px;
+}
+
+.g5-btn {
+  font: 600 14px/1 var(--g5-sans);
+  padding: 10px 18px;
+  border-radius: var(--g5-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.g5-btn--secondary { background: transparent; color: var(--g5-navy); border-color: var(--g5-navy); }
+.g5-btn--secondary:hover { background: var(--g5-bg-soft); }
+
+/* Regime do fechamento. Fica entre o título e o conteúdo porque é o que
+   governa metade dos números abaixo dele. */
+.g5-parametros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border: 1px solid var(--g5-line);
+  border-radius: var(--g5-radius-md);
+  background: var(--g5-bg-soft);
+  margin-bottom: var(--g5-space-4);
+}
+.g5-parametro {
+  flex: 1 1 180px;
+  padding: 14px var(--g5-space-3);
+  border-left: 1px solid var(--g5-line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.g5-parametro:first-child { border-left: 0; }
+.g5-parametro__rotulo {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g5-slate-aa);
+}
+.g5-parametro__valor {
+  font: 600 17px/1.2 var(--g5-sans);
+  color: var(--g5-navy);
+}
+.g5-parametro__papel { font-size: 11px; color: var(--g5-slate-aa); }
+
+.g5-pagina[hidden] { display: none; }
+.g5-pagina__descricao {
+  color: var(--g5-graphite);
+  max-width: 76ch;
+  margin-bottom: var(--g5-space-4);
+}
+
+.g5-secao { margin-bottom: var(--g5-space-6); }
+.g5-section-title {
+  font: 600 20px/1.2 var(--g5-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--g5-navy);
+  margin: 0 0 var(--g5-space-3);
+  padding-bottom: var(--g5-space-2);
+  position: relative;
+}
+.g5-section-title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 2px;
+  background: var(--g5-wine);
+}
+.g5-secao-descricao {
+  color: var(--g5-graphite);
+  font-size: 14px;
+  margin: calc(var(--g5-space-3) * -1 + 4px) 0 var(--g5-space-3);
+  max-width: 84ch;
+}
+
+.g5-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--g5-space-3);
+  align-items: start;
+}
+
+.g5-card {
+  background: var(--g5-white);
+  border: 1px solid var(--g5-line);
+  border-radius: var(--g5-radius-md);
+  padding: var(--g5-space-3);
+}
+.g5-cartao-titulo {
+  font: 600 15px/1.3 var(--g5-sans);
+  color: var(--g5-navy);
+  margin-bottom: var(--g5-space-2);
+}
+
+.g5-nota { font-size: 13px; color: var(--g5-graphite); margin-top: var(--g5-space-2); }
+.g5-aviso {
+  font-size: 13px;
+  color: var(--g5-graphite);
+  border-left: 3px solid var(--g5-wine);
+  background: var(--g5-bg-soft);
+  padding: var(--g5-space-2) var(--g5-space-3);
+  margin-bottom: var(--g5-space-3);
+}
+.g5-fonte { font-size: 11px; color: var(--g5-slate-aa); margin-top: var(--g5-space-1); }
+
+/* ----------------------------------------------------------------- kpi */
+
+.g5-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--g5-space-2);
+  margin-bottom: var(--g5-space-4);
+}
+.g5-kpi {
+  border: 1px solid var(--g5-line);
+  border-radius: var(--g5-radius-md);
+  padding: var(--g5-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.g5-kpi__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g5-slate-aa);
+}
+.g5-kpi__value { font: 600 34px/1.1 var(--g5-sans); color: var(--g5-navy); }
+.g5-kpi__delta { font-size: 13px; font-weight: 600; }
+.g5-kpi__detalhe { font-size: 12px; color: var(--g5-slate-aa); }
+
+.positivo { color: var(--g5-positive); }
+.negativo { color: var(--g5-negative); }
+
+/* -------------------------------------------------------------- tabela */
+
+.g5-tabela-rolagem { overflow-x: auto; }
+.g5-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 13px/1.5 var(--g5-sans);
+  color: var(--g5-ink);
+  font-variant-numeric: tabular-nums;
+}
+.g5-table thead th {
+  background: var(--g5-navy);
+  color: var(--g5-white);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  text-align: left;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+.g5-table thead th.num { text-align: right; }
+.g5-table thead th[data-ordena] { cursor: pointer; }
+.g5-table thead th[data-ordena]:hover { background: var(--g5-navy-deep); }
+.g5-table thead th[aria-sort]::after { content: " ▲"; font-size: 9px; }
+.g5-table thead th[aria-sort="descending"]::after { content: " ▼"; }
+.g5-table tbody td { padding: 8px 14px; border-bottom: 1px solid var(--g5-line); }
+.g5-table tbody tr:nth-child(even) td { background: var(--g5-bg-soft); }
+.g5-table tbody tr.subtotal td { background: var(--g5-bg-band); font-weight: 600; }
+.g5-table tbody tr.total td {
+  background: var(--g5-bg-band);
+  font-weight: 600;
+  border-top: 2px solid var(--g5-navy);
+}
+.g5-table tbody tr.destaque td { font-weight: 600; }
+.g5-table tbody tr.detalhe td { background: var(--g5-white); color: var(--g5-graphite); }
+.g5-table td.num { text-align: right; }
+.g5-table td.nivel-1 { padding-left: 30px; }
+.g5-table td.nivel-2 { padding-left: 48px; }
+.g5-table td.nivel-3 { padding-left: 66px; }
+.g5-table tbody tr[data-abre] { cursor: pointer; }
+.g5-table tbody tr[data-abre] td:first-child::before {
+  content: "▸ ";
+  color: var(--g5-wine);
+}
+.g5-table tbody tr[data-abre][aria-expanded="true"] td:first-child::before { content: "▾ "; }
+
+.g5-tabela-ferramentas {
+  display: flex;
+  align-items: center;
+  gap: var(--g5-space-2);
+  margin-bottom: var(--g5-space-2);
+}
+.g5-filtro {
+  font: 400 13px/1.4 var(--g5-sans);
+  padding: 8px 12px;
+  border: 1px solid var(--g5-line);
+  border-radius: var(--g5-radius-md);
+  min-width: 260px;
+}
+.g5-contador { font-size: 12px; color: var(--g5-slate-aa); }
+
+/* ------------------------------------------------------------- grafico */
+
+.g5-figura { margin: 0 0 var(--g5-space-2); }
+.g5-grafico { width: 100%; height: auto; display: block; }
+.g5-grade { stroke: var(--g5-line); stroke-width: 1; }
+.g5-zero { stroke: var(--g5-slate-aa); stroke-width: 1; }
+.g5-linha { stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.g5-eixo { font: 400 11px var(--g5-sans); fill: var(--g5-slate-aa); }
+.g5-rotulo-barra { font: 400 12px var(--g5-sans); fill: var(--g5-ink); }
+.g5-valor-barra { font: 600 12px var(--g5-sans); fill: var(--g5-graphite); }
+.g5-donut-total { font: 600 15px var(--g5-sans); fill: var(--g5-navy); }
+/* Halo branco: o rotulo do ultimo ponto cai em cima da propria linha
+   quando a serie termina achatada. */
+.g5-rotulo-ponto {
+  font: 600 12px var(--g5-sans);
+  paint-order: stroke;
+  stroke: var(--g5-white);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.g5-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--g5-space-2);
+  margin-bottom: var(--g5-space-1);
+  font-size: 12px;
+  color: var(--g5-graphite);
+}
+.g5-legenda__item { display: inline-flex; align-items: center; gap: 6px; }
+.g5-legenda__item i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+
+.g5-rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--g5-space-3);
+  border-top: 1px solid var(--g5-line);
+  padding-top: var(--g5-space-2);
+  margin-top: var(--g5-space-5);
+  font-size: 11px;
+  color: var(--g5-slate-aa);
+}
+
+.g5-marca-impressao { display: none; }
+
+/* --------------------------------------------------------- responsivo */
+
+@media (max-width: 1024px) {
+  .g5-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--g5-line);
+    padding: var(--g5-space-2) 0 0;
+  }
+  /* Dezesseis itens quebrados em linhas empurram o primeiro número para baixo
+     da dobra. Numa tela estreita o menu vira uma trilha horizontal: ocupa uma
+     linha, e o conteúdo começa onde deve. */
+  .g5-sidebar__topo {
+    display: flex;
+    align-items: baseline;
+    gap: var(--g5-space-2);
+    padding: 0 var(--g5-space-3) var(--g5-space-2);
+  }
+  .g5-sidebar__produto { margin-top: 0; }
+  .g5-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    gap: 2px;
+    padding: 0 var(--g5-space-3);
+    border-top: 1px solid var(--g5-line);
+  }
+  .g5-nav__grupo { display: none; }
+  .g5-nav__item {
+    width: auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    padding: 10px 12px;
+  }
+  .g5-nav__item[aria-current="page"] { border-left: 0; border-bottom-color: var(--g5-wine); }
+  .g5-sidebar__rodape { display: none; }
+  .g5-main { margin-left: 0; padding: var(--g5-space-3) var(--g5-space-3) var(--g5-space-5); }
+  /* Em duas colunas, quem abre a linha nao leva regua a esquerda. */
+  .g5-parametro { flex-basis: 50%; }
+  .g5-parametro:nth-child(odd) { border-left: 0; }
+  .g5-parametro:nth-child(n + 3) { border-top: 1px solid var(--g5-line); }
+}
+
+@media (max-width: 768px) {
+  .g5-kpis, .g5-colunas { grid-template-columns: 1fr; }
+  .g5-topbar { flex-direction: column; }
+  .g5-topbar__titulo { font-size: 26px; }
+}
+
+/* ------------------------------------------------------------ impressao */
+
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { font-size: 10pt; }
+  .g5-sidebar, .g5-topbar__acoes, .g5-tabela-ferramentas, .g5-pular { display: none; }
+  .g5-parametros { break-inside: avoid; background: none; }
+  .g5-main { margin: 0; padding: 0; max-width: none; }
+  .g5-marca-impressao {
+    display: block;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--g5-wine);
+    border-bottom: 1px solid var(--g5-line);
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+  }
+  .g5-pagina[hidden] { display: block; }
+  .g5-pagina { break-before: page; }
+  .g5-pagina:first-of-type { break-before: auto; }
+  .g5-secao { break-inside: avoid; margin-bottom: 18px; }
+  .g5-table thead th { position: static; }
+  .g5-table { font-size: 8.5pt; }
+  .g5-tabela-rolagem { overflow: visible; }
+}
+
+.g5-marcador {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g5-wine);
+  border: 1px solid var(--g5-line);
+  border-radius: var(--g5-radius-sm);
+  padding: 1px 5px;
+  vertical-align: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
