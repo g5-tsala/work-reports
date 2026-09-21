@@ -10,6 +10,8 @@ from typing import Any
 
 from core.planilha import numero, texto
 
+from .officers import CEO_LIN_FINAL, CEO_LIN_INICIAL, ROTULO_TOTAL_EX
+
 ABA_RESUMO = "resumo"
 ABA_CEO = "CEO-Dashboard"
 
@@ -180,11 +182,40 @@ def _total_faixa(ws, linha: int, colunas: dict[str, int]) -> dict[str, float | N
     return {campo: numero(ws.cell(linha, colunas[campo]).value) for campo in campos}
 
 
+#: `CEO-Dashboard` — a nota de rodape e procurada **abaixo do rotulo**
+#: `Total Ex- Fdos Alocacao`, o ultimo da tabela de officers, e nao numa linha
+#: fixa da aba. A tabela cresce e encolhe conforme entra e sai officer, e a nota
+#: desce e sobe junto: o extrator apontava para B41 e em 2026-08 ela estava em
+#: B40 — a nota sumiu do dashboard sem nenhum erro. Ancorada no rotulo, a
+#: distancia e estavel: na pratica a nota cai sempre em +2.
+NOTA_DESLOCAMENTO_INICIAL, NOTA_DESLOCAMENTO_FINAL = 2, 6
+
+
 def _notas(pl) -> list[str]:
     """Notas de rodape das duas abas, reproduzidas como estao."""
     ws = pl.aba(ABA_RESUMO)
     notas = [texto(ws.cell(linha, 2).value) for linha in range(18, 23)]
-    nota_ceo = texto(pl.celula(ABA_CEO, "B41"))
-    if nota_ceo:
-        notas.append(nota_ceo)
+    ws_ceo = pl.aba(ABA_CEO)
+    ancora = _linha_total_ex(ws_ceo)
+    notas += [
+        texto(ws_ceo.cell(ancora + salto, 2).value)
+        for salto in range(NOTA_DESLOCAMENTO_INICIAL, NOTA_DESLOCAMENTO_FINAL + 1)
+    ]
     return [n for n in notas if n]
+
+
+def _linha_total_ex(ws) -> int:
+    """Linha do `Total Ex- Fdos Alocacao` — o pe da tabela de officers.
+
+    Erro duro se o rotulo nao aparecer: ele fecha a tabela que a aba inteira
+    serve para montar. Nao estar la significa que a `CEO-Dashboard` mudou de
+    forma, e continuar lendo coordenada por coordenada a partir dai produz
+    numero plausivel e errado.
+    """
+    for linha in range(CEO_LIN_INICIAL, CEO_LIN_FINAL + 1):
+        if texto(ws.cell(linha, 2).value) == ROTULO_TOTAL_EX:
+            return linha
+    raise ValueError(
+        f"rotulo '{ROTULO_TOTAL_EX}' nao encontrado em {ABA_CEO}!B"
+        f"{CEO_LIN_INICIAL}:B{CEO_LIN_FINAL} — a tabela de officers mudou de forma"
+    )

@@ -110,6 +110,11 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
   segmento) e não mensaliza o numerador. Replicar assim para os números baterem, e
   sinalizar na interface que as duas colunas não são estritamente comparáveis.
 - **Câmbio arredondado.** `resumo!B4` exibe 5,08; as contas usam 5,0773 (`info!AQ3`).
+- **A nota de rodapé da `CEO-Dashboard` anda de linha.** Estava fixa em `B41` no extrator e
+  em 2026-08 apareceu em `B40`: a nota desce e sobe conforme entra e sai officer da tabela,
+  e a referência fixa simplesmente perdia a nota, sem erro. Hoje é varrida de +2 a +6 abaixo
+  do rótulo `Total Ex- Fdos Alocação` — âncora que anda junto com a tabela. Vale a regra
+  geral: **nesta aba, coordenada absoluta abaixo da tabela de officers é frágil.**
 - **O intervalo de cada bloco de `cons_officer` invade o nome do bloco seguinte.**
   `$C$31:$O$63` termina na linha 63, que é o rótulo `Alexandre` do próximo officer. Sem
   descartar essa linha, o JSON ganha uma "métrica" com o nome de uma pessoa.
