@@ -30,9 +30,13 @@ MAXIMO_FATIAS = 5
 COR_POSITIVO = "var(--g5-positive)"
 COR_NEGATIVO = "var(--g5-negative)"
 
-LARGURA = 880
-ALTURA = 300
-MARGEM = {"esquerda": 72, "direita": 16, "topo": 12, "base": 36}
+#: O viewBox nao e pixel: o SVG ocupa 100% da largura e a altura sai da
+#: proporcao. Com 1.344px de conteudo (`.g5-main` no maximo), 1200x224 rende
+#: ~250px de altura — o teto de `.g5-grafico--serie`. Mexer nesta razao e mexer
+#: na altura de todo grafico de serie do dashboard.
+LARGURA = 1200
+ALTURA = 224
+MARGEM = {"esquerda": 72, "direita": 16, "topo": 20, "base": 36}
 DIVISOES = 4
 
 
@@ -97,10 +101,15 @@ def _escala_agradavel(minimo: float, maximo: float, divisoes: int = DIVISOES) ->
     return [round(passo * indice, 10) for indice in range(primeira, ultima + 1)]
 
 
-def _texto(x: float, y: float, conteudo: str, classe: str, ancora: str = "middle") -> str:
+def _texto(
+    x: float, y: float, conteudo: str, classe: str, ancora: str = "middle", cor: str = ""
+) -> str:
+    # `style` e nao o atributo `fill`: atributo de apresentacao perde para
+    # qualquer regra CSS, e `.g5-valor-barra` ja declara um `fill` proprio.
+    preenchimento = f' style="fill:{cor}"' if cor else ""
     return (
-        f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{ancora}" class="{classe}">'
-        f"{escape(str(conteudo))}</text>"
+        f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{ancora}" class="{classe}"'
+        f"{preenchimento}>{escape(str(conteudo))}</text>"
     )
 
 
@@ -141,9 +150,16 @@ def _moldura(
     return "".join(partes), y, x, largura_faixa
 
 
-def _svg(conteudo: str, titulo: str, largura: int, altura: int) -> str:
+#: Os dois eixos de crescimento, que o CSS limita de formas diferentes: serie
+#: cresce na horizontal (altura tem teto), ranking cresce na vertical (nao tem).
+CLASSE_SERIE = "g5-grafico--serie"
+CLASSE_RANKING = "g5-grafico--ranking"
+CLASSE_DONUT = "g5-grafico--donut"
+
+
+def _svg(conteudo: str, titulo: str, largura: int, altura: int, classe: str = CLASSE_SERIE) -> str:
     return (
-        f'<svg class="g5-grafico" viewBox="0 0 {largura} {altura}" role="img" '
+        f'<svg class="g5-grafico {classe}" viewBox="0 0 {largura} {altura}" role="img" '
         f'aria-label="{escape(titulo)}" preserveAspectRatio="xMidYMid meet">{conteudo}</svg>'
     )
 
@@ -168,6 +184,7 @@ def linhas(
     altura: int = ALTURA,
     largura: int = LARGURA,
     rotular_ultimo: bool = False,
+    rotular_pontos: bool = False,
     ancorar_zero: bool = False,
 ) -> str:
     """Linha categórica. `rotular_ultimo` escreve o valor no último ponto.
@@ -175,6 +192,11 @@ def linhas(
     O rótulo direto vale o pixel: tira o vaivém entre legenda e traço, e é o
     que mantém o gráfico legível impresso em preto e branco, onde o azul e o
     wine viram o mesmo cinza.
+
+    `rotular_pontos` escreve **todos** os pontos, acima do traço e na cor da
+    série. Só cabe em série curta e de uma série só: com oito pontos os rótulos
+    ficam a ~140px um do outro, com trinta eles se sobrepõem e o gráfico fica
+    ilegível. Ele dispensa o `rotular_ultimo`, que vira redundante.
 
     O eixo **não** é ancorado no zero por padrão. Linha codifica variação, não
     magnitude por área: forçar o zero num AUM que anda 2% ao mês achata a série
@@ -204,7 +226,19 @@ def linhas(
         partes.append(f'<path d="{caminho}" fill="none" stroke="{cor}" class="g5-linha"/>')
         if len(pontos) < 20:
             partes += [f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3" fill="{cor}"/>' for px, py in pontos]
-        if rotular_ultimo:
+        if rotular_pontos:
+            valores = [
+                valor
+                for posicao, valor in enumerate(serie.valores)
+                if valor is not None and posicao < len(categorias)
+            ]
+            for (px, py), valor in zip(pontos, valores):
+                # Acima do ponto, com a margem do topo como piso: um pico colado
+                # no teto do viewBox empurraria o rotulo para fora do desenho.
+                partes.append(
+                    _texto(px, max(py - 12, MARGEM["topo"]), formatador(valor), "g5-rotulo-ponto", cor=cor)
+                )
+        elif rotular_ultimo:
             ultimo_valor = next(
                 (v for v in reversed(serie.valores[: len(categorias)]) if v is not None), None
             )
@@ -228,12 +262,17 @@ def barras(
     altura: int = ALTURA,
     largura: int = LARGURA,
     por_sinal: bool = False,
+    rotular: bool = False,
 ) -> str:
     """Barra vertical, agrupada ou empilhada.
 
     `por_sinal` colore cada barra pelo sinal do valor, e só faz sentido em
     série que oscila em torno do zero — variação, fluxo, resultado. Aplicar a
     nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
+
+    `rotular` escreve o valor fora da barra — acima quando positivo, abaixo
+    quando negativo. Vale numa série curta, onde o número exato importa tanto
+    quanto o desenho; numa série longa os rótulos colidem e o eixo basta.
     """
     partes, _, _, _ = _desenhar_barras(
         categorias,
@@ -243,6 +282,7 @@ def barras(
         altura=altura,
         largura=largura,
         por_sinal=por_sinal,
+        rotular=rotular,
     )
     return _svg("".join(partes), titulo, largura, altura)
 
@@ -257,6 +297,7 @@ def _desenhar_barras(
     largura: int,
     por_sinal: bool,
     series_na_escala: Sequence[Serie] = (),
+    rotular: bool = False,
 ):
     """Constroi as barras e devolve as pecas e a projecao usada.
 
@@ -307,6 +348,24 @@ def _desenhar_barras(
                 f'<rect x="{px:.1f}" y="{min(y1, y2):.1f}" width="{largura_barra:.1f}" '
                 f'height="{abs(y2 - y1):.1f}" fill="{cor}"/>'
             )
+            if rotular:
+                # Fora da barra, do lado para onde ela aponta: dentro, o rotulo
+                # some na barra curta e briga com o preenchimento na longa. Na
+                # cor da barra porque e dela que o numero fala — com barras de
+                # cores diferentes lado a lado, rotulo cinza obriga a mirar a
+                # coluna para saber de quem e o valor.
+                topo_barra = min(y1, y2)
+                base_barra = max(y1, y2)
+                altura_rotulo = topo_barra - 6 if valor >= 0 else base_barra + 14
+                partes.append(
+                    _texto(
+                        px + largura_barra / 2,
+                        altura_rotulo,
+                        formatador(valor),
+                        "g5-valor-barra",
+                        cor=cor,
+                    )
+                )
     return partes, y, x, largura_faixa
 
 
@@ -419,7 +478,7 @@ def barras_horizontais(
         partes.append(
             _texto(largura_rotulo + comprimento + 10, y + 17, formatador(valor), "g5-valor-barra", "start")
         )
-    return _svg("".join(partes), titulo, largura, altura)
+    return _svg("".join(partes), titulo, largura, altura, CLASSE_RANKING)
 
 
 def donut(
@@ -448,7 +507,7 @@ def donut(
         )
         angulo = fim
     partes.append(_texto(centro, centro + 6, formatador(total), "g5-donut-total"))
-    return _svg("".join(partes), titulo, tamanho, tamanho)
+    return _svg("".join(partes), titulo, tamanho, tamanho, CLASSE_DONUT)
 
 
 def _setor(cx: float, cy: float, externo: float, interno: float, inicio: float, fim: float) -> str:

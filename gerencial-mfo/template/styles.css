@@ -369,6 +369,16 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 
 .g5-figura { margin: 0 0 var(--g5-space-2); }
 .g5-grafico { width: 100%; height: auto; display: block; }
+
+/* O SVG ocupa a largura toda e a altura sai da proporcao do viewBox, entao num
+   container largo ela cresce sem limite. Quem ganha teto depende do eixo em que
+   o grafico cresce:
+   - `--serie` cresce na horizontal; a altura e folga e pode ser limitada.
+   - `--ranking` cresce na vertical, um item por linha: teto cortaria item.
+   A proporcao do viewBox e calibrada para que o teto quase nunca atue — quando
+   ele atua, sobra faixa vazia nas laterais. */
+.g5-grafico--serie { max-height: 250px; }
+.g5-grafico--donut { max-height: 260px; }
 .g5-grade { stroke: var(--g5-line); stroke-width: 1; }
 .g5-zero { stroke: var(--g5-slate-aa); stroke-width: 1; }
 .g5-linha { stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }

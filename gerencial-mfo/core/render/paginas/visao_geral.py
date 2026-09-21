@@ -152,14 +152,17 @@ def _evolucao(ctx: Contexto) -> str:
                 graficos.barras(
                     ctx.rotulos(meses),
                     [graficos.Serie("Δ AUM no mês", variacao)],
-                    formatador=lambda v: formato.em_bilhoes(v, 1),
+                    # Em bilhões a série inteira cabia entre -0,1 e 1,0: três
+                    # casas decimais de resolução para oito meses de movimento.
+                    # Milhão é a escala em que esses números têm dígito.
+                    formatador=lambda v: formato.em_milhoes(v, 0),
                     titulo="Variação mensal do AUM em 2026",
-                    altura=240,
                     por_sinal=True,
+                    rotular=True,
                 ),
                 itens_legenda=[
-                    ("Mês de entrada (R$ bi)", graficos.COR_POSITIVO),
-                    ("Mês de saída (R$ bi)", graficos.COR_NEGATIVO),
+                    ("Mês de entrada (R$ mi)", graficos.COR_POSITIVO),
+                    ("Mês de saída (R$ mi)", graficos.COR_NEGATIVO),
                 ],
                 rodape=fonte(
                     "aum_receita", ctx.rotulo_mes, "Offshore convertido pelo câmbio de cada mês."
@@ -171,8 +174,7 @@ def _evolucao(ctx: Contexto) -> str:
                     [graficos.Serie("Receita mensalizada", receita, cor=graficos.SERIES[1])],
                     formatador=lambda v: formato.em_milhoes(v, 1),
                     titulo="Receita mensalizada em 2026",
-                    altura=200,
-                    rotular_ultimo=True,
+                    rotular_pontos=True,
                 ),
                 itens_legenda=[("Receita mensalizada (R$ mi)", graficos.SERIES[1])],
                 rodape=fonte("aum_receita", ctx.rotulo_mes, "Onshore mensalizada + offshore por competência."),

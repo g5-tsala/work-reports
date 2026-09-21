@@ -21,6 +21,9 @@ Pontos que este projeto reforça:
 - Escala: AUM em **R$ bi** no nível MFO e **R$ mi** no nível officer/grupo/portfólio;
   receita e run rate em **R$ mi**; ROA em **%** com 2 casas.
 - Uma escala por tabela, declarada no cabeçalho da coluna (`AUM (R$ mi)`), nunca por célula.
+- **Variação não herda a escala do nível.** O AUM consolidado é R$ bi, mas o que ele varia
+  num mês cabe entre -0,1 e 1,0 bi: em bilhões a série inteira vira casa decimal. Delta de
+  AUM no mês vai em **R$ mi**.
 - Diferença entre percentuais é **p.p.**, nunca `%`.
 - Zero é `0,00`. Traço `—` significa "não aplicável". Célula vazia significa "dado ausente".
   São coisas diferentes e alguém vai perguntar.
@@ -58,9 +61,45 @@ Quatro decisões que já custaram uma rodada de conserto:
 - **Cor por sinal só em série que oscila em torno do zero** — variação, fluxo, resultado.
   Em nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
 
-O valor do último ponto sai rotulado direto na linha (`rotular_ultimo`), com halo branco: é
-o que dispensa o vaivém até a legenda e o que mantém o gráfico legível impresso em preto e
-branco, onde o azul e o wine viram o mesmo cinza.
+### 2.2 Rótulo direto
+
+O número escrito no desenho dispensa o vaivém até o eixo e é o que mantém o gráfico legível
+impresso em preto e branco, onde o azul e o wine viram o mesmo cinza. Três formas, e a
+escolha é pelo tamanho da série:
+
+| Opção | Onde | Quando |
+|---|---|---|
+| `rotular_ultimo` | `linhas()`, `combo()` | série longa: só o valor de fechamento |
+| `rotular_pontos` | `linhas()` | série curta e de uma série só — com ~8 pontos eles ficam a 140px um do outro; com 30 se sobrepõem |
+| `rotular` | `barras()` | série curta; o valor vai fora da barra, acima se positivo e abaixo se negativo |
+
+**O rótulo herda a cor da marca que ele descreve** — a cor da série na linha, a cor da barra
+na barra. Com marcas de cores diferentes lado a lado, rótulo cinza obriga a mirar a coluna
+para saber de quem é o número. Na linha ele leva halo branco (`paint-order: stroke`), senão
+cai em cima do próprio traço quando a série termina achatada.
+
+Detalhe de implementação: a cor sai como `style="fill:…"`, não como atributo `fill`.
+Atributo de apresentação perde para qualquer regra CSS, e `.g5-valor-barra` declara um
+`fill` próprio — com o atributo, o rótulo da barra voltaria silenciosamente para o cinza.
+
+### 2.3 Altura: dois tipos de gráfico, duas regras
+
+O SVG ocupa 100% da largura e a **altura sai da proporção do `viewBox`** — não de um valor
+em pixel. Numa coluna de 1.344px (`.g5-main` no máximo), a proporção antiga de 880×300
+rendia 450px de altura: um gráfico comia a dobra sozinho.
+
+Os dois tipos crescem em eixos diferentes e por isso têm classes CSS diferentes:
+
+| Classe | Tipos | Cresce | Teto |
+|---|---|---|---|
+| `.g5-grafico--serie` | linha, barra vertical, combo | na horizontal (o eixo do tempo se alonga) | `max-height: 250px` |
+| `.g5-grafico--ranking` | barra horizontal | na vertical (um item por linha) | nenhum — teto cortaria item |
+| `.g5-grafico--donut` | donut | nenhum (é quadrado) | `max-height: 260px` |
+
+`LARGURA`/`ALTURA` em `graficos.py` valem 1200×224 justamente para que a altura natural de
+um gráfico de série caia em ~250px na largura máxima — o teto é rede de segurança, não o
+mecanismo. **Mexer nessa razão é mexer na altura de todo gráfico de série do dashboard**; um
+`altura=` avulso numa página quebra a calibragem e cai no teto com letterbox nas laterais.
 
 ---
 
