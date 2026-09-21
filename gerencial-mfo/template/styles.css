@@ -406,7 +406,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 
 /* --------------------------------------------------------- responsivo */
 
-@media (max-width: 1024px) {
+/* `screen and` é obrigatório: sem isso a largura da folha (A4 retrato ~700px)
+   cai nesses breakpoints e a impressão sai empilhada, fora do layout da tela. */
+@media screen and (max-width: 1024px) {
   .g5-sidebar {
     position: sticky;
     top: 0;
@@ -453,7 +455,7 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   .g5-parametro:nth-child(n + 3) { border-top: 1px solid var(--g5-line); }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .g5-kpis, .g5-colunas { grid-template-columns: 1fr; }
   .g5-topbar { flex-direction: column; }
   .g5-topbar__titulo { font-size: 26px; }
@@ -461,12 +463,19 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 
 /* ------------------------------------------------------------ impressao */
 
+/* Imprime só a aba aberta, no mesmo layout da tela. Duas regras sustentam isso:
+   `.g5-pagina[hidden]` continua escondida (nada de override para display:block),
+   e as media queries responsivas são `screen and`, então a grade de KPIs e de
+   colunas chega inteira ao papel. */
 @media print {
-  @page { size: A4 landscape; margin: 12mm; }
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body { font-size: 10pt; }
   .g5-sidebar, .g5-topbar__acoes, .g5-tabela-ferramentas, .g5-pular { display: none; }
-  .g5-parametros { break-inside: avoid; background: none; }
+  .g5-parametros { break-inside: avoid; }
   .g5-main { margin: 0; padding: 0; max-width: none; }
+  .g5-topbar { border-bottom: 0; padding-bottom: 0; margin-bottom: var(--g5-space-2); }
+  .g5-topbar__titulo { font-size: 20pt; }
   .g5-marca-impressao {
     display: block;
     font-size: 8pt;
@@ -477,12 +486,21 @@ h1, h2, h3, h4, p, figure { margin: 0; }
     padding-bottom: 4px;
     margin-bottom: 12px;
   }
-  .g5-pagina[hidden] { display: block; }
-  .g5-pagina { break-before: page; }
-  .g5-pagina:first-of-type { break-before: auto; }
-  .g5-secao { break-inside: avoid; margin-bottom: 18px; }
-  .g5-table thead th { position: static; }
+
+  /* A folha é mais estreita que a tela: o layout é o mesmo, a escala não. */
+  .g5-secao { margin-bottom: 18px; break-inside: auto; }
+  .g5-kpi { padding: var(--g5-space-2); }
+  .g5-kpi__value { font-size: 19pt; }
+  .g5-kpi, .g5-card, .g5-figura, .g5-parametro { break-inside: avoid; }
+  .g5-section-title { font-size: 13pt; break-after: avoid; }
+  .g5-cartao-titulo { break-after: avoid; }
+
+  /* Tabela longa quebra entre páginas levando o cabeçalho junto — melhor que
+     empurrar a seção inteira para a página seguinte. */
   .g5-table { font-size: 8.5pt; }
+  .g5-table thead { display: table-header-group; }
+  .g5-table thead th { position: static; }
+  .g5-table tr { break-inside: avoid; }
   .g5-tabela-rolagem { overflow: visible; }
 }
 

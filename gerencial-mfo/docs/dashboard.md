@@ -98,9 +98,25 @@ Não é opcional e não aparece em screenshot:
 ## 6. Impressão e distribuição
 
 Distribuição inicial por link para download e abertura local. Em `@media print`: marca
-"CONFIDENCIAL — USO INTERNO" no cabeçalho, mês-base e data de geração no rodapé, sidebar
-oculta, quebras de página por seção. **Todas as abas imprimem** — no papel elas deixam de
-ser um menu e viram um relatório contínuo, uma por página.
+"CONFIDENCIAL — USO INTERNO" no cabeçalho, mês-base e data de geração no rodapé, sidebar e
+ferramentas de tabela ocultas.
+
+**Imprime apenas a aba aberta**, não o relatório inteiro: o botão é lido como "imprimir o
+que estou vendo". Quem quiser o caderno completo passa aba a aba. Na prática, `.g5-pagina`
+escondida continua escondida no papel — o `@media print` não reabre nada.
+
+**A impressão respeita o layout da tela.** Duas regras sustentam isso e não podem ser
+afrouxadas:
+
+1. As media queries responsivas são `@media screen and (max-width: …)`. Sem o `screen`, a
+   largura da folha (A4 retrato dá ~700px) cai no breakpoint de 768px e a grade de KPIs e
+   de colunas empilha — o relatório sai com cara de celular.
+2. `print-color-adjust: exact` no `html, body`, senão o navegador descarta o navy do
+   cabeçalho de tabela, a faixa de total e o verde/vermelho do delta.
+
+O que muda no papel é escala, não estrutura: fontes em `pt`, KPI menor, `@page` A4
+paisagem. Tabela longa quebra entre páginas repetindo o `thead` (`display:
+table-header-group`); card, figura e KPI não quebram no meio.
 
 ---
 
