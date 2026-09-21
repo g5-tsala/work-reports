@@ -38,6 +38,10 @@ Os quatro indicadores principais, com ênfase e **nesta ordem**: **AUM → Run R
 Ano → ROA**. Cada um com valor, variação M-1 (absoluta e %) e cor de sinal. Abaixo, split
 Onshore/Offshore e o ranking de officers.
 
+A base da comparação fecha a **mesma linha** do delta, em cinza (`kpi(referencia=…)`):
+`+1,70% · +0,73 bi · (vs. jul/26)`. Um número com sinal sem a base contra a qual foi medido
+não quer dizer nada, e jogar essa base uma linha abaixo separava a pergunta da resposta.
+
 **Officer marcado.** O ranking pinta de wine, com asterisco, o officer que a `CEO-Dashboard`
 traz colorido, e repete a nota da planilha na mesma cor. É estado do fechamento — carteira
 de quem já saiu e ainda não migrou —, e ele chega pelo `marcado` do JSON

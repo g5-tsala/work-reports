@@ -28,6 +28,41 @@ Pontos que este projeto reforça:
 - Zero é `0,00`. Traço `—` significa "não aplicável". Célula vazia significa "dado ausente".
   São coisas diferentes e alguém vai perguntar.
 
+## 1.1 Largura de coluna nas tabelas
+
+Não há largura declarada por coluna — `Coluna(largura=…)` existe em `ui.py` e ninguém usa. O
+layout é `auto`: o navegador mede o conteúdo. A decisão de verdade é **para onde vai a
+folga**, porque `.g5-table` é `width: 100%` e quase sempre sobra largura.
+
+Sem instrução, o navegador espalha a sobra proporcional à largura natural de cada coluna — e
+como o `th` é `nowrap`, quem levava a maior fatia era a coluna de **cabeçalho** mais longo
+(`Δ Receita M-1 (%)` ficou a mais larga da tabela sem ter o que mostrar). O conserto é
+padding, não largura declarada:
+
+```css
+.g5-table .num { padding-left: 8px; padding-right: 8px; }
+.g5-table .text:first-child { padding-right: 32px; }
+```
+
+Ele alarga por igual e deixa a distribuição do resto com o navegador. As colunas saem de
+`Coluna` com a classe `num` ou `text`, conforme `numerica`.
+
+A folga de 32px é da **primeira** coluna, não de toda coluna de texto: é ela que carrega o
+rótulo da linha e precisa se descolar do bloco de números. Aplicada a `.text` inteiro, ela
+multiplica pelo número de colunas de texto — na tabela de portfólios são oito, e
+`Companhia Estadual de Águas e Esgotos CEDAE` cai para três linhas.
+
+Duas alternativas foram testadas e descartadas, e não vale reabrir sem motivo novo:
+
+- `th:not(.num) { width: 100% }` joga a folga inteira na coluna de texto — o ranking fica
+  com um vão de 700px entre o nome e o primeiro número.
+- `th:not(.num) { width: 20% }` conserta o ranking e **quebra a tabela de portfólios**: lá
+  são oito colunas de texto, que passam a dividir a fatia em partes iguais, e
+  `SP - São Paulo - Grande SP` cai de duas para três linhas.
+
+Largura automática pura (`.g5-table { width: auto }`) também funciona — a tabela termina
+onde o dado termina —, mas deixa branco à direita nas tabelas de poucas colunas.
+
 ## 2. Gráficos
 
 Módulo SVG próprio, sem biblioteca externa — **gerado no build, em Python**

@@ -68,13 +68,31 @@ def fonte(aba: str, mes: str, observacao: str = "") -> str:
 # --------------------------------------------------------------------------
 
 
-def kpi(rotulo: str, valor: str, *, delta: str = "", classe_delta: str = "", detalhe: str = "") -> str:
+def kpi(
+    rotulo: str,
+    valor: str,
+    *,
+    delta: str = "",
+    classe_delta: str = "",
+    referencia: str = "",
+    detalhe: str = "",
+) -> str:
+    """`referencia` e a base de comparacao do delta — `vs. jul/26`.
+
+    Ela fecha a linha do delta, em cinza: um numero com sinal sem a base contra
+    a qual ele foi medido nao quer dizer nada, e jogar essa base uma linha
+    abaixo separava a pergunta da resposta.
+    """
     partes = [
         f'<span class="g5-kpi__label">{esc(rotulo)}</span>',
         f'<span class="g5-kpi__value">{esc(valor)}</span>',
     ]
-    if delta:
-        partes.append(f'<span class="g5-kpi__delta {classe_delta}">{esc(delta)}</span>')
+    if delta or referencia:
+        marca_ref = f'<span class="g5-kpi__ref">({esc(referencia)})</span>' if referencia else ""
+        separador = " · " if delta and referencia else ""
+        partes.append(
+            f'<span class="g5-kpi__delta {classe_delta}">{esc(delta)}{separador}{marca_ref}</span>'
+        )
     if detalhe:
         partes.append(f'<span class="g5-kpi__detalhe">{esc(detalhe)}</span>')
     return f'<div class="g5-kpi">{"".join(partes)}</div>'
@@ -115,7 +133,7 @@ class Coluna:
 
     @property
     def classe(self) -> str:
-        return "num" if self.numerica else ""
+        return "num" if self.numerica else "text"
 
     @property
     def tipo_ordenacao(self) -> str:

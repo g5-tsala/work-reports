@@ -54,19 +54,20 @@ def _kpis(ctx: Contexto) -> str:
             formato.bilhoes(consolidado["aum"]["total"]),
             delta=f"{formato.variacao(cartao['aum_var_pct'])} · {formato.com_sinal(cartao['aum_var_bi'], formato.numero, casas=2)} bi",
             classe_delta=formato.classe_sinal(cartao["aum_var_pct"]),
-            detalhe=f"vs. {formato.mes_curto(ctx.mes_anterior)}",
+            referencia=f"vs. {formato.mes_curto(ctx.mes_anterior)}",
         ),
         kpi(
             "Run Rate",
             formato.milhoes(consolidado["run_rate"]["total"]),
             delta=f"{formato.variacao(cartao['run_rate_var_pct'])} · {formato.com_sinal(cartao['run_rate_var_mi'], formato.numero, casas=2)} mi",
             classe_delta=formato.classe_sinal(cartao["run_rate_var_pct"]),
+            referencia=f"vs. {formato.mes_curto(ctx.mes_anterior)}",
             detalhe="receita mensalizada × 12",
         ),
         kpi(
             "Projeção Ano",
             formato.milhoes(projecao),
-            detalhe=f"{formato.milhoes(receita_ano)} realizados por competência",
+            detalhe=f"{formato.milhoes(receita_ano)} realizados até {formato.mes_curto(ctx.mes_base)}",
         ),
         kpi(
             "ROA",

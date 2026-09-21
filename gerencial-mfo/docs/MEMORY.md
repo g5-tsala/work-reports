@@ -67,6 +67,11 @@ Não reabrir sem motivo novo.
   geradora aparece no JSON sem alterar o extrator.
 - **Uma aba do dashboard = um arquivo em `core/render/paginas/`**, registrado por decorador.
   O menu e o roteamento saem do registro; mexer numa aba não encosta em nenhuma outra.
+- **Comentário em `styles.css` é genérico.** A folha é compartilhada por todas as abas: um
+  comentário que cita a tabela, a coluna ou o dado que motivou a regra amarra uma classe
+  reutilizável a um layout específico e envelhece na primeira mudança de página. O comentário
+  explica o mecanismo CSS e o porquê da escolha; o caso concreto que a motivou vive em
+  [visual.md](visual.md). O mesmo vale para o `app.js`.
 - **Texto da planilha é escapado por padrão no HTML.** A célula escapa sozinha; HTML montado
   por nós entra só por `ui.html(...)`, e quem chama escapa os pedaços que vieram do dado. A
   base já tem `&` e apostrofo em nome de grupo — não é hipótese.

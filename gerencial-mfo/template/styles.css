@@ -15,6 +15,7 @@
   --g5-line: #D9DDE3;
   --g5-bg-soft: #F4F6F9;
   --g5-bg-band: #E8ECF1;
+  --g5-bg-hover: #DCE3EC;
   --g5-white: #FFFFFF;
 
   --g5-positive: #1F6B3A;
@@ -280,10 +281,10 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-kpi {
   border: 1px solid var(--g5-line);
   border-radius: var(--g5-radius-md);
-  padding: var(--g5-space-3);
+  padding: 12px var(--g5-space-3);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .g5-kpi__label {
   font-size: 11px;
@@ -293,6 +294,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 }
 .g5-kpi__value { font: 600 34px/1.1 var(--g5-sans); color: var(--g5-navy); }
 .g5-kpi__delta { font-size: 13px; font-weight: 600; }
+/* A base da comparacao acompanha o delta na mesma linha, mas em cinza: e
+   contexto, nao resultado, e nao disputa a leitura com o sinal. */
+.g5-kpi__ref { color: var(--g5-slate-aa); font-weight: 400; }
 .g5-kpi__detalhe { font-size: 12px; color: var(--g5-slate-aa); }
 
 .positivo { color: var(--g5-positive); }
@@ -315,18 +319,25 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 10px 14px;
+  padding: 4px 8px;
   text-align: left;
   white-space: nowrap;
   position: sticky;
   top: 0;
 }
 .g5-table thead th.num { text-align: right; }
+/* Respiro lateral por tipo de coluna, em vez de largura declarada: o padding
+   compensa por igual e nao depende de quantas colunas a tabela tem.
+   A folga maior vai so para a primeira coluna, que carrega o rotulo da linha e
+   precisa se descolar do que vem depois. Aplicada a toda coluna de texto, ela
+   multiplicaria pelo numero delas e espremeria o conteudo. */
+.g5-table .num { padding-left: 8px; padding-right: 8px; }
+.g5-table .text:first-child { padding-right: 32px; }
 .g5-table thead th[data-ordena] { cursor: pointer; }
 .g5-table thead th[data-ordena]:hover { background: var(--g5-navy-deep); }
 .g5-table thead th[aria-sort]::after { content: " ▲"; font-size: 9px; }
 .g5-table thead th[aria-sort="descending"]::after { content: " ▼"; }
-.g5-table tbody td { padding: 8px 14px; border-bottom: 1px solid var(--g5-line); }
+.g5-table tbody td { padding: 2px 6px; border-bottom: 1px solid var(--g5-line); }
 .g5-table tbody tr:nth-child(even) td { background: var(--g5-bg-soft); }
 .g5-table tbody tr.subtotal td { background: var(--g5-bg-band); font-weight: 600; }
 .g5-table tbody tr.total td {
@@ -339,10 +350,13 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 /* Linha que a fonte marcou: a marcacao e dado, e anda junto com um simbolo na
    celula e uma nota de rodape na mesma cor. */
 .g5-table tbody tr.marcada td { color: var(--g5-wine); }
+/* Depois das regras de faixa, subtotal e total, de proposito — o realce de
+   hover vale para qualquer linha e precisa vencer todas. */
+.g5-table tbody tr:hover td { background: var(--g5-bg-hover); }
 .g5-table td.num { text-align: right; }
-.g5-table td.nivel-1 { padding-left: 30px; }
-.g5-table td.nivel-2 { padding-left: 48px; }
-.g5-table td.nivel-3 { padding-left: 66px; }
+.g5-table td.nivel-1 { padding-left: 22px; }
+.g5-table td.nivel-2 { padding-left: 38px; }
+.g5-table td.nivel-3 { padding-left: 54px; }
 .g5-table tbody tr[data-abre] { cursor: pointer; }
 .g5-table tbody tr[data-abre] td:first-child::before {
   content: "▸ ";
@@ -434,9 +448,8 @@ h1, h2, h3, h4, p, figure { margin: 0; }
     border-bottom: 1px solid var(--g5-line);
     padding: var(--g5-space-2) 0 0;
   }
-  /* Dezesseis itens quebrados em linhas empurram o primeiro número para baixo
-     da dobra. Numa tela estreita o menu vira uma trilha horizontal: ocupa uma
-     linha, e o conteúdo começa onde deve. */
+  /* Empilhados, os itens do menu empurram o conteúdo para baixo da dobra. Numa
+     tela estreita ele vira uma trilha horizontal: ocupa uma linha só. */
   .g5-sidebar__topo {
     display: flex;
     align-items: baseline;
