@@ -9,7 +9,7 @@ from __future__ import annotations
 from .. import formato, graficos
 from ..contexto import Contexto
 from ..pagina import pagina
-from ..ui import Coluna, Linha, esc, faixa_kpis, fonte, grafico, kpi, nota, num, secao, tabela
+from ..ui import Coluna, Linha, esc, faixa_kpis, fonte, grafico, kpi, num, secao, tabela
 
 ORIGENS = (("Onshore", "onshore"), ("Offshore", "offshore"), ("Total", "total"))
 
@@ -183,36 +183,58 @@ def _evolucao(ctx: Contexto) -> str:
 
 def _ranking(ctx: Contexto) -> str:
     tabela_ceo = ctx.bloco("officers", "tabela_ceo")
+    # Ordem da planilha, sem reordenar: alfabética, com quem saiu e os Fdos
+    # Alocação no pé. Quem quer o ranking por AUM clica no cabeçalho da coluna —
+    # a ordenação continua lendo o valor cru. Ordenar por AUM na entrega
+    # tornava a tabela impossível de conferir contra a CEO-Dashboard linha a
+    # linha, que é o uso dela no fechamento.
     carteiras = [linha for linha in tabela_ceo if linha["tipo"] in ("officer", "fdos_alocacao")]
-    carteiras.sort(key=lambda linha: linha["aum_mi"] or 0, reverse=True)
     total = next((linha for linha in tabela_ceo if linha["tipo"] == "total"), None)
 
     colunas = [
         Coluna("Officer"),
         Coluna("AUM (R$ mi)", numerica=True),
-        Coluna("Δ AUM M-1", numerica=True),
+        Coluna("Δ AUM M-1 (%)", numerica=True),
         Coluna("% AUM", numerica=True),
         Coluna("Receita (R$)", numerica=True),
+        Coluna("Δ Receita M-1 (%)", numerica=True),
+        Coluna("% Receita", numerica=True),
         Coluna("ROA (%)", numerica=True),
         Coluna("Qtd. portf.", numerica=True),
     ]
 
+    def delta(registro, campo: str):
+        """Variação M-1 com uma casa: aqui ela é leitura de ordem de grandeza.
+
+        Duas casas num ranking de vinte linhas viram vinte números de cinco
+        dígitos que ninguém compara — quem quiser a precisão abre a aba
+        Officers, que traz a mesma variação ao lado da série que a produziu.
+        """
+        valor = registro[campo]
+        return num(formato.variacao(valor, 1), formato.classe_sinal(valor), ordem=valor)
+
     linhas = [
         Linha(
             [
-                registro["nome"],
+                f"{registro['nome']} *" if registro.get("marcado") else registro["nome"],
                 num(formato.numero(registro["aum_mi"]), ordem=registro["aum_mi"]),
-                num(
-                    formato.variacao(registro["aum_var_pct"]),
-                    formato.classe_sinal(registro["aum_var_pct"]),
-                    ordem=registro["aum_var_pct"],
-                ),
+                delta(registro, "aum_var_pct"),
                 num(formato.percentual(registro["pct_aum"]), ordem=registro["pct_aum"]),
                 num(formato.numero(registro["receita"], 0), ordem=registro["receita"]),
+                delta(registro, "receita_var_pct"),
+                num(formato.percentual(registro["pct_receita"]), ordem=registro["pct_receita"]),
                 num(formato.percentual(registro["roa"]), ordem=registro["roa"]),
                 num(formato.inteiro(registro["qtd_portfolios"]), ordem=registro["qtd_portfolios"]),
             ],
-            classe="destaque" if registro["tipo"] == "fdos_alocacao" else "",
+            classe=" ".join(
+                filter(
+                    None,
+                    (
+                        "destaque" if registro["tipo"] == "fdos_alocacao" else "",
+                        "marcada" if registro.get("marcado") else "",
+                    ),
+                )
+            ),
         )
         for registro in carteiras
     ]
@@ -222,9 +244,11 @@ def _ranking(ctx: Contexto) -> str:
                 [
                     "Total",
                     num(formato.numero(total["aum_mi"])),
-                    num(formato.variacao(total["aum_var_pct"]), formato.classe_sinal(total["aum_var_pct"])),
+                    delta(total, "aum_var_pct"),
                     num(formato.percentual(total["pct_aum"])),
                     num(formato.numero(total["receita"], 0)),
+                    delta(total, "receita_var_pct"),
+                    num(formato.percentual(total["pct_receita"])),
                     num(formato.percentual(ctx.bloco("consolidado", "roa")["total"])),
                     num(formato.inteiro(total["qtd_portfolios"])),
                 ],
@@ -235,12 +259,18 @@ def _ranking(ctx: Contexto) -> str:
 
 
 def _nota_rodape(ctx: Contexto) -> str:
+    """A nota que explica o asterisco — na mesma cor das linhas que ele marca.
+
+    O texto sai da própria planilha, não é nosso. Sem officer marcado no mês, a
+    nota não tem o que explicar e some.
+    """
+    marcados = any(
+        linha.get("marcado") for linha in ctx.bloco("officers", "tabela_ceo")
+    )
+    if not marcados:
+        return ""
     notas = ctx.bloco("consolidado", "notas")
     rodape = next((texto for texto in notas if texto.startswith("*")), "")
-    texto = (
-        "<strong>Fdos Alocação</strong> é o pseudo-officer dos fundos próprios da G5 e entra "
-        "sempre nos totais, para que TOTAL feche entre todas as visões."
-    )
-    if rodape:
-        texto += f" <em>Nota da planilha: {esc(rodape.lstrip('* '))}.</em>"
-    return nota(texto)
+    if not rodape:
+        return ""
+    return f'<p class="g5-nota g5-nota--marcada">{esc(rodape)}</p>'

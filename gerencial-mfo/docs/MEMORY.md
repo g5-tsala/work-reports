@@ -110,6 +110,11 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
   segmento) e não mensaliza o numerador. Replicar assim para os números baterem, e
   sinalizar na interface que as duas colunas não são estritamente comparáveis.
 - **Câmbio arredondado.** `resumo!B4` exibe 5,08; as contas usam 5,0773 (`info!AQ3`).
+- **A cor da fonte na `CEO-Dashboard` é dado, não formatação.** O officer pintado de
+  vermelho é o que já saiu e ainda tem cliente vinculado; não existe coluna de status, a cor
+  é o único registro. Vira `officers.tabela_ceo[].marcado`
+  ([contrato-json.md](contrato-json.md) §3.3). A regra é "cor explícita que não seja preto",
+  não o tom exato — quem edita troca de vermelho entre os meses.
 - **A nota de rodapé da `CEO-Dashboard` anda de linha.** Estava fixa em `B41` no extrator e
   em 2026-08 apareceu em `B40`: a nota desce e sobe conforme entra e sai officer da tabela,
   e a referência fixa simplesmente perdia a nota, sem erro. Hoje é varrida de +2 a +6 abaixo

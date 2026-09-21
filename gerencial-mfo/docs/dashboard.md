@@ -38,6 +38,11 @@ Os quatro indicadores principais, com ênfase e **nesta ordem**: **AUM → Run R
 Ano → ROA**. Cada um com valor, variação M-1 (absoluta e %) e cor de sinal. Abaixo, split
 Onshore/Offshore e o ranking de officers.
 
+**Officer marcado.** O ranking pinta de wine, com asterisco, o officer que a `CEO-Dashboard`
+traz colorido, e repete a nota da planilha na mesma cor. É estado do fechamento — carteira
+de quem já saiu e ainda não migrou —, e ele chega pelo `marcado` do JSON
+([contrato-json.md](contrato-json.md) §3.3), não por lista de nomes no código.
+
 ## 3. Períodos
 
 Toda visão temporal oferece **MTD, Trimestre e YTD**. Não há meta ou orçamento nesta

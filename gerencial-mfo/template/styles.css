@@ -256,6 +256,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 }
 
 .g5-nota { font-size: 13px; color: var(--g5-graphite); margin-top: var(--g5-space-2); }
+/* A nota que explica uma marcacao usa a cor da marcacao — senao o leitor tem
+   de adivinhar a qual das linhas o asterisco se refere. */
+.g5-nota--marcada { color: var(--g5-wine); }
 .g5-aviso {
   font-size: 13px;
   color: var(--g5-graphite);
@@ -333,6 +336,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 }
 .g5-table tbody tr.destaque td { font-weight: 600; }
 .g5-table tbody tr.detalhe td { background: var(--g5-white); color: var(--g5-graphite); }
+/* Linha que a fonte marcou: a marcacao e dado, e anda junto com um simbolo na
+   celula e uma nota de rodape na mesma cor. */
+.g5-table tbody tr.marcada td { color: var(--g5-wine); }
 .g5-table td.num { text-align: right; }
 .g5-table td.nivel-1 { padding-left: 30px; }
 .g5-table td.nivel-2 { padding-left: 48px; }

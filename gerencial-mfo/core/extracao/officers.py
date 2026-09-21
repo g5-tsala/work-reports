@@ -59,15 +59,44 @@ def _tabela_ceo(ctx) -> list[dict[str, Any]]:
     ws = ctx.pl.aba(ABA_CEO)
     linhas = []
     for linha in range(CEO_LIN_INICIAL, CEO_LIN_FINAL + 1):
-        nome = texto(ws.cell(linha, CEO_COL_NOME).value)
+        celula_nome = ws.cell(linha, CEO_COL_NOME)
+        nome = texto(celula_nome.value)
         if nome is None:
             continue
-        registro: dict[str, Any] = {"nome": nome, "tipo": _tipo_linha(nome)}
+        registro: dict[str, Any] = {
+            "nome": nome,
+            "tipo": _tipo_linha(nome),
+            "marcado": _marcado(celula_nome),
+        }
         registro.update(
             {campo: numero(ws.cell(linha, coluna).value) for campo, coluna in CEO_CAMPOS.items()}
         )
         linhas.append(registro)
     return linhas
+
+
+#: Preto e "automatico": fonte sem cor explicita, ou seja, linha nao marcada.
+_CORES_NEUTRAS = frozenset({"FF000000", "00000000"})
+
+
+def _marcado(celula) -> bool:
+    """`True` quando o officer esta pintado na CEO-Dashboard.
+
+    A planilha marca com cor de fonte (hoje `C00000`, o vermelho do Office) o
+    officer que ja saiu mas ainda tem cliente vinculado — e a nota de rodape
+    `B41` explica o que a cor quer dizer. E dado de fechamento, nao formatacao:
+    quem le o ranking precisa saber que aquele AUM esta em transicao.
+
+    Lido pela cor porque e o unico lugar onde a planilha registra isso; nao ha
+    coluna de status. Qualquer cor explicita que nao seja preto conta — a
+    regra nao depende do tom exato, que muda de mes para mes na mao de quem
+    edita.
+    """
+    cor = celula.font.color if celula.font else None
+    if cor is None or cor.type != "rgb":
+        return False
+    rgb = cor.rgb
+    return isinstance(rgb, str) and rgb.upper() not in _CORES_NEUTRAS
 
 
 def _tipo_linha(nome: str) -> str:

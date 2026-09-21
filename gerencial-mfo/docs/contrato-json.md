@@ -87,7 +87,22 @@ serem lidos: uma coluna trocada na geradora viraria uma série invertida sem sin
 `backup` vem `null` quando a planilha traz `#N/D` — é "sem backup atribuído", nunca uma
 pessoa.
 
-### 3.3 Bloco de administrador
+### 3.3 Officer marcado na planilha
+
+`officers.tabela_ceo[].marcado` é `true` quando o nome do officer está **pintado** na
+`CEO-Dashboard` — hoje no vermelho `C00000` do Office. A cor é o único registro que a
+planilha tem desse estado (não existe coluna de status), e a nota de rodapé logo abaixo da
+tabela diz o que ela significa: *"Ainda existem clientes vinculados"* — officer que já saiu
+mas cuja carteira ainda não migrou.
+
+A regra é **qualquer cor de fonte explícita que não seja preto**, não o tom exato: quem
+edita a planilha troca de vermelho de um mês para o outro. A nota correspondente entra em
+`consolidado.notas`, procurada de **+2 a +6 linhas abaixo do rótulo `Total Ex- Fdos
+Alocação`** — o pé da tabela de officers. A âncora é o rótulo, não um número de linha,
+porque a tabela cresce e encolhe conforme entra e sai officer e a nota desce e sobe junto;
+na prática ela cai sempre em +2.
+
+### 3.4 Bloco de administrador
 
 `estrutura.administradores.{onshore,offshore}.blocos[]` traz, além das linhas rotuladas, o
 campo **`agrupamento`** — o marcador que a planilha escreve na linha acima do nome do bloco.
