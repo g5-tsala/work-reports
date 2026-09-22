@@ -205,9 +205,11 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-parametro__papel { font-size: 11px; color: var(--g5-slate-aa); }
 
 .g5-pagina[hidden] { display: none; }
+/* Sem medida de leitura, ao contrario do texto corrido da secao: e uma linha
+   de subtitulo, e limita-la a fazia quebrar em duas com a tela sobrando ao
+   lado. Quem escrever um subtitulo de paragrafo aqui perde o limite junto. */
 .g5-pagina__descricao {
   color: var(--g5-graphite);
-  max-width: 76ch;
   margin-bottom: var(--g5-space-4);
 }
 
