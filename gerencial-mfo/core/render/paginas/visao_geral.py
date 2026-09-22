@@ -62,7 +62,7 @@ def render(ctx: Contexto) -> str:
                 link_aba("historico", "Histórico completo desde 2018 em Histórico AUM × Receita"),
             ),
             secao(f"Run Rate desde {desde}", _run_rate(ctx, onshore, offshore, meses)),
-            link_aba("officers", "Ranking por officer na aba Officers"),
+            secao("Ranking Officers", link_aba("officers", "Ranking por officer na aba Officers")),
         ]
     )
 
