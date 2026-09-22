@@ -123,7 +123,7 @@ em `core/`:
 | `core/json_io.py` | leitura e escrita do JSON intermediário. |
 
 Dentro de `core/extracao/`: `parametros` (aba `info`), `consolidado` (`resumo` +
-`CEO-Dashboard`), `historico` (`aum_receita`, `roa_historico`), `officers`
+`CEO-Dashboard`), `historico` (`aum_receita`), `officers`
 (`cons_officer`), `carteira` (bases de posição, grupos, regiões), `captacao` (`net_in_out`,
 `io_*`, blocos do `Dashboard`), `estrutura` (administradores, `G5JUS`), `checks` (os checks
 embutidos) e `comum` (leitura de blocos rotulados, compartilhada).

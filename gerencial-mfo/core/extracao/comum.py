@@ -2,7 +2,7 @@
 
 Varias abas seguem o mesmo formato: um rotulo na coluna B e uma serie de meses
 a direita. `linhas_rotuladas` le esse formato uma vez so, para `aum_receita`,
-`roa_historico`, `cons_officer` e `ar_adm_*`.
+`cons_officer` e `ar_adm_*`.
 
 O nivel de hierarquia vem do recuo da celula (`indent`), que a geradora usa
 para aninhar as quebras — `IN/OUT` no nivel 1, os tipos de veiculo no nivel 2.

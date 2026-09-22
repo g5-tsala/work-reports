@@ -9,7 +9,7 @@ com barra wine à esquerda. Agrupamento:
 
 ```
 VISÃO EXECUTIVA     Visão Geral · Resumo
-PERFORMANCE         Histórico AUM × Receita · ROA Histórico
+PERFORMANCE         Histórico AUM × Receita
 CARTEIRA            Officers · Grupos Econômicos · Regiões · Portfólios On · Portfólios Off
 CAPTAÇÃO            Net In/Out · Grupos · Portfólios · NET Executado
 ESTRUTURA           Administradores Onshore · Administradores Offshore
@@ -98,9 +98,9 @@ Não é opcional e não aparece em screenshot:
 - **Foco de teclado visível** em wine, com `outline-offset`. O contorno default do navegador
   é preto e some sobre o navy do cabeçalho de tabela.
 - **`prefers-reduced-motion` respeitado.**
-- **Menu em tela estreita vira trilha horizontal rolável.** Dezesseis itens quebrados em
-  linhas empurravam o primeiro número para baixo da dobra — num relatório executivo aberto
-  no celular, isso é o defeito mais caro da página.
+- **Menu em tela estreita vira trilha horizontal rolável.** Empilhados, os itens do menu
+  empurravam o primeiro número para baixo da dobra — num relatório executivo aberto no
+  celular, isso é o defeito mais caro da página.
 - Tabela financeira **não reflui em cards** abaixo de 768px: rola na horizontal, porque
   linha reflowada deixa de ser comparável com a de cima.
 

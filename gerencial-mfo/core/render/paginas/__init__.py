@@ -24,6 +24,5 @@ from . import (  # noqa: F401
     portfolios_onshore,
     regioes,
     resumo,
-    roa_historico,
     visao_geral,
 )

@@ -23,7 +23,7 @@ nenhuma. O histórico de quem mudou o quê é trabalho do `git log`.
 | `gerar-dashboard.bat` · `gerar-dashboard.sh` · `pyproject.toml` · `uv.lock` | pronto |
 | **Etapa 1 — extração** | **pronta.** `outputs/2026-07/data-2026-07.json`, ~1,8 MB |
 | **Etapa 2 — validação** | **pronta.** 10/10 no checklist |
-| **Etapa 3 — renderização** | **pronta.** 16 abas, `dashboard-2026-07.html`, ~1,7 MB |
+| **Etapa 3 — renderização** | **pronta.** 15 abas, `dashboard-2026-07.html`, ~1,7 MB |
 | Filtros combináveis e toggle Ex-Fdos | **não iniciados** (backlog) |
 
 O build de `2026-07` passa nos **10 itens do checklist** de
@@ -31,7 +31,7 @@ O build de `2026-07` passa nos **10 itens do checklist** de
 `resumo`, `CEO-Dashboard` e a contagem nas bases; e o recálculo de Qtd. Grupos reproduz os
 20 officers e os 361 grupos distintos.
 
-O HTML foi conferido em navegador: as 16 abas trocam, a busca filtra, a ordenação numérica
+O HTML foi conferido em navegador: as abas trocam, a busca filtra, a ordenação numérica
 lê o valor cru, o drill-down abre e não há erro de console.
 
 Próximo passo: revalidar a decisão dos gráficos SVG (agora que existe protótipo) e decidir
@@ -85,13 +85,18 @@ Não reabrir sem motivo novo.
 
 ### Produto
 
-- Menu lateral, não abas no topo — são 14 abas visíveis.
+- Menu lateral, não abas no topo — a lista não cabe numa faixa no alto da tela.
 - KPIs da home nesta ordem: **AUM → Run Rate → Projeção Ano → ROA**.
 - Fdos Alocação sempre nos totais, com toggle global "Ex-Fdos Alocação" para proporções.
 - Períodos MTD, Trimestre e YTD. **Não há meta ou orçamento** nesta análise — isso é
   discutido em outro fórum comercial. O acompanhamento é de evolução, não de atingimento.
 - Drill-down sob demanda: consolidado no nível zero, detalhe ao clicar na linha.
 - Filtros ágeis por officer, tipo de veículo e segmento.
+- **A aba `roa_historico` da planilha fica de fora** — nem aba no dashboard, nem bloco no
+  JSON. O corte é de escopo, não técnico: a leitura de ROA que o fechamento usa é a da aba
+  Resumo (categoria e faixa de PL no mês) e a série de ROA do Histórico. A série longa por
+  categoria não entrou em nenhuma conversa de decisão, e extraí-la custava dez blocos
+  varridos e ~110 KB no HTML. Se voltar a ser pedida, o `git log` tem o extrator pronto.
 - Nomes reais. Marca de confidencialidade na impressão.
 - Distribuição por link para download hoje; `<iframe>` num portal no futuro.
 

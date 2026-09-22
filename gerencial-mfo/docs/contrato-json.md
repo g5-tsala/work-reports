@@ -31,7 +31,7 @@ jq -r '.avisos[]'     outputs/2026-07/data-2026-07.json
 | `meta` | — | mês-base, arquivo de origem, versões, marca de confidencialidade |
 | `parametros` | `info` | `dolar`, `cdi_mes`, `nwdays_mes`, de-para `login → apelido` |
 | `consolidado` | `resumo`, `CEO-Dashboard` | KPIs, ROA por categoria e por grupo, notas |
-| `historico` | `aum_receita`, `roa_historico` | séries longas 2018→mês-base |
+| `historico` | `aum_receita` | série longa 2018→mês-base |
 | `officers` | `CEO-Dashboard`, `cons_officer` | tabela do ranking e o bloco mensal de cada officer |
 | `carteira` | `ar_onshore`, `ar_offshore`, `ar_grupos`, `regiao` | portfólios, grupos e regiões |
 | `captacao` | `net_in_out`, `io_grupos`, `io_portfolios`, `Dashboard` | IN/OUT cliente e NET executado |
@@ -43,7 +43,7 @@ jq -r '.avisos[]'     outputs/2026-07/data-2026-07.json
 
 ### 3.1 Bloco de linhas rotuladas
 
-Usado em `aum_receita`, `roa_historico`, `cons_officer`, `ar_adm_*` e `net_in_out`:
+Usado em `aum_receita`, `cons_officer`, `ar_adm_*` e `net_in_out`:
 
 ```json
 {

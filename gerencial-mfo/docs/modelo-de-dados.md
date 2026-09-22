@@ -18,7 +18,6 @@ a visível agrega.
 | `Dashboard` | Resultado e run rate, captação cliente, NET executado por mês | Visão Geral + Captação |
 | `resumo` | ROA por Categoria/Faixa PL e por Grupo/Faixa PL, 4 donuts | Resumo |
 | `aum_receita` | Série AUM × Receita × ROA, onshore e offshore, 2018→hoje | Histórico |
-| `roa_historico` | Qtd. veículos, AUM e Receita anualizada por categoria/faixa, série longa | ROA Histórico |
 | `ar_grupos` | Top 10 AUM por grupo econômico, mês a mês | Grupos Econômicos |
 | `ar_adm_on` | AUM × Receita × Custos por administrador, onshore (R$) | Administradores Onshore |
 | `ar_adm_off` | AUM × Receita × Custos por administrador, offshore (US$) | Administradores Offshore |
@@ -54,7 +53,7 @@ Demais dimensões por portfólio: `Adm` (administrador), `Grupo` (grupo econômi
 
 ## 4. Grade temporal
 
-Nas abas de série longa (`aum_receita`, `roa_historico`, `ar_adm_on`), o cabeçalho de datas
+Nas abas de série longa (`aum_receita`, `ar_adm_on`), o cabeçalho de datas
 está na **linha 5** e a **linha 4 traz a contagem de dias úteis** do período — é o que
 sustenta a mensalização da receita.
 
