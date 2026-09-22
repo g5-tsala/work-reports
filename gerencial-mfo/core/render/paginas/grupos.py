@@ -1,7 +1,8 @@
 """Aba: Grupos Econômicos.
 
-Top 10 por AUM e por receita no mês, concentração do topo sobre o total, e a
-base completa de grupos com filtro.
+Top 10 por AUM e por receita no mês, com o par de barras AUM × receita da
+união dos dois, concentração do topo sobre o total, e a base completa de grupos
+com filtro.
 """
 
 from __future__ import annotations
@@ -11,7 +12,20 @@ from typing import Any
 from .. import formato, graficos
 from ..contexto import Contexto
 from ..pagina import pagina
-from ..ui import Coluna, Linha, faixa_kpis, fonte, grafico, kpi, nota, num, secao, tabela
+from ..ui import (
+    Coluna,
+    Linha,
+    cartao,
+    colunas,
+    faixa_kpis,
+    fonte,
+    grafico,
+    kpi,
+    nota,
+    num,
+    secao,
+    tabela,
+)
 
 RANK_G5 = "-"
 RANK_SOMA = "SOMA"
@@ -38,13 +52,13 @@ def render(ctx: Contexto) -> str:
                 "Top 10 por AUM",
                 _tabela_ranking(por_aum, "aum", "top-aum"),
                 fonte("ar_grupos", ctx.rotulo_mes),
-                _barras(por_aum, "aum"),
             ),
             secao(
                 "Top 10 por receita",
                 _tabela_ranking(por_receita, "receita", "top-receita"),
                 fonte("ar_grupos", ctx.rotulo_mes),
             ),
+            secao("AUM e receita do Top 10", _barras(ctx, por_aum, por_receita)),
             secao(
                 "Base completa",
                 _tabela_base(ctx),
@@ -129,19 +143,52 @@ def _tabela_ranking(linhas_ranking: list[dict[str, Any]], criterio: str, identif
     return tabela(colunas, linhas, identificador=identificador, ordenavel=False)
 
 
-def _barras(linhas_ranking: list[dict[str, Any]], criterio: str) -> str:
-    itens = [
-        (registro["grupo"], registro[criterio])
-        for registro in linhas_ranking
-        if registro["rank"] not in RANKS_AGREGADOS and registro["grupo"]
-    ]
-    return grafico(
-        graficos.barras_horizontais(
-            itens,
-            formatador=lambda v: formato.em_bilhoes(v, 2),
-            titulo="Top grupos por AUM",
-        ),
-        itens_legenda=[("AUM (R$ bi)", graficos.SERIES[0])],
+#: Cada gráfico do par: campo do ranking, título do cartão (com a escala) e o
+#: formatador que a escala exige.
+GRAFICOS = (
+    ("aum", "AUM", "R$ mi", lambda v: formato.em_milhoes(v, 0)),
+    ("receita", "Receita", "R$ mil", lambda v: formato.numero(v / 1e3, 0)),
+)
+
+
+def _barras(ctx: Contexto, *rankings: list[dict[str, Any]]) -> str:
+    """AUM e receita lado a lado, na mesma ordem nos dois gráficos.
+
+    Os dois Top 10 não coincidem: há grupo entre os dez maiores em AUM que não
+    está entre os dez de receita, e vice-versa. Como os dois rankings trazem AUM
+    e receita de cada grupo, os gráficos mostram a união deles — ordenada pelo
+    AUM, como no par da aba Officers. O G5 fica de fora, como no ranking.
+    """
+    grupos: dict[str, dict[str, Any]] = {}
+    for ranking in rankings:
+        for registro in ranking:
+            if registro["rank"] in RANKS_AGREGADOS or registro["rank"] == RANK_G5:
+                continue
+            if registro["grupo"]:
+                grupos.setdefault(registro["grupo"], registro)
+    registros = sorted(grupos.values(), key=lambda registro: registro["aum"] or 0, reverse=True)
+    if not registros:
+        return ""
+    rotulos = [registro["grupo"] for registro in registros]
+
+    def desenhar(chave: str, rotulo: str, escala: str, formatador) -> str:
+        return cartao(
+            f"{rotulo} ({escala})",
+            grafico(
+                graficos.barras_horizontais(
+                    list(zip(rotulos, (registro[chave] for registro in registros))),
+                    formatador=formatador,
+                    titulo=f"{rotulo} por grupo econômico, em {escala}",
+                    largura=560,
+                    largura_rotulo=170,
+                )
+            ),
+        )
+
+    return colunas(*(desenhar(*definicao) for definicao in GRAFICOS)) + fonte(
+        "ar_grupos",
+        ctx.rotulo_mes,
+        f"União dos Top 10 por AUM e por receita ({len(registros)} grupos), sem o G5.",
     )
 
 
@@ -156,7 +203,8 @@ def _tabela_base(ctx: Contexto) -> str:
         Coluna("Grupo econômico"),
         Coluna("AUM (R$ mi)", numerica=True),
         Coluna("Δ AUM M-1", numerica=True),
-        Coluna("Receita mens. (R$)", numerica=True),
+        Coluna("Receita (R$)", numerica=True),
+        Coluna("Δ Receita M-1", numerica=True),
         Coluna("ROA anual. (%)", numerica=True),
     ]
 
@@ -167,6 +215,9 @@ def _tabela_base(ctx: Contexto) -> str:
         if not aum and not receita:
             continue
         variacao = ctx.variacao(aum, registro["aum"][anterior] if anterior is not None else None)
+        variacao_receita = ctx.variacao(
+            receita, registro["receita"][anterior] if anterior is not None else None
+        )
         roa = (receita * 12 / aum) if aum and receita is not None else None
         linhas.append(
             Linha(
@@ -175,6 +226,11 @@ def _tabela_base(ctx: Contexto) -> str:
                     num(formato.em_milhoes(aum), ordem=aum),
                     num(formato.variacao(variacao), formato.classe_sinal(variacao), ordem=variacao),
                     num(formato.numero(receita, 0), ordem=receita),
+                    num(
+                        formato.variacao(variacao_receita),
+                        formato.classe_sinal(variacao_receita),
+                        ordem=variacao_receita,
+                    ),
                     num(formato.percentual(roa), ordem=roa),
                 ]
             )
