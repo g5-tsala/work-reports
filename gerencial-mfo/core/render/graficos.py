@@ -540,6 +540,7 @@ def barras_horizontais(
     cor: str = SERIES[0],
     cores: Sequence[str] = (),
     largura_rotulo: int = 220,
+    altura_linha: int = 26,
 ) -> str:
     """Ranking. É a forma canônica quando um donut passaria de cinco fatias.
 
@@ -548,6 +549,9 @@ def barras_horizontais(
     dispensa reordenar o gráfico para agrupá-las. Item sem cor correspondente
     cai em `cor`. Como sempre, no máximo cinco famílias: acima disso a legenda
     deixa de ser memorizável e a cor vira ruído.
+
+    `altura_linha` afina a barra quando o gráfico vem em par, lado a lado, e a
+    altura cheia faria o par ocupar mais tela do que o dado pede.
     """
     pintados = [
         (rotulo, valor, cores[indice] if indice < len(cores) else cor)
@@ -556,7 +560,7 @@ def barras_horizontais(
     itens = [(rotulo, valor, tom) for rotulo, valor, tom in pintados if valor is not None]
     if not itens:
         return ""
-    altura_linha, espaco = 26, 6
+    espaco = max(4, altura_linha // 4)
     altura = len(itens) * (altura_linha + espaco) + 16
     maximo = max(abs(valor) for _, valor, _ in itens) or 1
     disponivel = largura - largura_rotulo - 140
@@ -565,13 +569,14 @@ def barras_horizontais(
     for indice, (rotulo, valor, tom) in enumerate(itens):
         y = 8 + indice * (altura_linha + espaco)
         comprimento = abs(valor) / maximo * disponivel
-        partes.append(_texto(largura_rotulo - 12, y + 17, rotulo, "g5-rotulo-barra", "end"))
+        base_texto = y + altura_linha / 2 + 4
+        partes.append(_texto(largura_rotulo - 12, base_texto, rotulo, "g5-rotulo-barra", "end"))
         partes.append(
             f'<rect x="{largura_rotulo}" y="{y}" width="{comprimento:.1f}" '
             f'height="{altura_linha}" fill="{tom}"/>'
         )
         partes.append(
-            _texto(largura_rotulo + comprimento + 10, y + 17, formatador(valor), "g5-valor-barra", "start")
+            _texto(largura_rotulo + comprimento + 10, base_texto, formatador(valor), "g5-valor-barra", "start")
         )
     return _svg("".join(partes), titulo, largura, altura, CLASSE_RANKING)
 

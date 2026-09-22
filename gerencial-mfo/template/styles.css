@@ -245,6 +245,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   gap: var(--g5-space-3);
   align-items: start;
 }
+/* Duas grades seguidas na mesma secao: o mesmo respiro do gap entre colunas,
+   senao os cartoes de uma linha encostam nos da seguinte. */
+.g5-colunas + .g5-colunas { margin-top: var(--g5-space-3); }
 
 .g5-card {
   background: var(--g5-white);

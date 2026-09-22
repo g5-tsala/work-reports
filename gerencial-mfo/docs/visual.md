@@ -105,7 +105,7 @@ Quatro decisões que já custaram uma rodada de conserto:
   mesmo teto de cinco: acima disso a legenda deixa de ser memorizável.
 
 **Dois gráficos lado a lado compartilham a ordem**, e a ordem sai de um deles (no Resumo, em
-Officers e em Grupos Econômicos, do AUM). Quando os itens vêm de dois rankings que não
+Officers, em Grupos Econômicos e nos Portfólios, do AUM). Quando os itens vêm de dois rankings que não
 coincidem — os Top 10 por AUM e por receita —, o par mostra a união dos dois. Ordenado cada um pelo próprio valor, o mesmo item cai em alturas diferentes e comparar
 vira procurar o rótulo; ordenados juntos, a linha horizontal já é a comparação — e onde as
 duas barras discordam está a métrica derivada (ali, o ROA).

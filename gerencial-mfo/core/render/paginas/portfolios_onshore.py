@@ -1,17 +1,23 @@
 """Aba: Portfólios Onshore.
 
 Base de posição em R$, uma linha por portfólio com todas as dimensões. A
-composição por tipo e por administrador abre a página; a tabela cheia fica
-abaixo, com filtro.
+composição de AUM e receita por tipo de veículo e por segmento abre a página;
+a tabela cheia fica abaixo, com filtro.
 """
 
 from __future__ import annotations
 
-from .. import formato, graficos
+from .. import formato
 from ..contexto import Contexto
 from ..pagina import pagina
-from ..ui import colunas, faixa_kpis, fonte, grafico, kpi, secao
-from .comum import composicao_por_dimensao, tabela_portfolios
+from ..ui import faixa_kpis, fonte, kpi, secao
+from .comum import par_composicao, tabela_portfolios
+
+#: Escala e formatador de cada gráfico do par: AUM e receita.
+ESCALAS = (
+    ("R$ bi", lambda v: formato.em_bilhoes(v, 2)),
+    ("R$ mil", lambda v: formato.numero(v / 1e3, 0)),
+)
 
 
 @pagina(
@@ -31,12 +37,10 @@ def render(ctx: Contexto) -> str:
         [
             _kpis(ctx, base, posicao),
             secao(
-                "Composição do AUM",
-                colunas(
-                    _barras(base, "tipo", posicao, "Tipo de veículo"),
-                    _barras(base, "adm", posicao, "Administrador"),
-                ),
-                fonte("ar_onshore", ctx.rotulo_mes),
+                "Composição de AUM e Receita",
+                par_composicao(base, "tipo", posicao, "Tipo de veículo", ESCALAS),
+                par_composicao(base, "segmento", posicao, "Segmento", ESCALAS),
+                fonte("ar_onshore", ctx.rotulo_mes, "Receita do mês por competência."),
             ),
             secao(
                 "Portfólios",
@@ -56,31 +60,9 @@ def _kpis(ctx: Contexto, base, posicao: int) -> str:
     aum = base["total"]["aum"][posicao]
     receita = base["total"]["receita"][posicao]
     return faixa_kpis(
-        kpi("Portfólios ativos", formato.inteiro(len(ativos)), detalhe=f"de {len(base['linhas'])} na base"),
+        kpi("Portfólios ativos", formato.inteiro(len(ativos))),
         kpi("AUM onshore", formato.bilhoes(aum)),
-        kpi("Receita do mês", formato.milhoes(receita), detalhe="competência"),
-        kpi(
-            "ROA anualizado",
-            formato.percentual(receita * 12 / aum if aum and receita else None),
-            detalhe="sem mensalizar",
-        ),
+        kpi("Receita do mês (competência)", formato.milhoes(receita)),
+        kpi("ROA anualizado", formato.percentual(receita * 12 / aum if aum and receita else None)),
     )
 
-
-def _barras(base, campo: str, posicao: int, titulo: str) -> str:
-    itens = composicao_por_dimensao(base, campo, posicao)
-    return "".join(
-        [
-            f'<h3 class="g5-cartao-titulo">{titulo}</h3>',
-            grafico(
-                graficos.barras_horizontais(
-                    itens,
-                    formatador=lambda v: formato.em_bilhoes(v, 2),
-                    titulo=f"AUM por {titulo.lower()}",
-                    largura=560,
-                    largura_rotulo=200,
-                ),
-                itens_legenda=[("AUM (R$ bi)", graficos.SERIES[0])],
-            ),
-        ]
-    )
