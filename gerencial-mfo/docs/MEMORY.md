@@ -130,6 +130,11 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
   fator de 2,3. É a armadilha número um do modelo. **O `Dashboard §3` (NET Executado) é
   de cliente**, não `in_out` — conferido na fórmula (`Dashboard!C37`). Já foi documentado
   errado aqui e custou uma aba duplicada.
+- **Uma linha de `io_grupos` YTD não é um grupo**: é grupo + officer + lead externo +
+  lead G5 + segmento (em ago/26, 289 grupos em mais linhas que isso — `Vieira` tem duas, uma
+  por lead externo). O mês a mês casa pela combinação inteira; casando só pelo grupo, as
+  duas linhas abriam o mesmo detalhe, com os meses das duas somados. Gráficos e o KPI de
+  grupos contam por grupo.
 - **Mensalização** = competência ÷ dias úteis × 21, **só no onshore**. A planilha escreve
   `/nwdays*21` num lugar e `/nwdays*252` em outro — são a mesma coisa, 21 × 12 = 252.
 - **ROA MFO** tem dois desvios frente ao ROA: conta todo o offshore como MFO (sem filtro de
