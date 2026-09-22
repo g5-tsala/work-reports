@@ -4,11 +4,14 @@ Cuidado com a armadilha numero um do modelo (`docs/modelo-de-dados.md` §6):
 
 - **Captacao Cliente** sai das bases `*_net_*`, sem as movimentacoes do proprio
   grupo G5 — e o que alimenta `net_in_out` e `io_portfolios`.
-- **NET Executado** sai de `in_out`, com o G5 — e o que alimenta o bloco 3 do
-  `Dashboard`.
+- **NET Executado** (bloco 3 do `Dashboard`) sai das **mesmas** bases de
+  cliente: `in_net_*` / `out_net_*`, com o offshore pelas colunas 12/13 (R$ ao
+  cambio da movimentacao). Ver `Dashboard!C37`. Fecha com `net_in_out` e com o
+  bloco 2 no mes e no ano.
 
-Sao abas diferentes justamente porque os numeros sao diferentes. Este modulo so
-transporta cada uma para o seu lugar no JSON; nada e somado entre elas.
+A armadilha e `in_out` (com o G5), que alimenta `in_out_cons` e a serie IN/OUT
+de `aum_receita` — nenhum destes blocos. Este modulo so transporta cada bloco
+para o seu lugar no JSON.
 """
 
 from __future__ import annotations
@@ -238,8 +241,8 @@ def _captacao_cliente(ctx) -> list[dict[str, Any]]:
 def _net_executado(ctx) -> dict[str, Any]:
     """Bloco 3 do `Dashboard`: entradas e saidas por segmento, mes a mes.
 
-    Base `in_out` — **com** as movimentacoes do grupo G5. Nao confundir com a
-    captacao cliente acima.
+    Mesma base de cliente da captacao acima (`in_net_*` / `out_net_*`, sem o
+    G5), cortada por segmento — `Dashboard!C37` e vizinhas.
     """
     ws = ctx.pl.aba(ABA_DASHBOARD)
     meses = []

@@ -200,6 +200,32 @@ def _dica(titulo: str, linhas: Sequence[Sequence[Any]]) -> str:
     return escape(json.dumps({"titulo": titulo, "linhas": [list(linha) for linha in linhas]}, ensure_ascii=False))
 
 
+def _camada_dicas(
+    categorias: Sequence[str],
+    x: Callable[[int], float],
+    largura_faixa: float,
+    altura: int,
+    linhas_por_categoria: Sequence[Sequence[Sequence[Any]]],
+) -> list[str]:
+    """Um alvo de hover por categoria, cobrindo a faixa inteira dela.
+
+    Desenhado por cima das marcas (`.g5-alvo--sobre`, transparente): o leitor
+    mira a coluna, não um ponto de 3px ou uma barra curta.
+    """
+    topo, base = MARGEM["topo"], altura - MARGEM["base"]
+    return [
+        f'<g class="g5-com-dica" data-dica="{_dica(categoria, linhas)}">'
+        f'<rect class="g5-alvo g5-alvo--sobre" x="{x(posicao) - largura_faixa / 2:.1f}" '
+        f'y="{topo}" width="{largura_faixa:.1f}" height="{base - topo}"/></g>'
+        for posicao, (categoria, linhas) in enumerate(zip(categorias, linhas_por_categoria))
+    ]
+
+
+def _valor_dica(serie: Serie, posicao: int, formatador: Callable[[float], str]) -> str:
+    bruto = serie.valores[posicao] if posicao < len(serie.valores) else None
+    return formatador(bruto) if bruto is not None else "—"
+
+
 def _passo_de_rotulos(quantidade: int, largura: int) -> int:
     """Evita rotulo de eixo sobreposto quando a serie e longa."""
     cabem = max(int((largura - MARGEM["esquerda"] - MARGEM["direita"]) / 56), 1)
@@ -317,6 +343,8 @@ def barras(
     rotular: bool = False,
     formatador_rotulo: Callable[[float], str] | None = None,
     rotulos_inclinados: bool = False,
+    formatador_dica: Callable[[float], str] | None = None,
+    rotulo_total_dica: str = "",
 ) -> str:
     """Barra vertical, agrupada ou empilhada.
 
@@ -341,8 +369,12 @@ def barras(
     `formatador_rotulo` separa a escala do rótulo da escala do eixo — o eixo
     aceita marca redonda (`43 bi`), o rótulo costuma querer a casa decimal
     (`43,5 bi`). Sem ele, os dois usam `formatador`.
+
+    `formatador_dica` liga o tooltip por categoria, com o valor de cada série;
+    `rotulo_total_dica` acrescenta, separada por um fio, a soma das séries —
+    numa pilha de entrada positiva e saída negativa, é o líquido.
     """
-    partes, _, _, _ = _desenhar_barras(
+    partes, _, x, largura_faixa = _desenhar_barras(
         categorias,
         series,
         formatador=formatador,
@@ -354,6 +386,21 @@ def barras(
         formatador_rotulo=formatador_rotulo or formatador,
         rotulos_inclinados=rotulos_inclinados,
     )
+    if formatador_dica:
+        series = list(series)[:MAXIMO_SERIES]
+        linhas = []
+        for posicao in range(len(categorias)):
+            itens: list[list[Any]] = [
+                [serie.rotulo, _valor_dica(serie, posicao, formatador_dica), cor_da_serie(indice, serie)]
+                for indice, serie in enumerate(series)
+            ]
+            if rotulo_total_dica:
+                soma = sum(
+                    (serie.valores[posicao] or 0.0) for serie in series if posicao < len(serie.valores)
+                )
+                itens.append([rotulo_total_dica, formatador_dica(soma), ""])
+            linhas.append(itens)
+        partes += _camada_dicas(categorias, x, largura_faixa, altura, linhas)
     return _svg("".join(partes), titulo, largura, altura)
 
 
@@ -545,25 +592,22 @@ def combo(
                     f'class="g5-rotulo-ponto" fill="{cor}">{escape(formatador_linha(ultimo))}</text>'
                 )
     if formatador_dica:
-        topo, base = MARGEM["topo"], altura - MARGEM["base"]
-
-        def valor(serie: Serie, posicao: int) -> str:
-            bruto = serie.valores[posicao] if posicao < len(serie.valores) else None
-            return formatador_dica(bruto) if bruto is not None else "—"
-
-        for posicao, categoria in enumerate(categorias):
-            linhas = [
-                [serie.rotulo, valor(serie, posicao), cor_da_serie(indice, serie)]
+        linhas = [
+            [
+                [serie.rotulo, _valor_dica(serie, posicao, formatador_dica), cor_da_serie(indice, serie)]
                 for indice, serie in enumerate(series_barra)
             ]
-            linhas.append(
-                [serie_linha.rotulo, valor(serie_linha, posicao), serie_linha.cor or SERIES[1], True]
-            )
-            partes.append(
-                f'<g class="g5-com-dica" data-dica="{_dica(categoria, linhas)}">'
-                f'<rect class="g5-alvo g5-alvo--sobre" x="{x(posicao) - largura_faixa / 2:.1f}" '
-                f'y="{topo}" width="{largura_faixa:.1f}" height="{base - topo}"/></g>'
-            )
+            + [
+                [
+                    serie_linha.rotulo,
+                    _valor_dica(serie_linha, posicao, formatador_dica),
+                    serie_linha.cor or SERIES[1],
+                    True,
+                ]
+            ]
+            for posicao in range(len(categorias))
+        ]
+        partes += _camada_dicas(categorias, x, largura_faixa, altura, linhas)
     return _svg("".join(partes), titulo, largura, altura)
 
 

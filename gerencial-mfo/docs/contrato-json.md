@@ -112,9 +112,10 @@ caso superestima o AUM.
 
 ## 4. Pontos de atenção do consumidor
 
-- **`captacao.net_in_out` e `captacao.captacao_cliente` são cliente (sem G5);
-  `captacao.net_executado` é com G5.** Não somar um com o outro. É a armadilha número um
-  do modelo ([modelo-de-dados.md](modelo-de-dados.md) §6).
+- **`captacao.net_in_out`, `captacao.captacao_cliente` e `captacao.net_executado` são
+  todos cliente (sem G5)** — três cortes da mesma captação, que fecham entre si no mês e no
+  ano. Não somar um com o outro: é contar a mesma entrada duas vezes. A base com o G5
+  (`in_out`) não chega a nenhum destes blocos ([modelo-de-dados.md](modelo-de-dados.md) §6).
 - **`officers.blocos` inclui os Fdos Alocação** com `e_fdos_alocacao: true` e `nome: "-"`.
   Sempre nos totais; o toggle "Ex-Fdos Alocação" recalcula proporções, não totais.
 - **`roa_mfo`** não é comparável ao `roa` lado a lado — todo o offshore conta como MFO e o

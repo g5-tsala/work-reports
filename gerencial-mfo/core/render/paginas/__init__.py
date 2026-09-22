@@ -12,7 +12,6 @@ campo `ordem` do decorador, não da ordem destes imports.
 from . import (  # noqa: F401
     administradores_offshore,
     administradores_onshore,
-    captacao_executado,
     captacao_grupos,
     captacao_net,
     captacao_portfolios,

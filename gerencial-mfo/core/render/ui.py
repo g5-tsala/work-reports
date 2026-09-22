@@ -77,6 +77,7 @@ def kpi(
     referencia: str = "",
     detalhe: str = "",
     classe_valor: str = "",
+    complemento: str = "",
 ) -> str:
     """`referencia` e a base de comparacao do delta — `vs. jul/26`.
 
@@ -85,12 +86,14 @@ def kpi(
     abaixo separava a pergunta da resposta.
 
     `classe_valor` pinta o proprio numero — `formato.classe_sinal()` para um
-    fluxo que pode fechar negativo.
+    fluxo que pode fechar negativo. `complemento` e o mesmo numero em outra
+    unidade (US$ -> R$), menor e ao lado dele, na mesma linha.
     """
     classe = f"g5-kpi__value {classe_valor}".strip()
+    extra = f' <span class="g5-kpi__complemento">{esc(complemento)}</span>' if complemento else ""
     partes = [
         f'<span class="g5-kpi__label">{esc(rotulo)}</span>',
-        f'<span class="{classe}">{esc(valor)}</span>',
+        f'<span class="{classe}">{esc(valor)}{extra}</span>',
     ]
     if delta or referencia:
         marca_ref = f'<span class="g5-kpi__ref">({esc(referencia)})</span>' if referencia else ""
@@ -103,18 +106,9 @@ def kpi(
     return f'<div class="g5-kpi">{"".join(partes)}</div>'
 
 
-def faixa_kpis(*blocos: str, titulo: str = "", secundaria: bool = False) -> str:
-    """Nunca mais de quatro KPIs por linha — o CSS trava em 4 colunas.
-
-    `titulo` nomeia a faixa quando a pagina empilha mais de uma (consolidado,
-    onshore, offshore). `secundaria` e a faixa de apoio: numero menor e
-    cartao mais baixo, para que a principal continue sendo a primeira leitura.
-    """
-    classe = "g5-kpis g5-kpis--secundaria" if secundaria else "g5-kpis"
-    faixa = f'<div class="{classe}">{"".join(blocos)}</div>'
-    if not titulo:
-        return faixa
-    return f'<div class="g5-kpis-bloco"><h3 class="g5-kpis__titulo">{esc(titulo)}</h3>{faixa}</div>'
+def faixa_kpis(*blocos: str) -> str:
+    """Nunca mais de quatro KPIs por linha — o CSS trava em 4 colunas."""
+    return f'<div class="g5-kpis">{"".join(blocos)}</div>'
 
 
 def alternador(identificador: str, rotulo: str, opcoes: Sequence[tuple[str, str, str]]) -> str:
@@ -176,10 +170,13 @@ class Coluna:
     rotulo: str
     numerica: bool = False
     largura: str = ""
+    #: Abre um bloco de colunas (um segmento, uma moeda): fio pontilhado à esquerda.
+    separador: bool = False
 
     @property
     def classe(self) -> str:
-        return "num" if self.numerica else "text"
+        base = "num" if self.numerica else "text"
+        return f"{base} sep" if self.separador else base
 
     @property
     def tipo_ordenacao(self) -> str:

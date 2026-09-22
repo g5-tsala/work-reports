@@ -23,7 +23,7 @@ nenhuma. O histórico de quem mudou o quê é trabalho do `git log`.
 | `gerar-dashboard.bat` · `gerar-dashboard.sh` · `pyproject.toml` · `uv.lock` | pronto |
 | **Etapa 1 — extração** | **pronta.** `outputs/2026-07/data-2026-07.json`, ~1,8 MB |
 | **Etapa 2 — validação** | **pronta.** 10/10 no checklist |
-| **Etapa 3 — renderização** | **pronta.** 15 abas, `dashboard-2026-07.html`, ~1,7 MB |
+| **Etapa 3 — renderização** | **pronta.** 14 abas, `dashboard-2026-07.html`, ~1,7 MB |
 | Filtros combináveis e toggle Ex-Fdos | **não iniciados** (backlog) |
 
 O build de `2026-07` passa nos **10 itens do checklist** de
@@ -101,11 +101,16 @@ Não reabrir sem motivo novo.
   varridos e ~110 KB no HTML. Se voltar a ser pedida, o `git log` tem o extrator pronto.
 - **A região `-` da aba `regiao` aparece como `G5`** em Regiões (gráficos e tabelas). É
   onde caem os fundos de alocação, e o negócio lê a linha como o grupo G5.
-- **Net In/Out tem três faixas de KPI** — consolidado em R$ (a principal), onshore e
-  offshore (de apoio, menores) — e um seletor entre os mesmos três universos no fluxo
-  mensal. O consolidado converte o offshore pelo câmbio de cada mês, a regra da própria
-  planilha ([calculos.md](calculos.md) §3.6). O gráfico de saídas por finalidade saiu; a
-  finalidade segue no detalhe, recolhida sob cada tipo de veículo.
+- **Net In/Out é a aba única da captação de cliente**, em ordem: uma faixa de KPI com
+  seletor consolidado · onshore · offshore (offshore mostra o R$ ao lado do US$), a tabela *Captação
+  Cliente* (`Dashboard §2`) ao lado do incremento de receita por segmento, o fluxo mensal
+  com seletor consolidado · onshore · offshore, e o detalhe por segmento (`Dashboard §3`,
+  o antigo "NET Executado", em R$ mi). O consolidado converte o offshore pelo câmbio de
+  cada mês ([calculos.md](calculos.md) §3.6). As tabelas de detalhe onshore/offshore por
+  tipo de veículo saíram — o corte por segmento é o que o negócio usa.
+- **Alocação só tem incremento de receita** no §2: o IN/OUT dos fundos de alocação não é
+  captação de cliente e fica "—" em mês e ano, mas o incremento de receita entra — e
+  entra no gráfico e na soma do Net.
 - Nomes reais. Marca de confidencialidade na impressão.
 - Distribuição por link para download hoje; `<iframe>` num portal no futuro.
 
@@ -122,7 +127,9 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
 - **`in_out` vs `info_net_in_out`** — duas bases de schema idêntico e conteúdo diferente. A
   segunda exclui as movimentações do próprio grupo G5. Em jul/26: R$ 4,50 bi contra
   R$ 1,92 bi no IN onshore. Trocar uma pela outra produz número plausível e errado por um
-  fator de 2,3. É a armadilha número um do modelo.
+  fator de 2,3. É a armadilha número um do modelo. **O `Dashboard §3` (NET Executado) é
+  de cliente**, não `in_out` — conferido na fórmula (`Dashboard!C37`). Já foi documentado
+  errado aqui e custou uma aba duplicada.
 - **Mensalização** = competência ÷ dias úteis × 21, **só no onshore**. A planilha escreve
   `/nwdays*21` num lugar e `/nwdays*252` em outro — são a mesma coisa, 21 × 12 = 252.
 - **ROA MFO** tem dois desvios frente ao ROA: conta todo o offshore como MFO (sem filtro de

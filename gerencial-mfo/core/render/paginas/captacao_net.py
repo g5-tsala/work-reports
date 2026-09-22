@@ -1,9 +1,17 @@
 """Aba: Net In/Out.
 
-Captação **de cliente** — base sem as movimentações do próprio grupo G5. Três
-faixas de KPI (consolidado em R$, onshore, offshore), o fluxo mensal com um
-seletor entre os três universos e o detalhe por tipo de veículo, com a
-abertura de cada tipo recolhida.
+Captação **de cliente** — sem as movimentações dos fundos de alocação da G5 —
+em três leituras que vêm da mesma base e por isso fecham entre si:
+
+- faixas de KPI (consolidado em R$, onshore, offshore), de `net_in_out`;
+- a tabela *Captação Cliente* do `Dashboard` (§2): mês, ano e o incremento de
+  receita que a captação produz, por universo e segmento, ao lado do gráfico
+  desse incremento por segmento;
+- o fluxo mensal, com seletor entre os três universos;
+- o *NET executado* por segmento (§3 do `Dashboard`), mês a mês.
+
+O NET do mês e do ano batem nas três: são a mesma captação, cortada de jeitos
+diferentes.
 """
 
 from __future__ import annotations
@@ -14,9 +22,12 @@ from .. import formato, graficos
 from ..contexto import Contexto
 from ..pagina import pagina
 from ..ui import (
+    Celula,
     Coluna,
     Linha,
     alternador,
+    cartao,
+    colunas,
     expandir_todos,
     faixa_kpis,
     fonte,
@@ -24,7 +35,6 @@ from ..ui import (
     kpi,
     linha_detalhe,
     linha_expansivel,
-    nota,
     num,
     secao,
     tabela,
@@ -48,9 +58,31 @@ def render(ctx: Contexto) -> str:
 
     return "".join(
         [
-            *(_kpis(ctx, universo, principal=indice == 0) for indice, universo in enumerate(universos)),
+            alternador(
+                "net-kpis",
+                "Universo dos indicadores",
+                [(universo["chave"], universo["titulo"], _kpis(ctx, universo)) for universo in universos],
+            ),
             secao(
-                "Fluxo mensal",
+                "Captação cliente — mês e ano",
+                # O botão fica fora da grade: dentro da coluna da tabela, ele
+                # empurraria a tabela para baixo e o gráfico ao lado ficaria
+                # desalinhado dela.
+                expandir_todos("net-captacao-cliente"),
+                colunas(
+                    _tabela_captacao_cliente(ctx),
+                    _grafico_incremento(ctx),
+                    proporcoes=[3, 2],
+                ),
+                fonte(
+                    "Dashboard §2",
+                    ctx.rotulo_mes,
+                    "Offshore em R$. Alocação entra só no incremento de receita: o IN/OUT dos "
+                    "fundos de alocação não é captação de cliente.",
+                ),
+            ),
+            secao(
+                "Fluxo mensal In/Out",
                 alternador(
                     "net-fluxo",
                     "Universo do gráfico",
@@ -61,21 +93,10 @@ def render(ctx: Contexto) -> str:
                 ),
             ),
             secao(
-                "Detalhe onshore (R$)",
-                expandir_todos("net-onshore"),
-                _tabela(ctx, onshore, "net-onshore"),
-                fonte("net_in_out", ctx.rotulo_mes, "Base info_net_in_out, sem o grupo G5."),
-            ),
-            secao(
-                "Detalhe offshore (US$)",
-                expandir_todos("net-offshore"),
-                _tabela(ctx, offshore, "net-offshore"),
-                fonte("net_in_out", ctx.rotulo_mes, "Valores em US$; total do ano também em R$."),
-            ),
-            nota(
-                "Esta página usa a base <strong>de cliente</strong>. O NET executado do "
-                "<em>Dashboard</em>, que inclui os fundos de alocação da G5, é outra base e não "
-                "deve ser somado a esta."
+                "Detalhe por segmento",
+                expandir_todos("net-executado"),
+                _tabela_segmentos(ctx),
+                fonte("Dashboard §3", ctx.rotulo_mes, "NET executado; offshore em R$ ao câmbio do mês da movimentação."),
             ),
         ]
     )
@@ -139,38 +160,46 @@ def _universos(onshore: dict[str, Any], offshore: dict[str, Any]) -> list[dict[s
             "moeda": "US$",
             "meses": offshore["meses"],
             "series": series(offshore, False),
+            "em_reais": off_reais,
             "observacao": "",
         },
     ]
 
 
-def _kpis(ctx: Contexto, universo: dict[str, Any], principal: bool) -> str:
-    """Uma faixa por universo. Número negativo sai em vermelho; positivo, não.
+def _kpis(ctx: Contexto, universo: dict[str, Any]) -> str:
+    """A faixa de um universo; o seletor acima dela troca entre os três.
+
+    Número negativo sai em vermelho; positivo, não.
 
     Uma casa decimal: com o sinal, `R$ -426,48 mi` não cabe no cartão e quebra
     linha, e na casa das centenas de milhões o centésimo não muda leitura.
     """
     posicao = universo["meses"].index(ctx.mes_base) if ctx.mes_base in universo["meses"] else None
     series, moeda = universo["series"], universo["moeda"]
+    #: Offshore leva o valor em R$ ao lado do US$ — pelo câmbio do mês no mês,
+    #: e o `total_reais` da planilha no ano, as mesmas contas do consolidado.
+    em_reais = universo.get("em_reais")
 
-    def cartao(rotulo: str, valor: float | None) -> str:
+    def do_mes(fonte_: dict[str, Any], secao_: str) -> float | None:
+        valores = fonte_[secao_]["valores"]
+        return valores[posicao] if posicao is not None and posicao < len(valores) else None
+
+    def cartao(rotulo: str, valor: float | None, valor_reais: float | None = None) -> str:
         return kpi(
             rotulo,
             formato.milhoes(valor, 1, moeda=moeda),
             classe_valor="negativo" if valor is not None and valor < 0 else "",
+            complemento=formato.milhoes(valor_reais, 1) if em_reais else "",
         )
 
-    def do_mes(secao_: str) -> float | None:
-        valores = series[secao_]["valores"]
-        return valores[posicao] if posicao is not None and posicao < len(valores) else None
+    def do_mes_cartao(rotulo: str, secao_: str) -> str:
+        return cartao(rotulo, do_mes(series, secao_), do_mes(em_reais, secao_) if em_reais else None)
 
     return faixa_kpis(
-        cartao("NET do mês", do_mes("NET")),
-        cartao("IN do mês", do_mes("IN")),
-        cartao("OUT do mês", do_mes("OUT")),
-        cartao("NET no ano", series["NET"]["total"]),
-        titulo=universo["titulo"],
-        secundaria=not principal,
+        do_mes_cartao("NET do mês", "NET"),
+        do_mes_cartao("IN do mês", "IN"),
+        do_mes_cartao("OUT do mês", "OUT"),
+        cartao("NET no ano", series["NET"]["total"], em_reais["NET"]["total"] if em_reais else None),
     )
 
 
@@ -203,57 +232,148 @@ def _grafico(ctx: Contexto, universo: dict[str, Any]) -> str:
     )
 
 
-def _tabela(ctx: Contexto, bloco: dict[str, Any], identificador: str) -> str:
-    """IN, OUT e NET por tipo de veículo; a abertura de cada tipo fica recolhida.
+#: Segmentos da captação cliente, na ordem da planilha. Alocação só aparece no
+#: §2, e só com incremento de receita.
+SEGMENTOS_CLIENTE = ("mfo", "institucional", "estruturado", "alocacao")
+SEGMENTOS_EXECUTADO = ("MFO", "Institucional", "Estruturado")
 
-    As linhas de nível 2 (início no ano, clientes antigos, finalidade, ROA)
-    abrem ao clicar no tipo de veículo acima delas — ou todas de uma vez pelo
-    botão acima da tabela.
+
+def _tabela_captacao_cliente(ctx: Contexto) -> str:
+    """O §2 do `Dashboard`: Net, e por universo o ingresso e a retirada.
+
+    Ingresso e retirada abrem nos segmentos. Mês e ano já vêm em R$ mi na
+    planilha, com o offshore convertido; mês/ano vazios são "—" (a Alocação não
+    tem IN/OUT de cliente, só incremento de receita).
     """
-    moeda = bloco["moeda"]
-    escala = f"{moeda} mi"
-    colunas = (
-        [Coluna(f"Linha ({escala})")]
-        + [Coluna(rotulo, numerica=True) for rotulo in ctx.rotulos(bloco["meses"])]
-        + [Coluna("Ano", numerica=True)]
-    )
-    tem_reais = any("total_reais" in linha for linha in bloco["linhas"])
-    if tem_reais:
-        colunas.append(Coluna("Ano (R$ mi)", numerica=True))
+    registros = ctx.bloco("captacao", "captacao_cliente")
+    colunas_tabela = [
+        Coluna("Linha (R$ mi)"),
+        Coluna(formato.mes_curto(ctx.mes_base), numerica=True),
+        Coluna(ctx.mes_base[:4], numerica=True),
+        Coluna("Incr. receita/ano", numerica=True),
+        Coluna("ROA incr.", numerica=True),
+    ]
 
-    registros = bloco["linhas"]
+    def valor(numero: float | None) -> Any:
+        if numero is None:
+            return num(formato.NAO_APLICAVEL)
+        return num(formato.numero(numero, 1), formato.classe_sinal(numero))
+
     linhas = []
     alvo = None
     for indice, registro in enumerate(registros):
-        eh_percentual = registro["chave"] == "roa_pct"
-        formatador = formato.percentual if eh_percentual else (lambda v: formato.em_milhoes(v, 2))
-        celulas: list[Any] = [registro["rotulo"]]
-        celulas += [
-            num(formatador(valor), formato.classe_sinal(valor) if not eh_percentual else "")
-            for valor in registro["valores"]
+        celulas = [
+            registro["rotulo"],
+            valor(registro["mes"]),
+            valor(registro["ano"]),
+            num(
+                formato.numero(registro["incremento_receita_mi_ano"], 2),
+                formato.classe_sinal(registro["incremento_receita_mi_ano"]),
+            ),
+            num(formato.percentual(registro["roa_incremental"]) or formato.NAO_APLICAVEL),
         ]
-        celulas.append(num(formato.NAO_APLICAVEL if eh_percentual else formatador(registro["total"])))
-        if tem_reais:
-            celulas.append(
-                num(
-                    formato.NAO_APLICAVEL
-                    if eh_percentual
-                    else formato.em_milhoes(registro.get("total_reais"), 2)
-                )
-            )
-
         nivel = registro["nivel"]
         atributos: dict[str, Any] = {}
         if nivel == 1:
-            proxima = registros[indice + 1] if indice + 1 < len(registros) else None
-            alvo = f"{identificador}-{indice}" if proxima and proxima["nivel"] > 1 else None
-            if alvo:
-                atributos = linha_expansivel(alvo)
+            alvo = f"net-cliente-{indice}"
+            atributos = linha_expansivel(alvo)
         elif nivel > 1 and alvo:
             atributos = linha_detalhe(alvo)
-        else:
-            alvo = None
-        classe = "subtotal" if nivel == 0 else ""
+        classe = "total" if registro["chave"] == "net" else ("subtotal" if nivel == 0 else "")
         linhas.append(Linha(celulas, classe=classe, nivel=nivel, atributos=atributos))
 
-    return tabela(colunas, linhas, identificador=identificador, ordenavel=False)
+    return tabela(colunas_tabela, linhas, identificador="net-captacao-cliente", ordenavel=False)
+
+
+def _grafico_incremento(ctx: Contexto) -> str:
+    """Incremento de receita no ano por segmento: ingresso para cima, retirada para baixo.
+
+    Soma onshore e offshore de cada segmento — as linhas do próprio §2. O
+    líquido de cada segmento vai no tooltip; a soma dos quatro é o incremento
+    da linha Net da tabela ao lado.
+    """
+    registros = ctx.bloco("captacao", "captacao_cliente")
+    rotulos = {registro["chave"]: registro["rotulo"] for registro in registros if registro["nivel"] == 2}
+    soma = {movimento: dict.fromkeys(SEGMENTOS_CLIENTE, 0.0) for movimento in ("ingresso", "retirada")}
+    for registro in registros:
+        if registro["nivel"] == 2 and registro["pai"] in soma and registro["chave"] in SEGMENTOS_CLIENTE:
+            soma[registro["pai"]][registro["chave"]] += registro["incremento_receita_mi_ano"] or 0.0
+
+    segmentos = [chave for chave in SEGMENTOS_CLIENTE if chave in rotulos]
+    svg = graficos.barras(
+        [rotulos[chave] for chave in segmentos],
+        [
+            graficos.Serie("Ingresso", [soma["ingresso"][chave] for chave in segmentos]),
+            graficos.Serie("Retirada", [soma["retirada"][chave] for chave in segmentos], cor=graficos.SERIES[1]),
+        ],
+        formatador=lambda v: formato.numero(v, 0),
+        empilhado=True,
+        titulo="Incremento de receita no ano por segmento, em R$ mi/ano",
+        altura=300,
+        largura=440,
+        formatador_dica=lambda v: f"R$ {formato.numero(v, 2)} mi/ano",
+        rotulo_total_dica="Líquido",
+    )
+    return cartao(
+        "Incremento de receita no ano (R$ mi/ano)",
+        grafico(
+            svg,
+            itens_legenda=[("Ingresso", graficos.SERIES[0]), ("Retirada", graficos.SERIES[1])],
+        ),
+    )
+
+
+def _tabela_segmentos(ctx: Contexto) -> str:
+    """NET executado (§3 do `Dashboard`): entradas e saídas por segmento, mês a mês.
+
+    Cada mês abre nos componentes — início no ano, clientes antigos, uso
+    pessoal, saída para concorrência. Em R$ mi, como o resto da página.
+    """
+    bloco = ctx.bloco("captacao", "net_executado")
+    colunas_tabela = [Coluna("Mês")]
+    for segmento in SEGMENTOS_EXECUTADO:
+        colunas_tabela += [
+            Coluna(f"{segmento} entrada", numerica=True, separador=True),
+            Coluna(f"{segmento} saída", numerica=True),
+        ]
+    colunas_tabela.append(Coluna("NET (R$ mi)", numerica=True, separador=True))
+
+    linhas = []
+    for indice, item in enumerate(bloco["meses"]):
+        alvo = f"executado-{indice}"
+        linhas.append(
+            Linha(
+                _celulas_segmento(item),
+                classe="destaque",
+                atributos=linha_expansivel(alvo) if item["componentes"] else {},
+            )
+        )
+        for componente in item["componentes"]:
+            linhas.append(
+                Linha(
+                    _celulas_segmento(componente, rotulo=componente["rotulo"]),
+                    classe="detalhe",
+                    nivel=1,
+                    atributos=linha_detalhe(alvo),
+                )
+            )
+    if bloco["total"]:
+        linhas.append(
+            Linha(_celulas_segmento(bloco["total"], rotulo="Total do ano"), classe="total total--maior")
+        )
+
+    return tabela(colunas_tabela, linhas, identificador="net-executado", ordenavel=False)
+
+
+def _celulas_segmento(item: dict[str, Any], rotulo: str | None = None) -> list[Any]:
+    def valor(numero: float | None) -> Any:
+        return num(formato.em_milhoes(numero, 1), formato.classe_sinal(numero))
+
+    # Sem quebra: "[-] Saída para concorrência" em duas linhas dobrava a altura
+    # da sub-linha. A largura da coluna não resolve — a tabela encolhe a coluna.
+    celulas: list[Any] = [Celula(rotulo or formato.mes_extenso(item.get("mes")), "sem-quebra")]
+    for segmento in SEGMENTOS_EXECUTADO:
+        valores = item["segmentos"][segmento]
+        celulas += [valor(valores["entrada"]), valor(valores["saida"])]
+    celulas.append(valor(item["total"]))
+    return celulas

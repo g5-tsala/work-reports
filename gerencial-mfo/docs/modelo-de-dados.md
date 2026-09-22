@@ -156,8 +156,16 @@ Consequência direta:
 | Visão | Base | Aba |
 |---|---|---|
 | **Captação Cliente** | `*_net_*` (sem G5) | `net_in_out`, `io_portfolios`, `Dashboard §2` |
-| **NET Executado** | `in_out` (com G5) | `in_out_cons`, `Dashboard §3` |
+| **NET Executado** | `*_net_*` (sem G5) — offshore pelas col. 12/13, em R$ | `Dashboard §3` |
+| Consolidação com G5 | `in_out` (com G5) | `in_out_cons` |
 | Série `IN/OUT` de `aum_receita` | `io_cons_*`, ou seja `in_out` (com G5) | `aum_receita!S8` |
+
+**`Dashboard §3` (NET Executado) é base de cliente**, não `in_out`: as fórmulas
+(`Dashboard!C37` em diante) somam `in_net_onshore` col. 3 com `in_net_offshore` col. 12, e
+`out_net_*` do mesmo jeito. Por isso o NET do mês e do ano do §3 batem no centavo com o §2 e
+com `net_in_out` consolidado (ago/26: R$ 29,52 mi no mês, R$ 230,98 mi no ano). Uma versão
+anterior desta tabela dizia o contrário, e o dashboard chegou a separar as duas numa aba
+cada, com aviso de "bases diferentes".
 
 Trocar uma pela outra produz números plausíveis e errados. É a armadilha número um deste
 modelo.

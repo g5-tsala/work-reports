@@ -10,7 +10,7 @@ com barra wine à esquerda. Agrupamento:
 ```
 VISÃO EXECUTIVA     Visão Geral · Resumo · Histórico AUM × Receita
 CARTEIRA            Officers · Grupos Econômicos · Regiões · Portfólios On · Portfólios Off
-CAPTAÇÃO            Net In/Out · Grupos · Portfólios · NET Executado
+CAPTAÇÃO            Net In/Out · Grupos · Portfólios
 ESTRUTURA           Administradores Onshore · Administradores Offshore
 OUTROS              G5 JUS
 ```
@@ -19,9 +19,11 @@ OUTROS              G5 JUS
 pelo decorador `@pagina(...)` com grupo e ordem. O menu e o roteamento saem do registro —
 para mexer no conteúdo de uma aba, abre-se o arquivo dela e mais nada.
 
-`NET Executado` não estava no desenho original: entrou porque o bloco 3 do `Dashboard` usa
-a base **com** o grupo G5 e não podia dividir página com a captação de cliente, que é a base
-**sem** o G5. Misturar as duas numa aba só é a maneira mais fácil de somar o que não se soma.
+**Net In/Out reúne a captação de cliente inteira**: KPIs de `net_in_out`, a tabela
+*Captação Cliente* (`Dashboard §2`, com o incremento de receita), o fluxo mensal e o NET
+executado por segmento (`Dashboard §3`). Os três blocos vêm da mesma base sem o G5 e fecham
+entre si. Já houve uma aba "NET Executado" separada, sob a premissa errada de que o §3 usava
+a base com o G5 — ver [modelo-de-dados.md](modelo-de-dados.md) §6.
 
 ## 1.1 Page furniture — o regime do fechamento
 
@@ -94,7 +96,8 @@ drill-down usando `linha_expansivel()` e `linha_detalhe()` do `ui.py`, sem tocar
 vez; o rótulo acompanha o estado real ("Recolher tudo" quando todas estão abertas, mesmo
 que o leitor tenha aberto uma a uma).
 
-**Versões do mesmo gráfico** (consolidado · onshore · offshore no Net In/Out) usam
+**Versões do mesmo conteúdo** (consolidado · onshore · offshore nos KPIs e no fluxo
+mensal do Net In/Out) usam
 `alternador()` do `ui.py`: todos os painéis são renderizados no build, os botões só trocam
 o `hidden`. Sem JS fica a primeira opção, que deve ser a leitura principal. Na impressão os
 botões somem e sai o painel ativo.
