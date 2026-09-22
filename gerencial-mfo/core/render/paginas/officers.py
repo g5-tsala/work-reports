@@ -17,6 +17,7 @@ from ..ui import (
     Linha,
     cartao,
     colunas,
+    esc,
     fonte,
     grafico,
     linha_detalhe,
@@ -59,6 +60,7 @@ def render(ctx: Contexto) -> str:
                 "Ranking",
                 _tabela(ctx),
                 fonte("CEO-Dashboard e cons_officer", ctx.rotulo_mes),
+                _nota_marcados(ctx),
                 _ressalvas(),
             ),
             secao("AUM e receita por officer", _barras(ctx)),
@@ -90,7 +92,7 @@ def _tabela(ctx: Contexto) -> str:
     linhas = []
     for registro in tabela_ceo:
         celulas = [
-            registro["nome"],
+            f"{registro['nome']} *" if registro.get("marcado") else registro["nome"],
             num(formato.numero(registro["aum_mi"]), ordem=registro["aum_mi"]),
             num(
                 formato.variacao(registro["aum_var_pct"]),
@@ -127,7 +129,15 @@ def _tabela(ctx: Contexto) -> str:
             continue
 
         alvo = f"officer-{formato.mes_curto(ctx.mes_base)}-{len(linhas)}"
-        classe = "destaque" if registro["tipo"] == "fdos_alocacao" else ""
+        classe = " ".join(
+            filter(
+                None,
+                (
+                    "destaque" if registro["tipo"] == "fdos_alocacao" else "",
+                    "marcada" if registro.get("marcado") else "",
+                ),
+            )
+        )
         bloco = blocos.get(registro["nome"])
         if bloco:
             linhas.append(Linha(celulas, classe=classe, atributos=linha_expansivel(alvo)))
@@ -205,6 +215,20 @@ def _barras(ctx: Contexto) -> str:
     return colunas(*(desenhar(*definicao) for definicao in GRAFICOS)) + fonte(
         "CEO-Dashboard", ctx.rotulo_mes
     )
+
+
+def _nota_marcados(ctx: Contexto) -> str:
+    """A nota que explica o asterisco — na mesma cor das linhas que ele marca.
+
+    O texto sai da própria planilha, não é nosso. Sem officer marcado no mês, a
+    nota não tem o que explicar e some.
+    """
+    if not any(linha.get("marcado") for linha in ctx.bloco("officers", "tabela_ceo")):
+        return ""
+    rodape = next((texto for texto in ctx.bloco("consolidado", "notas") if texto.startswith("*")), "")
+    if not rodape:
+        return ""
+    return f'<p class="g5-nota g5-nota--marcada">{esc(rodape)}</p>'
 
 
 def _ressalvas() -> str:

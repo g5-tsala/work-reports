@@ -90,6 +90,10 @@ ROA total [C10] = K9 / C9                 ; run rate / AUM
 ROA onshore [C13] = K7 / C7
 ```
 
+**Série do Run Rate** (Visão Geral): a mesma conta aplicada a cada mês de `aum_receita` —
+`(onshore.receita_mens_rs + offshore.receita_rs) × 12`, com o offshore já em R$ ao câmbio
+daquele mês. No mês-base fecha com `resumo!K9` (ago/26: R$ 105,97 mi).
+
 Note que a Projeção Ano soma **competência** acumulada no ano e projeta os meses restantes
 pela **mensalizada** do último mês.
 

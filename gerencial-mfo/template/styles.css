@@ -274,6 +274,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   padding: var(--g5-space-2) var(--g5-space-3);
   margin-bottom: var(--g5-space-3);
 }
+.g5-link-aba { margin: var(--g5-space-1) 0 0; font-size: 13px; }
+.g5-link-aba a { color: var(--g5-navy); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--g5-wine-tint); }
+.g5-link-aba a:hover { color: var(--g5-wine); border-bottom-color: var(--g5-wine); }
 .g5-fonte { font-size: 11px; color: var(--g5-slate-aa); margin-top: var(--g5-space-1); }
 
 /* ----------------------------------------------------------------- kpi */
@@ -613,7 +616,7 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   @page { size: A4 landscape; margin: 10mm; }
   html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body { font-size: 10pt; }
-  .g5-sidebar, .g5-topbar__acoes, .g5-tabela-ferramentas, .g5-pular, .g5-alternador__botoes { display: none; }
+  .g5-sidebar, .g5-topbar__acoes, .g5-tabela-ferramentas, .g5-pular, .g5-alternador__botoes, .g5-link-aba { display: none; }
   .g5-parametros { break-inside: avoid; }
   .g5-main { margin: 0; padding: 0; max-width: none; }
   .g5-topbar { border-bottom: 0; padding-bottom: 0; margin-bottom: var(--g5-space-2); }

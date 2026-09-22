@@ -41,6 +41,14 @@
     });
   });
 
+  /* Link de uma aba para outra, no meio do conteúdo. */
+  doc.addEventListener("click", function (evento) {
+    var link = evento.target.closest ? evento.target.closest("[data-ir-para]") : null;
+    if (!link) return;
+    evento.preventDefault();
+    mostrar(link.getAttribute("data-ir-para"));
+  });
+
   /* -------------------------------------------------------------- filtro */
 
   doc.addEventListener("input", function (evento) {

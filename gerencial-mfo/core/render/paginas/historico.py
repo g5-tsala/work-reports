@@ -13,6 +13,7 @@ from .. import formato, graficos
 from ..contexto import Contexto
 from ..pagina import pagina
 from ..ui import Coluna, Linha, fonte, grafico, nota, num, secao, tabela
+from .comum import alinhar_meses, grafico_aum_consolidado, grafico_receita_consolidada
 
 #: Linhas da aba que valem uma tabela; o resto da série vive no JSON.
 LINHAS_ONSHORE = (
@@ -48,8 +49,12 @@ def render(ctx: Contexto) -> str:
 
     return "".join(
         [
-            secao("AUM consolidado", _grafico_aum(ctx, onshore, offshore)),
-            secao("Receita e ROA", _grafico_receita(ctx, onshore, offshore), _grafico_roa(ctx, onshore, offshore)),
+            secao("AUM consolidado", grafico_aum_consolidado(ctx, onshore, offshore, onshore["meses"])),
+            secao(
+                "Receita e ROA",
+                grafico_receita_consolidada(ctx, onshore, offshore, onshore["meses"]),
+                _grafico_roa(ctx, onshore, offshore),
+            ),
             secao(
                 f"Série onshore (R$) — {ano}",
                 _tabela(ctx, onshore, LINHAS_ONSHORE, "serie-onshore"),
@@ -69,58 +74,6 @@ def render(ctx: Contexto) -> str:
     )
 
 
-def _grafico_aum(ctx: Contexto, onshore: dict[str, Any], offshore: dict[str, Any]) -> str:
-    """Empilhado, não duas linhas: a pergunta aqui é o AUM da casa.
-
-    Em linhas separadas o consolidado ficava implícito — o leitor tinha de
-    somar de cabeça um traço de 40 bi com outro de 4 bi para chegar ao número
-    que ele veio buscar. Empilhado, o topo da barra é o total e cada parcela
-    traz o próprio valor escrito dentro.
-    """
-    meses = onshore["meses"]
-    return grafico(
-        graficos.barras(
-            ctx.rotulos(meses),
-            [
-                graficos.Serie("Onshore", ctx.serie(onshore, "aum_rs")),
-                graficos.Serie("Offshore (R$)", _alinhar(ctx, offshore, "aum_rs", meses)),
-            ],
-            formatador=lambda v: formato.em_bilhoes(v, 0),
-            formatador_rotulo=lambda v: formato.em_bilhoes(v, 1),
-            titulo="AUM onshore e offshore empilhados, em R$ bi",
-            empilhado=True,
-            rotular=True,
-            rotulos_inclinados=True,
-        ),
-        itens_legenda=[("Onshore (R$ bi)", graficos.SERIES[0]), ("Offshore (R$ bi)", graficos.SERIES[1])],
-        rodape=fonte("aum_receita", ctx.rotulo_mes, "Offshore convertido pelo câmbio de cada período."),
-    )
-
-
-def _grafico_receita(ctx: Contexto, onshore: dict[str, Any], offshore: dict[str, Any]) -> str:
-    meses = onshore["meses"]
-    return grafico(
-        graficos.barras(
-            ctx.rotulos(meses),
-            [
-                graficos.Serie("Onshore mensalizada", ctx.serie(onshore, "receita_mens_rs")),
-                graficos.Serie("Offshore (R$)", _alinhar(ctx, offshore, "receita_rs", meses)),
-            ],
-            formatador=lambda v: formato.em_milhoes(v, 0),
-            formatador_rotulo=lambda v: formato.em_milhoes(v, 1),
-            titulo="Receita onshore e offshore empilhadas, em R$ mi",
-            empilhado=True,
-            rotular=True,
-            rotulos_inclinados=True,
-        ),
-        itens_legenda=[
-            ("Onshore (R$ mi)", graficos.SERIES[0]),
-            ("Offshore (R$ mi)", graficos.SERIES[1]),
-        ],
-        rodape=fonte("aum_receita", ctx.rotulo_mes),
-    )
-
-
 def _grafico_roa(ctx: Contexto, onshore: dict[str, Any], offshore: dict[str, Any]) -> str:
     """Linha, não barra: ROA é razão, não volume — empilhá-lo somaria taxas."""
     meses = onshore["meses"]
@@ -129,7 +82,7 @@ def _grafico_roa(ctx: Contexto, onshore: dict[str, Any], offshore: dict[str, Any
             ctx.rotulos(meses),
             [
                 graficos.Serie("ROA onshore", ctx.serie(onshore, "roa_pct")),
-                graficos.Serie("ROA offshore", _alinhar(ctx, offshore, "roa_pct", meses)),
+                graficos.Serie("ROA offshore", alinhar_meses(ctx, offshore, "roa_pct", meses)),
             ],
             formatador=lambda v: formato.percentual(v),
             titulo="ROA onshore e offshore",
@@ -139,19 +92,6 @@ def _grafico_roa(ctx: Contexto, onshore: dict[str, Any], offshore: dict[str, Any
         itens_legenda=[("ROA onshore", graficos.SERIES[0]), ("ROA offshore", graficos.SERIES[1])],
         rodape=fonte("aum_receita", ctx.rotulo_mes),
     )
-
-
-def _alinhar(ctx: Contexto, bloco: dict[str, Any], chave: str, meses: list[str]) -> list[float | None]:
-    """Reposiciona uma série na grade de meses da outra origem.
-
-    Onshore e offshore têm cabeçalhos de data próprios e um ponto divergente em
-    2023 — casar por mês, nunca por índice de coluna.
-    """
-    serie = ctx.serie(bloco, chave)
-    return [
-        serie[bloco["meses"].index(mes)] if mes in bloco["meses"] and bloco["meses"].index(mes) < len(serie) else None
-        for mes in meses
-    ]
 
 
 def _tabela(ctx: Contexto, bloco: dict[str, Any], especificacao, identificador: str) -> str:

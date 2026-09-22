@@ -139,6 +139,16 @@ def alternador(identificador: str, rotulo: str, opcoes: Sequence[tuple[str, str,
     )
 
 
+def link_aba(identificador: str, texto: str) -> str:
+    """Link para outra aba do dashboard. Não é `data-vai-para` (reservado ao
+    menu, que também marca o item ativo e dá o título da página): o `app.js`
+    trata `data-ir-para` só como navegação."""
+    return (
+        f'<p class="g5-link-aba"><a href="#{esc(identificador)}" data-ir-para="{esc(identificador)}">'
+        f"{esc(texto)} →</a></p>"
+    )
+
+
 def expandir_todos(tabela: str) -> str:
     """Botão que abre ou fecha, de uma vez, todo drill-down da tabela `tabela`."""
     return (
