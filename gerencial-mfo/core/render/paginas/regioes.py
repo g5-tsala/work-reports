@@ -1,6 +1,7 @@
 """Aba: Regiões.
 
-Distribuição geográfica do AUM. Única fonte do corte é a aba oculta `regiao`,
+Distribuição geográfica do AUM e da receita, com as parcelas onshore e
+offshore empilhadas. Única fonte do corte é a aba oculta `regiao`,
 que já traz onshore, offshore e o consolidado somados um a um.
 """
 
@@ -11,7 +12,25 @@ from typing import Any
 from .. import formato, graficos
 from ..contexto import Contexto
 from ..pagina import pagina
-from ..ui import Coluna, Linha, fonte, grafico, nota, num, secao, tabela
+from ..ui import Coluna, Linha, cartao, colunas, fonte, grafico, legenda, num, secao, tabela
+
+#: Rótulo de exibição da linha sem região da planilha (`-`): é onde caem os
+#: fundos de alocação próprios, e o negócio lê essa linha como o grupo G5.
+ROTULO_SEM_REGIAO = "G5"
+
+#: Parcelas de cada barra, na ordem da pilha: bloco do JSON, rótulo e cor —
+#: as mesmas do Histórico AUM × Receita.
+PARCELAS = (
+    ("onshore", "Onshore", graficos.SERIES[0]),
+    ("offshore", "Offshore", graficos.SERIES[1]),
+)
+
+#: Cada gráfico do par: campo do JSON, título do cartão (com a escala) e o
+#: formatador que a escala exige.
+GRAFICOS = (
+    ("aum", "AUM", "R$ bi", lambda v: formato.em_bilhoes(v, 2)),
+    ("receita", "Receita", "R$ mil", lambda v: formato.numero(v / 1e3, 0)),
+)
 
 BLOCOS = (
     ("consolidado", "Consolidado (R$)", True),
@@ -31,7 +50,7 @@ def render(ctx: Contexto) -> str:
     regioes = ctx.bloco("carteira", "regioes")
     consolidado = regioes["consolidado"]
 
-    partes = [secao("Distribuição do AUM", _barras(ctx, consolidado))]
+    partes = [secao("Distribuição do AUM e da receita", _barras(ctx, regioes, consolidado))]
     for chave, titulo, com_grupos in BLOCOS:
         partes.append(
             secao(
@@ -40,30 +59,61 @@ def render(ctx: Contexto) -> str:
                 fonte("regiao", ctx.rotulo_mes),
             )
         )
-    partes.append(
-        nota(
-            "A linha <strong>—</strong> reúne portfólios sem região atribuída, incluindo os "
-            "fundos de alocação. Ela entra no total."
-        )
-    )
     return "".join(partes)
 
 
-def _barras(ctx: Contexto, bloco: dict[str, Any]) -> str:
-    itens = sorted(
-        ((linha["regiao"], linha["aum"]) for linha in bloco["linhas"] if linha["aum"]),
-        key=lambda item: item[1],
+def _rotulo(registro: dict[str, Any]) -> str:
+    return ROTULO_SEM_REGIAO if registro.get("sem_regiao") else registro["regiao"]
+
+
+def _barras(ctx: Contexto, regioes: dict[str, Any], consolidado: dict[str, Any]) -> str:
+    """AUM e receita lado a lado, empilhando onshore e offshore.
+
+    A ordem sai do AUM consolidado e vale para os dois gráficos, como nos pares
+    de Resumo, Officers e Grupos. As parcelas vêm dos blocos onshore e offshore
+    da aba `regiao`, casadas pelo nome da região — o consolidado é a soma delas.
+    """
+    linhas = sorted(
+        (linha for linha in consolidado["linhas"] if linha["aum"]),
+        key=lambda linha: linha["aum"],
         reverse=True,
     )
-    return grafico(
-        graficos.barras_horizontais(
-            itens,
-            formatador=lambda v: formato.em_bilhoes(v, 2),
-            titulo="AUM consolidado por região",
-            largura_rotulo=280,
-        ),
-        itens_legenda=[("AUM (R$ bi)", graficos.SERIES[0])],
-        rodape=fonte("regiao", ctx.rotulo_mes, "Offshore convertido ao câmbio do mês."),
+    parcelas = {
+        chave: {linha["regiao"]: linha for linha in regioes[chave]["linhas"]} for chave, _, _ in PARCELAS
+    }
+    rotulos = [_rotulo(linha) for linha in linhas]
+
+    def desenhar(campo: str, rotulo: str, escala: str, formatador) -> str:
+        series = [
+            graficos.Serie(
+                nome,
+                [(parcelas[chave].get(linha["regiao"]) or {}).get(campo) for linha in linhas],
+                cor,
+            )
+            for chave, nome, cor in PARCELAS
+        ]
+        return cartao(
+            f"{rotulo} ({escala})",
+            grafico(
+                graficos.barras_horizontais_empilhadas(
+                    rotulos,
+                    series,
+                    formatador=formatador,
+                    titulo=f"{rotulo} por região, onshore e offshore, em {escala}",
+                    largura=560,
+                    largura_rotulo=180,
+                )
+            ),
+        )
+
+    return (
+        legenda([(nome, cor) for _, nome, cor in PARCELAS])
+        + colunas(*(desenhar(*definicao) for definicao in GRAFICOS))
+        + fonte(
+            "regiao",
+            ctx.rotulo_mes,
+            "Offshore convertido ao câmbio do mês. Passe o mouse na barra para ver as parcelas.",
+        )
     )
 
 
@@ -83,7 +133,7 @@ def _tabela(ctx: Contexto, bloco: dict[str, Any], identificador: str, com_grupos
         aum, receita = registro["aum"], registro["receita"]
         roa = (receita * 12 / aum) if aum and receita is not None else None
         celulas = [
-            registro["regiao"],
+            _rotulo(registro),
             num(formato.em_milhoes(aum), ordem=aum),
             num(formato.percentual(registro["pct_aum"]), ordem=registro["pct_aum"]),
             num(formato.numero(receita, 0), ordem=receita),

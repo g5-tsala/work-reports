@@ -1,6 +1,6 @@
 /* Gerencial MFO — comportamento do dashboard.
-   Quatro coisas, e nada mais: navegar entre as abas, filtrar, ordenar e abrir
-   o detalhe de uma linha. Os números já vêm calculados do build; nada aqui
+   Cinco coisas, e nada mais: navegar entre as abas, filtrar, ordenar, abrir
+   o detalhe de uma linha e exibir o tooltip dos gráficos. Os números já vêm calculados do build; nada aqui
    recalcula valor de negócio.
 
    Restrições do projeto: precisa rodar dentro de um <iframe>, então nada de
@@ -157,6 +157,81 @@
     if (!linha) return;
     evento.preventDefault();
     alternarDetalhe(linha);
+  });
+
+  /* -------------------------------------------------------------- tooltip */
+
+  /* O gráfico chega pronto do build; aqui só se exibe o que ele já traz em
+     `data-dica` ({titulo, linhas: [[rótulo, valor, cor]]}). Um único balão
+     para a página, posicionado junto ao ponteiro e mantido dentro da janela.
+     Texto entra por textContent: rótulo vem da planilha. */
+  var balao = null;
+
+  function montarBalao(dica) {
+    if (!balao) {
+      balao = doc.createElement("div");
+      balao.className = "g5-dica";
+      balao.setAttribute("role", "tooltip");
+      doc.body.appendChild(balao);
+    }
+    balao.textContent = "";
+    var cabeca = doc.createElement("div");
+    cabeca.className = "g5-dica__titulo";
+    cabeca.textContent = dica.titulo || "";
+    balao.appendChild(cabeca);
+    (dica.linhas || []).forEach(function (item) {
+      var linha = doc.createElement("div");
+      linha.className = "g5-dica__linha" + (item[2] ? "" : " g5-dica__linha--total");
+      var chave = doc.createElement("i");
+      if (item[2]) chave.style.background = item[2];
+      var valor = doc.createElement("strong");
+      valor.textContent = item[1];
+      var rotulo = doc.createElement("span");
+      rotulo.textContent = item[0];
+      linha.appendChild(chave);
+      linha.appendChild(valor);
+      linha.appendChild(rotulo);
+      balao.appendChild(linha);
+    });
+    balao.hidden = false;
+  }
+
+  function posicionarBalao(evento) {
+    var folga = 14;
+    var x = evento.clientX + folga;
+    var y = evento.clientY + folga;
+    var caixa = balao.getBoundingClientRect();
+    if (x + caixa.width > window.innerWidth - 4) x = evento.clientX - folga - caixa.width;
+    if (y + caixa.height > window.innerHeight - 4) y = evento.clientY - folga - caixa.height;
+    balao.style.left = Math.max(4, x) + "px";
+    balao.style.top = Math.max(4, y) + "px";
+  }
+
+  var marcaAtual = null;
+
+  doc.addEventListener("pointermove", function (evento) {
+    var marca = evento.target.closest ? evento.target.closest("[data-dica]") : null;
+    if (!marca) {
+      if (balao) balao.hidden = true;
+      marcaAtual = null;
+      return;
+    }
+    if (marca !== marcaAtual) {
+      var dica;
+      try {
+        dica = JSON.parse(marca.getAttribute("data-dica"));
+      } catch (erro) {
+        return;
+      }
+      montarBalao(dica);
+      marcaAtual = marca;
+    }
+    posicionarBalao(evento);
+  });
+
+  doc.addEventListener("pointerleave", function () {
+    if (balao) balao.hidden = true;
+    marcaAtual = null;
   });
 
   /* ------------------------------------------------------------ impressão */

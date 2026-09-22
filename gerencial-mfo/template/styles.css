@@ -419,6 +419,44 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   stroke-linejoin: round;
 }
 
+/* Tooltip de grafico. A area de hover e a faixa inteira da categoria
+   (`.g5-alvo`, transparente), nao so a marca pintada: parcela fina e alvo
+   dificil. A marca sob o ponteiro clareia para mostrar que respondeu. */
+.g5-alvo { fill: transparent; }
+.g5-com-dica:hover .g5-alvo { fill: var(--g5-bg-soft); }
+.g5-com-dica:hover rect:not(.g5-alvo) { opacity: 0.85; }
+.g5-dica {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  min-width: 180px;
+  padding: var(--g5-space-1) 12px;
+  background: var(--g5-white);
+  border: 1px solid var(--g5-line);
+  border-radius: var(--g5-radius-md);
+  box-shadow: 0 4px 12px rgba(35, 36, 107, 0.14);
+  font: 400 12px var(--g5-sans);
+  color: var(--g5-graphite);
+}
+.g5-dica[hidden] { display: none; }
+.g5-dica__titulo { font-weight: 600; color: var(--g5-navy); margin-bottom: 4px; }
+/* Valor primeiro e em destaque; o rotulo da serie vem depois, secundario. A
+   chave e um traco curto da cor da serie, nao um quadrado. */
+.g5-dica__linha {
+  display: grid;
+  grid-template-columns: 12px minmax(64px, auto) 1fr;
+  align-items: center;
+  column-gap: 8px;
+  line-height: 1.6;
+}
+.g5-dica__linha i { display: block; height: 3px; border-radius: 1px; }
+.g5-dica__linha strong {
+  justify-self: end;
+  color: var(--g5-ink);
+  font-variant-numeric: tabular-nums;
+}
+.g5-dica__linha--total { border-top: 1px solid var(--g5-line); margin-top: 2px; padding-top: 2px; }
+
 .g5-legenda {
   display: flex;
   flex-wrap: wrap;
@@ -510,6 +548,7 @@ h1, h2, h3, h4, p, figure { margin: 0; }
    e as media queries responsivas são `screen and`, então a grade de KPIs e de
    colunas chega inteira ao papel. */
 @media print {
+  .g5-dica { display: none !important; }
   @page { size: A4 landscape; margin: 10mm; }
   html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body { font-size: 10pt; }

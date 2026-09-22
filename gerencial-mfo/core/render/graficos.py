@@ -2,7 +2,8 @@
 
 Sem biblioteca e sem JavaScript: os dados sao fixos no momento em que o HTML e
 escrito, entao o grafico pode ser vetor estatico. Ele imprime bem, funciona com
-o JS desligado e nao depende de rede.
+o JS desligado e nao depende de rede. O unico JS que encosta em grafico e o
+tooltip: o SVG carrega o conteudo em `data-dica` e o `app.js` so o exibe.
 
 Regras do design system aplicadas aqui: paleta na ordem canonica (no maximo 5
 series), gridlines so horizontais em `--g5-line`, eixos em `--g5-slate-aa`
@@ -13,6 +14,7 @@ uma mudanca de paleta continua acontecendo num lugar so.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Sequence
 from html import escape
 
@@ -570,6 +572,79 @@ def barras_horizontais(
         )
         partes.append(
             _texto(largura_rotulo + comprimento + 10, y + 17, formatador(valor), "g5-valor-barra", "start")
+        )
+    return _svg("".join(partes), titulo, largura, altura, CLASSE_RANKING)
+
+
+def barras_horizontais_empilhadas(
+    rotulos: Sequence[str],
+    series: Sequence[Serie],
+    *,
+    formatador: Callable[[float], str],
+    titulo: str = "",
+    largura: int = LARGURA,
+    largura_rotulo: int = 220,
+) -> str:
+    """Ranking em que cada barra é a soma de parcelas — onshore + offshore.
+
+    Só o total vai escrito, no fim da pilha: a parcela menor quase nunca tem
+    largura para o próprio número, e rotular uma parcela e não a outra deixaria
+    a leitura pela metade. O detalhe vai no tooltip (`data-dica`, lido pelo
+    `app.js`), e a tabela da página continua sendo o lugar de todos os números
+    — sem JS o gráfico perde só o hover.
+
+    Linha mais baixa que a de `barras_horizontais` porque o par empilhado
+    costuma vir lado a lado e com muitas categorias: com a altura cheia, vinte
+    regiões passariam de 800px.
+    """
+    series = list(series)[:MAXIMO_SERIES]
+    if not rotulos or not series:
+        return ""
+
+    def valor(serie: Serie, posicao: int) -> float:
+        return (serie.valores[posicao] if posicao < len(serie.valores) else None) or 0.0
+
+    totais = [sum(max(valor(serie, posicao), 0.0) for serie in series) for posicao in range(len(rotulos))]
+    maximo = max(totais) or 1
+    altura_linha, espaco = 18, 5
+    altura = len(rotulos) * (altura_linha + espaco) + 10
+    disponivel = largura - largura_rotulo - 90
+
+    partes = []
+    for posicao, rotulo in enumerate(rotulos):
+        y = 5 + posicao * (altura_linha + espaco)
+        dica = {
+            "titulo": rotulo,
+            "linhas": [
+                [serie.rotulo, formatador(valor(serie, posicao)), cor_da_serie(indice, serie)]
+                for indice, serie in enumerate(series)
+            ]
+            + [["Total", formatador(totais[posicao]), ""]],
+        }
+        # O `rect` transparente da faixa inteira é a área de hover: a parcela
+        # offshore tem poucos pixels, e mirar nela seria o gesto mais difícil
+        # justamente para o número que só o tooltip mostra.
+        grupo = [
+            (
+                f'<rect class="g5-alvo" x="0" y="{y - espaco / 2:.1f}" width="{largura}" '
+                f'height="{altura_linha + espaco}"/>'
+            ),
+            _texto(largura_rotulo - 10, y + 13, rotulo, "g5-rotulo-barra", "end"),
+        ]
+        inicio = float(largura_rotulo)
+        for indice, serie in enumerate(series):
+            parcela = max(valor(serie, posicao), 0.0)
+            comprimento = parcela / maximo * disponivel
+            if comprimento:
+                grupo.append(
+                    f'<rect x="{inicio:.1f}" y="{y}" width="{comprimento:.1f}" '
+                    f'height="{altura_linha}" fill="{cor_da_serie(indice, serie)}"/>'
+                )
+            inicio += comprimento
+        grupo.append(_texto(inicio + 8, y + 13, formatador(totais[posicao]), "g5-valor-barra", "start"))
+        partes.append(
+            f'<g class="g5-com-dica" data-dica="{escape(json.dumps(dica, ensure_ascii=False))}">'
+            f'{"".join(grupo)}</g>'
         )
     return _svg("".join(partes), titulo, largura, altura, CLASSE_RANKING)
 

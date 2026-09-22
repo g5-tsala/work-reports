@@ -71,13 +71,13 @@ que o HTML é escrito, então o gráfico pode ser vetor estático: imprime bem, 
 desligado e não depende de rede.
 
 Tipos disponíveis: linha, barra vertical (agrupada e empilhada), combo barra + linha com
-segundo eixo, barra horizontal e donut. Waterfall ainda não existe — a captação usa barra
+segundo eixo, barra horizontal (simples e empilhada) e donut. Waterfall ainda não existe — a captação usa barra
 empilhada com linha de NET.
 
 As cores saem como `var(--g5-*)` dentro do SVG inline, que herda os tokens do CSS: trocar a
-paleta continua sendo mexer num arquivo só. Se algum dia for preciso interatividade real
-(tooltip, brushing, seletor que redesenha), aí sim entra biblioteca — minificada e inline,
-nunca via CDN.
+paleta continua sendo mexer num arquivo só. Tooltip não pede biblioteca (§2.4). Se algum
+dia for preciso interatividade real (brushing, seletor que redesenha), aí sim entra
+biblioteca — minificada e inline, nunca via CDN.
 
 ### 2.1 Regras de eixo
 
@@ -167,3 +167,22 @@ mecanismo. **Mexer nessa razão é mexer na altura de todo gráfico de série do
 ---
 
 [← Índice](../CLAUDE.md)
+
+### 2.4 Tooltip
+
+O gráfico continua estático: quem quer hover marca o grupo SVG com `data-dica`, um JSON
+`{titulo, linhas: [[rótulo, valor, cor]]}` já formatado no build, e o `app.js` exibe um
+balão único junto ao ponteiro. Linha sem cor é o total, separada por um fio. Hoje só
+`barras_horizontais_empilhadas()` usa (Regiões).
+
+- **Tooltip complementa, não esconde.** Todo número do balão está numa tabela da página.
+  Por isso a barra empilhada horizontal escreve só o total no fim da pilha: a parcela menor
+  quase nunca tem largura para o próprio número, e o balão é onde ela se abre.
+- **A área de hover é a faixa inteira da categoria** (`.g5-alvo`, retângulo transparente),
+  não só a tinta: a parcela offshore tem poucos pixels. A faixa sob o ponteiro ganha fundo
+  `--g5-bg-soft` e a barra clareia, para mostrar que respondeu.
+- **Valor antes do rótulo, chave em traço.** No balão o leitor já sabe a série e quer o
+  número: valor em destaque e alinhado à direita, rótulo depois, e a cor da série num traço
+  curto em vez de quadrado.
+- **Texto por `textContent`**, nunca `innerHTML`: o rótulo vem da planilha.
+- Some na impressão.

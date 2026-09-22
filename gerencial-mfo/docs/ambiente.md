@@ -167,8 +167,8 @@ arquivo que carrega nome de cliente.
 
 Os assets ficam em `template/` (`base.html`, `styles.css`, `app.js`, `logo-g5.txt`) e são
 **inlined** no HTML final. O logo é data URI porque caminho relativo some quando o arquivo é
-enviado por e-mail. O `app.js` faz quatro coisas e nada mais: navegar, filtrar, ordenar e
-abrir detalhe — sem `localStorage` e sem `window.top`, para funcionar dentro de um
+enviado por e-mail. O `app.js` faz cinco coisas e nada mais: navegar, filtrar, ordenar,
+abrir detalhe e exibir o tooltip dos gráficos — sem `localStorage` e sem `window.top`, para funcionar dentro de um
 `<iframe>`.
 
 **Regras invioláveis do pipeline:**

@@ -81,7 +81,9 @@ Não reabrir sem motivo novo.
   fixa, não decoração: é o regime que governa metade dos números da tela.
 - **Gráficos são SVG gerado no build, em Python** — não `charts.js`. Os dados são fixos
   quando o HTML é escrito, então vetor estático basta: imprime, abre sem JS e não depende de
-  rede. Biblioteca só se aparecer necessidade de interatividade real.
+  rede. Biblioteca só se aparecer necessidade de interatividade real. **Tooltip não é
+  esse caso:** o SVG leva o conteúdo em `data-dica` e o `app.js` só o exibe — sem JS o
+  gráfico perde o hover e nada mais. Detalhe em [visual.md](visual.md) §2.4.
 
 ### Produto
 
@@ -97,6 +99,8 @@ Não reabrir sem motivo novo.
   Resumo (categoria e faixa de PL no mês) e a série de ROA do Histórico. A série longa por
   categoria não entrou em nenhuma conversa de decisão, e extraí-la custava dez blocos
   varridos e ~110 KB no HTML. Se voltar a ser pedida, o `git log` tem o extrator pronto.
+- **A região `-` da aba `regiao` aparece como `G5`** em Regiões (gráficos e tabelas). É
+  onde caem os fundos de alocação, e o negócio lê a linha como o grupo G5.
 - Nomes reais. Marca de confidencialidade na impressão.
 - Distribuição por link para download hoje; `<iframe>` num portal no futuro.
 
