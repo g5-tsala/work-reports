@@ -170,9 +170,6 @@ def _kpis(ctx: Contexto, universo: dict[str, Any]) -> str:
     """A faixa de um universo; o seletor acima dela troca entre os três.
 
     Número negativo sai em vermelho; positivo, não.
-
-    Uma casa decimal: com o sinal, `R$ -426,48 mi` não cabe no cartão e quebra
-    linha, e na casa das centenas de milhões o centésimo não muda leitura.
     """
     posicao = universo["meses"].index(ctx.mes_base) if ctx.mes_base in universo["meses"] else None
     series, moeda = universo["series"], universo["moeda"]
@@ -187,9 +184,9 @@ def _kpis(ctx: Contexto, universo: dict[str, Any]) -> str:
     def cartao(rotulo: str, valor: float | None, valor_reais: float | None = None) -> str:
         return kpi(
             rotulo,
-            formato.milhoes(valor, 1, moeda=moeda),
+            formato.milhoes(valor, 2, moeda=moeda),
             classe_valor="negativo" if valor is not None and valor < 0 else "",
-            complemento=formato.milhoes(valor_reais, 1) if em_reais else "",
+            complemento=formato.milhoes(valor_reais, 2) if em_reais else "",
         )
 
     def do_mes_cartao(rotulo: str, secao_: str) -> str:
@@ -200,6 +197,7 @@ def _kpis(ctx: Contexto, universo: dict[str, Any]) -> str:
         do_mes_cartao("IN do mês", "IN"),
         do_mes_cartao("OUT do mês", "OUT"),
         cartao("NET no ano", series["NET"]["total"], em_reais["NET"]["total"] if em_reais else None),
+        compacta=True,
     )
 
 

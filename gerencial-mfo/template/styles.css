@@ -305,6 +305,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-kpi__ref { color: var(--g5-slate-aa); font-weight: 400; }
 .g5-kpi__detalhe { font-size: 12px; color: var(--g5-slate-aa); }
 
+/* Numero longo (sinal + duas casas + centenas de mi): corpo menor e sem
+   quebra, para o valor nao partir em duas linhas no cartao. */
+.g5-kpis--compacta .g5-kpi__value { font-size: 28px; white-space: nowrap; }
 /* A mesma grandeza em outra moeda, ao lado do valor: contexto, nao leitura
    principal — menor e em cinza, mesmo quando o valor esta em cor de sinal. */
 .g5-kpi__complemento { font-size: 13px; font-weight: 500; color: var(--g5-slate-aa); white-space: nowrap; }

@@ -106,9 +106,14 @@ def kpi(
     return f'<div class="g5-kpi">{"".join(partes)}</div>'
 
 
-def faixa_kpis(*blocos: str) -> str:
-    """Nunca mais de quatro KPIs por linha — o CSS trava em 4 colunas."""
-    return f'<div class="g5-kpis">{"".join(blocos)}</div>'
+def faixa_kpis(*blocos: str, compacta: bool = False) -> str:
+    """Nunca mais de quatro KPIs por linha — o CSS trava em 4 colunas.
+
+    `compacta` reduz o corpo do valor para número longo — sinal, duas casas e
+    centenas de milhões — caber numa linha do cartão.
+    """
+    classe = "g5-kpis g5-kpis--compacta" if compacta else "g5-kpis"
+    return f'<div class="{classe}">{"".join(blocos)}</div>'
 
 
 def alternador(identificador: str, rotulo: str, opcoes: Sequence[tuple[str, str, str]]) -> str:
