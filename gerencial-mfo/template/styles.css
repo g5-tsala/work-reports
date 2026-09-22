@@ -399,8 +399,15 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-zero { stroke: var(--g5-slate-aa); stroke-width: 1; }
 .g5-linha { stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .g5-eixo { font: 400 11px var(--g5-sans); fill: var(--g5-slate-aa); }
+/* Girado, o rotulo cabe mais apertado entre os vizinhos: um ponto a menos. */
+.g5-eixo--inclinado { font-size: 10px; }
 .g5-rotulo-barra { font: 400 12px var(--g5-sans); fill: var(--g5-ink); }
 .g5-valor-barra { font: 600 12px var(--g5-sans); fill: var(--g5-graphite); }
+/* Rotulo dentro da barra: menor, porque disputa espaco com a largura dela, e
+   branco, porque o fundo e a cor cheia da serie. O total fica fora, sobre a
+   pilha, e por isso volta para a cor de texto. */
+.g5-valor-dentro { font: 600 11px var(--g5-sans); fill: var(--g5-white); }
+.g5-total-barra { font: 600 11px var(--g5-sans); fill: var(--g5-navy); }
 .g5-donut-total { font: 600 15px var(--g5-sans); fill: var(--g5-navy); }
 /* Halo branco: o rotulo do ultimo ponto cai em cima da propria linha
    quando a serie termina achatada. */

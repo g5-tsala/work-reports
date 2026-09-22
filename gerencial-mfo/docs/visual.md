@@ -95,6 +95,10 @@ Quatro decisões que já custaram uma rodada de conserto:
   medir duas alturas no mesmo desenho.
 - **Cor por sinal só em série que oscila em torno do zero** — variação, fluxo, resultado.
   Em nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
+- **Série longa pede rótulo de eixo inclinado** (`rotulos_inclinados`), não rótulo pulado.
+  Sem ele, `_passo_de_rotulos` mostra de N em N para não sobrepor, e num histórico de 24
+  pontos metade das datas some — justo o que faz o leitor localizar o ponto que está vendo.
+  Girado em -45°, com um ponto a menos de corpo, cabem todas.
 - **Cor por família em ranking** (`barras_horizontais(cores=…)`) quando as barras pertencem
   a grupos que o leitor reconhece — família de produto, G5 contra terceiros. A cor carrega o
   grupo e dispensa reordenar o gráfico para agrupá-lo, mantendo a ordem por grandeza. Vale o
@@ -114,13 +118,27 @@ escolha é pelo tamanho da série:
 | Opção | Onde | Quando |
 |---|---|---|
 | `rotular_ultimo` | `linhas()`, `combo()` | série longa: só o valor de fechamento |
-| `rotular_pontos` | `linhas()` | série curta e de uma série só — com ~8 pontos eles ficam a 140px um do outro; com 30 se sobrepõem |
-| `rotular` | `barras()` | série curta; o valor vai fora da barra, acima se positivo e abaixo se negativo |
+| `rotular_pontos` | `linhas()` | quando o número exato de cada ponto importa. Marca o ponto com um círculo maior e alterna as séries acima e abaixo do traço — duas séries próximas empilhariam os rótulos justamente onde se cruzam |
+| `rotular` | `barras()` | o valor vai **fora** da barra solta (acima se positivo, abaixo se negativo) e **dentro** de cada segmento empilhado, em branco |
+
+`formatador_rotulo` separa a escala do rótulo da do eixo: o eixo aceita marca redonda
+(`45 bi`), o rótulo costuma querer a casa decimal (`39,7 bi`). Sem ele, os dois usam
+`formatador`.
+
+Em barra empilhada o rótulo vai **dentro** porque é o segmento que precisa ser identificado
+— fora dele não haveria a qual parcela o número se refere. Segmento mais curto que
+`ALTURA_MINIMA_ROTULO` fica sem rótulo: o eixo e a tabela respondem, e um texto que
+transborda passaria a rotular a parcela vizinha.
 
 **O rótulo herda a cor da marca que ele descreve** — a cor da série na linha, a cor da barra
 na barra. Com marcas de cores diferentes lado a lado, rótulo cinza obriga a mirar a coluna
-para saber de quem é o número. Na linha ele leva halo branco (`paint-order: stroke`), senão
+para saber de quem é o número. A exceção é o rótulo dentro da barra, que é branco: ali o
+fundo é a cor cheia da série. Na linha ele leva halo branco (`paint-order: stroke`), senão
 cai em cima do próprio traço quando a série termina achatada.
+
+**Empilhar é para parcela de um total; linha é para razão.** AUM e receita de duas origens
+empilham — o topo da barra é o consolidado, que é o número que o leitor veio buscar, e em
+duas linhas separadas ele teria de somar de cabeça. ROA não: somar taxas não produz taxa.
 
 Detalhe de implementação: a cor sai como `style="fill:…"`, não como atributo `fill`.
 Atributo de apresentação perde para qualquer regra CSS, e `.g5-valor-barra` declara um

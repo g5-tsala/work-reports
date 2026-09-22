@@ -36,8 +36,15 @@ COR_NEGATIVO = "var(--g5-negative)"
 #: na altura de todo grafico de serie do dashboard.
 LARGURA = 1200
 ALTURA = 224
-MARGEM = {"esquerda": 72, "direita": 16, "topo": 20, "base": 36}
+#: `base_inclinada` cobre a diagonal do rotulo girado, que ocupa mais altura
+#: que o texto deitado.
+MARGEM = {"esquerda": 72, "direita": 16, "topo": 20, "base": 36, "base_inclinada": 50}
 DIVISOES = 4
+
+#: Altura minima de um segmento empilhado para caber o rotulo dentro dele —
+#: pouco acima do corpo da fonte de `.g5-valor-dentro`, que e o que de fato
+#: precisa caber.
+ALTURA_MINIMA_ROTULO = 12
 
 
 class Serie:
@@ -102,14 +109,21 @@ def _escala_agradavel(minimo: float, maximo: float, divisoes: int = DIVISOES) ->
 
 
 def _texto(
-    x: float, y: float, conteudo: str, classe: str, ancora: str = "middle", cor: str = ""
+    x: float,
+    y: float,
+    conteudo: str,
+    classe: str,
+    ancora: str = "middle",
+    cor: str = "",
+    rotacao: float = 0,
 ) -> str:
     # `style` e nao o atributo `fill`: atributo de apresentacao perde para
     # qualquer regra CSS, e `.g5-valor-barra` ja declara um `fill` proprio.
     preenchimento = f' style="fill:{cor}"' if cor else ""
+    giro = f' transform="rotate({rotacao:g} {x:.1f} {y:.1f})"' if rotacao else ""
     return (
         f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{ancora}" class="{classe}"'
-        f"{preenchimento}>{escape(str(conteudo))}</text>"
+        f"{preenchimento}{giro}>{escape(str(conteudo))}</text>"
     )
 
 
@@ -120,10 +134,12 @@ def _moldura(
     largura: int,
     altura: int,
     passo_rotulos: int = 1,
+    inclinar: bool = False,
 ) -> tuple[str, Callable[[float], float], Callable[[int], float], float]:
     """Gridlines, eixos e as funcoes de projecao de valor e categoria."""
     esquerda, direita = MARGEM["esquerda"], largura - MARGEM["direita"]
-    topo, base = MARGEM["topo"], altura - MARGEM["base"]
+    base_reservada = MARGEM["base_inclinada"] if inclinar else MARGEM["base"]
+    topo, base = MARGEM["topo"], altura - base_reservada
     minimo, maximo = marcas[0], marcas[-1]
 
     def y(valor: float) -> float:
@@ -145,7 +161,15 @@ def _moldura(
             _texto(esquerda - 10, altura_marca + 4, formatador(marca), "g5-eixo", "end")
         )
     for indice, categoria in enumerate(categorias):
-        if indice % passo_rotulos == 0:
+        if inclinar:
+            # Ancorado no fim e girado -45°, o rotulo desce para a esquerda a
+            # partir do tick: termina embaixo da categoria que descreve e nao
+            # invade a area de plotagem. E o que permite mostrar todos os
+            # pontos de uma serie longa sem pular um sim, um nao.
+            partes.append(
+                _texto(x(indice), base + 12, categoria, "g5-eixo g5-eixo--inclinado", "end", rotacao=-45)
+            )
+        elif indice % passo_rotulos == 0:
             partes.append(_texto(x(indice), altura - 12, categoria, "g5-eixo"))
     return "".join(partes), y, x, largura_faixa
 
@@ -186,6 +210,7 @@ def linhas(
     rotular_ultimo: bool = False,
     rotular_pontos: bool = False,
     ancorar_zero: bool = False,
+    rotulos_inclinados: bool = False,
 ) -> str:
     """Linha categórica. `rotular_ultimo` escreve o valor no último ponto.
 
@@ -207,7 +232,13 @@ def linhas(
     series = list(series)[:MAXIMO_SERIES]
     marcas = _escala_agradavel(*_limites(series, ancorar_zero=ancorar_zero))
     grade, y, x, _ = _moldura(
-        marcas, categorias, formatador, largura, altura, _passo_de_rotulos(len(categorias), largura)
+        marcas,
+        categorias,
+        formatador,
+        largura,
+        altura,
+        _passo_de_rotulos(len(categorias), largura),
+        inclinar=rotulos_inclinados,
     )
 
     partes = [grade]
@@ -224,19 +255,28 @@ def linhas(
         )
         cor = cor_da_serie(indice, serie)
         partes.append(f'<path d="{caminho}" fill="none" stroke="{cor}" class="g5-linha"/>')
-        if len(pontos) < 20:
-            partes += [f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3" fill="{cor}"/>' for px, py in pontos]
+        # Rotular ponto a ponto pede o ponto marcado: o numero solto sobre o
+        # traco nao diz onde a medicao acontece.
+        if rotular_pontos or len(pontos) < 20:
+            raio = 4 if rotular_pontos else 3
+            partes += [
+                f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{raio}" fill="{cor}"/>' for px, py in pontos
+            ]
         if rotular_pontos:
             valores = [
                 valor
                 for posicao, valor in enumerate(serie.valores)
                 if valor is not None and posicao < len(categorias)
             ]
+            # Series alternam acima e abaixo do traco. Duas series proximas —
+            # e ROA de duas origens fica proximo — empilhariam os rotulos no
+            # mesmo lugar justamente onde elas se cruzam, que e o ponto que o
+            # leitor foi conferir.
+            acima = indice % 2 == 0
             for (px, py), valor in zip(pontos, valores):
-                # Acima do ponto, com a margem do topo como piso: um pico colado
-                # no teto do viewBox empurraria o rotulo para fora do desenho.
+                altura_rotulo = max(py - 12, MARGEM["topo"]) if acima else py + 18
                 partes.append(
-                    _texto(px, max(py - 12, MARGEM["topo"]), formatador(valor), "g5-rotulo-ponto", cor=cor)
+                    _texto(px, altura_rotulo, formatador(valor), "g5-rotulo-ponto", cor=cor)
                 )
         elif rotular_ultimo:
             ultimo_valor = next(
@@ -263,6 +303,8 @@ def barras(
     largura: int = LARGURA,
     por_sinal: bool = False,
     rotular: bool = False,
+    formatador_rotulo: Callable[[float], str] | None = None,
+    rotulos_inclinados: bool = False,
 ) -> str:
     """Barra vertical, agrupada ou empilhada.
 
@@ -270,9 +312,23 @@ def barras(
     série que oscila em torno do zero — variação, fluxo, resultado. Aplicar a
     nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
 
-    `rotular` escreve o valor fora da barra — acima quando positivo, abaixo
-    quando negativo. Vale numa série curta, onde o número exato importa tanto
-    quanto o desenho; numa série longa os rótulos colidem e o eixo basta.
+    `rotular` escreve o valor na barra, e **onde** depende do empilhamento:
+    solta, ele vai fora — acima quando positivo, abaixo quando negativo —
+    porque ali a barra inteira é o valor; empilhada, vai dentro de cada
+    segmento, em branco, porque é o segmento que precisa ser identificado e
+    fora dele não haveria a qual parcela o número se refere. Segmento curto
+    demais para caber o texto fica sem rótulo: o eixo e a tabela respondem.
+    Na empilhada, o **total** ainda sai acima da barra — é o número que a pilha
+    existe para mostrar, e somar os segmentos de cabeça é o que empilhar
+    deveria ter evitado.
+
+    `rotulos_inclinados` gira o rótulo do eixo em -45° e mostra **todas** as
+    categorias, em vez de pular de N em N para não sobrepor. É o caminho para
+    série longa em que cada ponto precisa ser localizável.
+
+    `formatador_rotulo` separa a escala do rótulo da escala do eixo — o eixo
+    aceita marca redonda (`43 bi`), o rótulo costuma querer a casa decimal
+    (`43,5 bi`). Sem ele, os dois usam `formatador`.
     """
     partes, _, _, _ = _desenhar_barras(
         categorias,
@@ -283,6 +339,8 @@ def barras(
         largura=largura,
         por_sinal=por_sinal,
         rotular=rotular,
+        formatador_rotulo=formatador_rotulo or formatador,
+        rotulos_inclinados=rotulos_inclinados,
     )
     return _svg("".join(partes), titulo, largura, altura)
 
@@ -298,6 +356,8 @@ def _desenhar_barras(
     por_sinal: bool,
     series_na_escala: Sequence[Serie] = (),
     rotular: bool = False,
+    formatador_rotulo: Callable[[float], str] | None = None,
+    rotulos_inclinados: bool = False,
 ):
     """Constroi as barras e devolve as pecas e a projecao usada.
 
@@ -311,8 +371,15 @@ def _desenhar_barras(
         minimo, maximo = min(minimo, outro_minimo), max(maximo, outro_maximo)
     marcas = _escala_agradavel(minimo, maximo)
     grade, y, x, largura_faixa = _moldura(
-        marcas, categorias, formatador, largura, altura, _passo_de_rotulos(len(categorias), largura)
+        marcas,
+        categorias,
+        formatador,
+        largura,
+        altura,
+        _passo_de_rotulos(len(categorias), largura),
+        inclinar=rotulos_inclinados,
     )
+    escrever = formatador_rotulo or formatador
 
     partes = [grade]
     linha_zero = y(0)
@@ -349,23 +416,37 @@ def _desenhar_barras(
                 f'height="{abs(y2 - y1):.1f}" fill="{cor}"/>'
             )
             if rotular:
-                # Fora da barra, do lado para onde ela aponta: dentro, o rotulo
-                # some na barra curta e briga com o preenchimento na longa. Na
-                # cor da barra porque e dela que o numero fala — com barras de
-                # cores diferentes lado a lado, rotulo cinza obriga a mirar a
-                # coluna para saber de quem e o valor.
-                topo_barra = min(y1, y2)
-                base_barra = max(y1, y2)
-                altura_rotulo = topo_barra - 6 if valor >= 0 else base_barra + 14
-                partes.append(
-                    _texto(
-                        px + largura_barra / 2,
-                        altura_rotulo,
-                        formatador(valor),
-                        "g5-valor-barra",
-                        cor=cor,
+                topo_barra, base_barra = min(y1, y2), max(y1, y2)
+                if empilhado:
+                    # No centro do segmento, so quando ha altura para o texto —
+                    # senao ele transborda para o segmento vizinho e passa a
+                    # rotular a parcela errada.
+                    if base_barra - topo_barra >= ALTURA_MINIMA_ROTULO:
+                        partes.append(
+                            _texto(
+                                px + largura_barra / 2,
+                                (topo_barra + base_barra) / 2 + 4,
+                                escrever(valor),
+                                "g5-valor-dentro",
+                            )
+                        )
+                else:
+                    # Fora da barra, do lado para onde ela aponta: a barra
+                    # inteira e o valor, e dentro o rotulo some na barra curta.
+                    # Na cor da barra porque e dela que o numero fala.
+                    partes.append(
+                        _texto(
+                            px + largura_barra / 2,
+                            topo_barra - 6 if valor >= 0 else base_barra + 14,
+                            escrever(valor),
+                            "g5-valor-barra",
+                            cor=cor,
+                        )
                     )
-                )
+        if empilhado and rotular and topo_positivo:
+            partes.append(
+                _texto(x(posicao), y(topo_positivo) - 6, escrever(topo_positivo), "g5-total-barra")
+            )
     return partes, y, x, largura_faixa
 
 
