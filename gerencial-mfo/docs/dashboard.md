@@ -8,8 +8,7 @@ Menu lateral fixo (~240px, colapsável), conteúdo renderizado ao centro. Item a
 com barra wine à esquerda. Agrupamento:
 
 ```
-VISÃO EXECUTIVA     Visão Geral · Resumo
-PERFORMANCE         Histórico AUM × Receita
+VISÃO EXECUTIVA     Visão Geral · Resumo · Histórico AUM × Receita
 CARTEIRA            Officers · Grupos Econômicos · Regiões · Portfólios On · Portfólios Off
 CAPTAÇÃO            Net In/Out · Grupos · Portfólios · NET Executado
 ESTRUTURA           Administradores Onshore · Administradores Offshore

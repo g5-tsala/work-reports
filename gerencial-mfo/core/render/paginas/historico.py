@@ -36,8 +36,8 @@ LINHAS_OFFSHORE = (
 @pagina(
     identificador="historico",
     titulo="Histórico AUM × Receita",
-    grupo="Performance",
-    ordem=10,
+    grupo="Visão Executiva",
+    ordem=30,
     subtitulo="Evolução desde 2018. Pontos semestrais até 2025 e mensais em 2026 — "
     "o eixo é categórico, as distâncias não são proporcionais ao tempo.",
 )
