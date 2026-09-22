@@ -117,8 +117,9 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
 - **Mensalização** = competência ÷ dias úteis × 21, **só no onshore**. A planilha escreve
   `/nwdays*21` num lugar e `/nwdays*252` em outro — são a mesma coisa, 21 × 12 = 252.
 - **ROA MFO** tem dois desvios frente ao ROA: conta todo o offshore como MFO (sem filtro de
-  segmento) e não mensaliza o numerador. Replicar assim para os números baterem, e
-  sinalizar na interface que as duas colunas não são estritamente comparáveis.
+  segmento) e não mensaliza o numerador. Replicar assim para os números baterem. A página
+  de Officers **não** exibe mais essa ressalva (retirada a pedido do negócio em 2026-09-22);
+  o registro fica aqui e em [calculos.md](calculos.md) §3.5.
 - **Câmbio arredondado.** `resumo!B4` exibe 5,08; as contas usam 5,0773 (`info!AQ3`).
 - **A cor da fonte na `CEO-Dashboard` é dado, não formatação.** O officer pintado de
   vermelho é o que já saiu e ainda tem cliente vinculado; não existe coluna de status, a cor
@@ -151,7 +152,9 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
   Tainá, Diego, Michael G. O dashboard não pode assumir subconjunto.
 - **A rede de backup não aparece em nenhuma métrica atual.** João tem 3 grupos como titular
   e **66 como backup**; Fabietti tem 39 e 69; Gau, 19 e 44. Rodrigo M. é o inverso: 60
-  titular, 10 backup. É um corte que o relatório hoje não mostra.
+  titular, 10 backup. A seção "Rede de backup" chegou a existir na página de Officers e foi
+  **removida a pedido do negócio em 2026-09-22**; a contagem por pessoa segue só no
+  drill-down de cada officer.
 - **Não somar Qtd. Grupos entre officers.** A soma dá 376 contra 361 grupos distintos —
   um grupo pode ter portfólios sob titulares diferentes. O total correto é `resumo!AA17`.
 - **Fdos Alocação** são ~33% do AUM (R$ 14,2 bi em jul/26) com ROA de 0,12%, uma ordem de
@@ -171,4 +174,3 @@ Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.
 - [ ] Página **Performance da Base** a partir da aba oculta `cotas` — cotiza o AUM como se
       fosse um portfólio e compara com CDI desde 2018-01. Prioridade baixa, mas é a análise
       mais interessante que nenhuma aba visível mostra hoje.
-- [ ] Avaliar expor a métrica de backup na página de officers.

@@ -175,8 +175,9 @@ ROA MFO      [C47] = (C40 + C43 * dolar) * 12 / (C34 + C37 * dolar)
    `ROA MFO` parte de `C40` cru. Em jul/26 isso infla o `ROA MFO` em cerca de 9%
    (fator `nwdays/21` = 23/21) frente à base de comparação do `ROA`.
 
-Reproduzir o comportamento da planilha para que os números confiram, e sinalizar a ressalva
-na interface. As duas colunas lado a lado não são estritamente comparáveis.
+Reproduzir o comportamento da planilha para que os números confiram. As duas colunas lado a
+lado não são estritamente comparáveis; por decisão do negócio (2026-09-22), a ressalva não
+aparece na interface.
 
 ```
 Qtd. Portfolios [C55..C59, por Tipo]

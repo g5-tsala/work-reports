@@ -2,7 +2,7 @@
 
 Ranking completo com drill-down: clicar na linha abre o detalhe daquele officer
 no mês — AUM por segmento, receita, ROA, IN/OUT, portfólios por tipo e grupos
-como titular e como backup.
+como titular e como backup — e o par de barras AUM × receita por officer.
 """
 
 from __future__ import annotations
@@ -15,6 +15,8 @@ from ..pagina import pagina
 from ..ui import (
     Coluna,
     Linha,
+    cartao,
+    colunas,
     fonte,
     grafico,
     linha_detalhe,
@@ -59,8 +61,7 @@ def render(ctx: Contexto) -> str:
                 fonte("CEO-Dashboard e cons_officer", ctx.rotulo_mes),
                 _ressalvas(),
             ),
-            secao("AUM por officer", _barras(ctx)),
-            secao("Rede de backup", _backup(ctx)),
+            secao("AUM e receita por officer", _barras(ctx)),
         ]
     )
 
@@ -162,71 +163,52 @@ def _linhas_detalhe(ctx: Contexto, bloco: dict[str, Any], alvo: str, total_colun
     return linhas
 
 
+#: Cada gráfico do par: campo da `tabela_ceo`, título do cartão (com a escala)
+#: e o formatador que a escala exige.
+GRAFICOS = (
+    ("aum_mi", "AUM", "R$ mi", lambda v: formato.numero(v, 0)),
+    ("receita", "Receita", "R$ mil", lambda v: formato.numero(v / 1e3, 0)),
+)
+
+
 def _barras(ctx: Contexto) -> str:
-    carteiras = [
-        (registro["nome"], registro["aum_mi"])
-        for registro in ctx.bloco("officers", "tabela_ceo")
-        if registro["tipo"] in ("officer", "fdos_alocacao")
-    ]
-    carteiras.sort(key=lambda item: item[1] or 0, reverse=True)
-    return grafico(
-        graficos.barras_horizontais(
-            carteiras,
-            formatador=lambda v: f"{formato.numero(v, 0)} mi",
-            titulo="AUM por officer",
+    """AUM e receita lado a lado, na mesma ordem nos dois gráficos.
+
+    Mesmo desenho do par da aba Resumo: a ordem sai do AUM e vale para os dois,
+    então cada officer fica na mesma altura e a comparação é horizontal.
+    """
+    registros = sorted(
+        (
+            registro
+            for registro in ctx.bloco("officers", "tabela_ceo")
+            if registro["tipo"] in ("officer", "fdos_alocacao")
         ),
-        itens_legenda=[("AUM (R$ mi)", graficos.SERIES[0])],
-        rodape=fonte("CEO-Dashboard", ctx.rotulo_mes),
+        key=lambda registro: registro["aum_mi"] or 0,
+        reverse=True,
     )
+    rotulos = [registro["nome"] for registro in registros]
 
-
-def _backup(ctx: Contexto) -> str:
-    """Titular × backup — o corte que nenhuma métrica da planilha mostra hoje."""
-    linhas_tabela = []
-    for bloco in ctx.bloco("officers", "blocos"):
-        posicao = ctx.posicao(bloco, ctx.mes_base)
-        if posicao is None or bloco["e_fdos_alocacao"]:
-            continue
-        titular = ctx.serie(bloco, "qtd_grupos_officer")
-        backup = ctx.serie(bloco, "qtd_grupos_backup")
-        if not titular and not backup:
-            continue
-        como_titular = titular[posicao] if posicao < len(titular) else None
-        como_backup = backup[posicao] if posicao < len(backup) else None
-        linhas_tabela.append(
-            Linha(
-                [
-                    bloco["nome"],
-                    num(formato.inteiro(como_titular), ordem=como_titular),
-                    num(formato.inteiro(como_backup), ordem=como_backup),
-                ]
-            )
+    def desenhar(chave: str, rotulo: str, escala: str, formatador) -> str:
+        return cartao(
+            f"{rotulo} ({escala})",
+            grafico(
+                graficos.barras_horizontais(
+                    list(zip(rotulos, (registro[chave] for registro in registros))),
+                    formatador=formatador,
+                    titulo=f"{rotulo} por officer, em {escala}",
+                    largura=560,
+                    largura_rotulo=170,
+                )
+            ),
         )
 
-    colunas = [
-        Coluna("Officer"),
-        Coluna("Grupos como titular", numerica=True),
-        Coluna("Grupos como backup", numerica=True),
-    ]
-    return "".join(
-        [
-            tabela(colunas, linhas_tabela, identificador="backup-officers"),
-            fonte("cons_officer", ctx.rotulo_mes, "Grupos com AUM ou receita > 0 no mês."),
-            nota(
-                "<strong>Não somar a coluna de titular.</strong> Um grupo econômico pode ter "
-                "portfólios sob officers diferentes, então a soma excede o total de grupos "
-                f"distintos ({formato.inteiro(ctx.bloco('consolidado', 'roa_grupo')['total']['qtd'])})."
-            ),
-        ]
+    return colunas(*(desenhar(*definicao) for definicao in GRAFICOS)) + fonte(
+        "CEO-Dashboard", ctx.rotulo_mes
     )
 
 
 def _ressalvas() -> str:
     return nota(
-        "<strong>ROA MFO não é diretamente comparável ao ROA.</strong> A fórmula da planilha "
-        "conta todo o offshore como MFO, nos dois lados da razão, e não mensaliza o numerador — "
-        "o que infla a coluna na proporção <code>dias úteis ÷ 21</code>. Reproduzimos como está "
-        "para os números baterem com a fonte. As variações M-1 da linha "
-        "<em>Total Ex- Fdos Alocação</em> saem como “—”: na planilha, a base de comparação dessa "
-        "linha é o total do mês anterior, não o próprio ex-fundos."
+        "As variações M-1 da linha <em>Total Ex- Fdos Alocação</em> saem como “—”: na planilha, "
+        "a base de comparação dessa linha é o total do mês anterior, não o próprio ex-fundos."
     )
