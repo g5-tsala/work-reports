@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Sequence
 from html import escape
+from typing import Any
 
 SERIES = (
     "var(--g5-data-blue)",
@@ -188,6 +189,15 @@ def _svg(conteudo: str, titulo: str, largura: int, altura: int, classe: str = CL
         f'<svg class="g5-grafico {classe}" viewBox="0 0 {largura} {altura}" role="img" '
         f'aria-label="{escape(titulo)}" preserveAspectRatio="xMidYMid meet">{conteudo}</svg>'
     )
+
+
+def _dica(titulo: str, linhas: Sequence[Sequence[Any]]) -> str:
+    """Conteúdo do tooltip, já escapado para ir num atributo `data-dica`.
+
+    Cada linha é `[rótulo, valor formatado, cor, total?]`: sem cor, ou com o
+    quarto item verdadeiro, a linha sai como total — separada por um fio.
+    """
+    return escape(json.dumps({"titulo": titulo, "linhas": [list(linha) for linha in linhas]}, ensure_ascii=False))
 
 
 def _passo_de_rotulos(quantidade: int, largura: int) -> int:
@@ -466,6 +476,7 @@ def combo(
     por_sinal: bool = False,
     rotular_ultimo: bool = False,
     eixo_proprio: bool = False,
+    formatador_dica: Callable[[float], str] | None = None,
 ) -> str:
     """Barras com uma linha por cima.
 
@@ -475,9 +486,14 @@ def combo(
     grandeza medir duas alturas diferentes no mesmo desenho. Quando as unidades
     forem realmente distintas (AUM em R$ mi contra receita em R$), passe
     `eixo_proprio=True` e os dois eixos saem rotulados.
+
+    Com `formatador_dica`, cada categoria ganha tooltip com o valor de todas
+    as séries naquele ponto — barras primeiro, a linha por último, como total.
+    A área de hover é a faixa inteira da categoria, por cima de barras e linha:
+    o leitor mira o mês, não um ponto de 3px.
     """
     margem_direita = MARGEM["direita"] + (56 if eixo_proprio else 0)
-    partes, y_barra, x, _ = _desenhar_barras(
+    partes, y_barra, x, largura_faixa = _desenhar_barras(
         categorias,
         series_barra,
         formatador=formatador_barra,
@@ -528,6 +544,26 @@ def combo(
                     f'<text x="{px - 8:.1f}" y="{py - 10:.1f}" text-anchor="end" '
                     f'class="g5-rotulo-ponto" fill="{cor}">{escape(formatador_linha(ultimo))}</text>'
                 )
+    if formatador_dica:
+        topo, base = MARGEM["topo"], altura - MARGEM["base"]
+
+        def valor(serie: Serie, posicao: int) -> str:
+            bruto = serie.valores[posicao] if posicao < len(serie.valores) else None
+            return formatador_dica(bruto) if bruto is not None else "—"
+
+        for posicao, categoria in enumerate(categorias):
+            linhas = [
+                [serie.rotulo, valor(serie, posicao), cor_da_serie(indice, serie)]
+                for indice, serie in enumerate(series_barra)
+            ]
+            linhas.append(
+                [serie_linha.rotulo, valor(serie_linha, posicao), serie_linha.cor or SERIES[1], True]
+            )
+            partes.append(
+                f'<g class="g5-com-dica" data-dica="{_dica(categoria, linhas)}">'
+                f'<rect class="g5-alvo g5-alvo--sobre" x="{x(posicao) - largura_faixa / 2:.1f}" '
+                f'y="{topo}" width="{largura_faixa:.1f}" height="{base - topo}"/></g>'
+            )
     return _svg("".join(partes), titulo, largura, altura)
 
 
@@ -618,14 +654,14 @@ def barras_horizontais_empilhadas(
     partes = []
     for posicao, rotulo in enumerate(rotulos):
         y = 5 + posicao * (altura_linha + espaco)
-        dica = {
-            "titulo": rotulo,
-            "linhas": [
+        dica = _dica(
+            rotulo,
+            [
                 [serie.rotulo, formatador(valor(serie, posicao)), cor_da_serie(indice, serie)]
                 for indice, serie in enumerate(series)
             ]
             + [["Total", formatador(totais[posicao]), ""]],
-        }
+        )
         # O `rect` transparente da faixa inteira é a área de hover: a parcela
         # offshore tem poucos pixels, e mirar nela seria o gesto mais difícil
         # justamente para o número que só o tooltip mostra.
@@ -648,7 +684,7 @@ def barras_horizontais_empilhadas(
             inicio += comprimento
         grupo.append(_texto(inicio + 8, y + 13, formatador(totais[posicao]), "g5-valor-barra", "start"))
         partes.append(
-            f'<g class="g5-com-dica" data-dica="{escape(json.dumps(dica, ensure_ascii=False))}">'
+            f'<g class="g5-com-dica" data-dica="{dica}">'
             f'{"".join(grupo)}</g>'
         )
     return _svg("".join(partes), titulo, largura, altura, CLASSE_RANKING)

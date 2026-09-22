@@ -263,6 +263,19 @@ ROA do NET [C49] = (ROA_in × IN + ROA_out × OUT) / NET
 A `Taxa` (col. 5) é a taxa de gestão contratada do portfólio, em % a.a. — é o que permite
 estimar receita incremental sem esperar o fechamento seguinte.
 
+**Offshore em R$ e consolidado.** A coluna `Ano (R$)` do bloco offshore (`net_in_out!P`,
+`total_reais` no JSON) é Σ (valor do mês × câmbio **daquele** mês) — conferido em ago/26
+contra `offshore.dolar`, bate no centavo para IN, OUT e NET. O dashboard usa a mesma regra
+para o consolidado do Net In/Out, que a planilha não traz pronto:
+
+```
+consolidado[mês] = onshore[mês] + offshore[mês] × dolar[mês]
+consolidado[ano] = onshore.total + offshore.total_reais
+```
+
+Converter o ano inteiro pelo câmbio do mês-base daria outro número (IN: R$ 239,5 mi contra
+R$ 237,9 mi em ago/26).
+
 ### 3.7 Captação por portfólio — `io_portfolios`
 
 ```

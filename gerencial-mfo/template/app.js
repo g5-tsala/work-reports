@@ -1,7 +1,8 @@
 /* Gerencial MFO — comportamento do dashboard.
-   Cinco coisas, e nada mais: navegar entre as abas, filtrar, ordenar, abrir
-   o detalhe de uma linha e exibir o tooltip dos gráficos. Os números já vêm calculados do build; nada aqui
-   recalcula valor de negócio.
+   Seis coisas, e nada mais: navegar entre as abas, filtrar, ordenar, abrir
+   o detalhe de uma linha (uma a uma ou todas), alternar entre versões de um
+   mesmo gráfico e exibir o tooltip dos gráficos. Os números já vêm
+   calculados do build; nada aqui recalcula valor de negócio.
 
    Restrições do projeto: precisa rodar dentro de um <iframe>, então nada de
    window.top, e nada de localStorage — o estado vive em memória. */
@@ -134,21 +135,67 @@
 
   /* ----------------------------------------------------------- drill-down */
 
-  function alternarDetalhe(linha) {
+  function definirDetalhe(linha, abrir) {
     var alvo = linha.getAttribute("data-abre");
-    var aberto = linha.getAttribute("aria-expanded") === "true";
-    linha.setAttribute("aria-expanded", aberto ? "false" : "true");
+    linha.setAttribute("aria-expanded", abrir ? "true" : "false");
     Array.prototype.forEach.call(
       doc.querySelectorAll('[data-detalhe="' + alvo + '"]'),
       function (filha) {
-        filha.hidden = aberto;
+        filha.hidden = !abrir;
       }
     );
+  }
+
+  /* O botão "Expandir tudo" reflete o estado da tabela: com tudo aberto ele
+     vira "Recolher tudo", não importa se o leitor abriu linha a linha. */
+  function sincronizarBotao(tabela) {
+    if (!tabela || !tabela.id) return;
+    var botao = doc.querySelector('[data-expande-todos="' + tabela.id + '"]');
+    if (!botao) return;
+    var pais = tabela.querySelectorAll("tr[data-abre]");
+    var todosAbertos = pais.length > 0 && Array.prototype.every.call(pais, function (linha) {
+      return linha.getAttribute("aria-expanded") === "true";
+    });
+    botao.setAttribute("aria-expanded", todosAbertos ? "true" : "false");
+    botao.textContent = todosAbertos ? "Recolher tudo" : "Expandir tudo";
+  }
+
+  function alternarDetalhe(linha) {
+    definirDetalhe(linha, linha.getAttribute("aria-expanded") !== "true");
+    sincronizarBotao(linha.closest("table"));
   }
 
   doc.addEventListener("click", function (evento) {
     var linha = evento.target.closest ? evento.target.closest("tr[data-abre]") : null;
     if (linha) alternarDetalhe(linha);
+  });
+
+  doc.addEventListener("click", function (evento) {
+    var botao = evento.target.closest ? evento.target.closest("[data-expande-todos]") : null;
+    if (!botao) return;
+    var tabela = doc.getElementById(botao.getAttribute("data-expande-todos"));
+    if (!tabela) return;
+    var abrir = botao.getAttribute("aria-expanded") !== "true";
+    Array.prototype.forEach.call(tabela.querySelectorAll("tr[data-abre]"), function (linha) {
+      definirDetalhe(linha, abrir);
+    });
+    sincronizarBotao(tabela);
+  });
+
+  /* ----------------------------------------------------------- alternador */
+
+  doc.addEventListener("click", function (evento) {
+    var botao = evento.target.closest ? evento.target.closest("[data-alterna]") : null;
+    if (!botao) return;
+    var grupo = botao.closest("[data-alternador]");
+    if (!grupo) return;
+    var chave = botao.getAttribute("data-alterna");
+    Array.prototype.forEach.call(grupo.querySelectorAll("[data-alterna]"), function (outro) {
+      outro.setAttribute("aria-pressed", outro === botao ? "true" : "false");
+    });
+    Array.prototype.forEach.call(grupo.querySelectorAll("[data-painel]"), function (painel) {
+      painel.hidden = painel.getAttribute("data-painel") !== chave;
+    });
   });
 
   doc.addEventListener("keydown", function (evento) {
@@ -162,7 +209,8 @@
   /* -------------------------------------------------------------- tooltip */
 
   /* O gráfico chega pronto do build; aqui só se exibe o que ele já traz em
-     `data-dica` ({titulo, linhas: [[rótulo, valor, cor]]}). Um único balão
+     `data-dica` ({titulo, linhas: [[rótulo, valor, cor, total?]]}); linha sem
+     cor ou marcada como total sai separada por um fio. Um único balão
      para a página, posicionado junto ao ponteiro e mantido dentro da janela.
      Texto entra por textContent: rótulo vem da planilha. */
   var balao = null;
@@ -181,7 +229,8 @@
     balao.appendChild(cabeca);
     (dica.linhas || []).forEach(function (item) {
       var linha = doc.createElement("div");
-      linha.className = "g5-dica__linha" + (item[2] ? "" : " g5-dica__linha--total");
+      var total = item[3] === true || !item[2];
+      linha.className = "g5-dica__linha" + (total ? " g5-dica__linha--total" : "");
       var chave = doc.createElement("i");
       if (item[2]) chave.style.background = item[2];
       var valor = doc.createElement("strong");

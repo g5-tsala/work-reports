@@ -171,6 +171,7 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 }
 .g5-btn--secondary { background: transparent; color: var(--g5-navy); border-color: var(--g5-navy); }
 .g5-btn--secondary:hover { background: var(--g5-bg-soft); }
+.g5-btn--pequeno { font-size: 12px; padding: 6px 12px; }
 
 /* Regime do fechamento. Fica entre o título e o conteúdo porque é o que
    governa metade dos números abaixo dele. */
@@ -304,6 +305,47 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-kpi__ref { color: var(--g5-slate-aa); font-weight: 400; }
 .g5-kpi__detalhe { font-size: 12px; color: var(--g5-slate-aa); }
 
+/* Faixas empilhadas: a primeira e a leitura principal; as de apoio encolhem
+   numero e cartao para nao competir com ela. O rotulo da faixa diz o universo
+   (e a moeda) dos quatro numeros abaixo dele. */
+.g5-kpis-bloco { margin-bottom: var(--g5-space-3); }
+.g5-kpis-bloco .g5-kpis { margin-bottom: 0; }
+.g5-kpis-bloco:last-of-type { margin-bottom: var(--g5-space-4); }
+.g5-kpis__titulo {
+  font: 600 12px var(--g5-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g5-navy);
+  margin: 0 0 var(--g5-space-1);
+}
+.g5-kpis--secundaria .g5-kpi { padding: 8px var(--g5-space-2); gap: 2px; background: var(--g5-bg-soft); }
+.g5-kpis--secundaria .g5-kpi__label { font-size: 10px; }
+.g5-kpis--secundaria .g5-kpi__value { font-size: 20px; }
+/* O valor de KPI tem cor propria (navy); a de sinal precisa vencer. */
+.g5-kpi__value.negativo { color: var(--g5-negative); }
+.g5-kpi__value.positivo { color: var(--g5-positive); }
+
+/* Alternador: botoes segmentados que trocam o painel visivel. */
+.g5-alternador__botoes {
+  display: inline-flex;
+  border: 1px solid var(--g5-navy);
+  border-radius: var(--g5-radius-md);
+  overflow: hidden;
+  margin-bottom: var(--g5-space-2);
+}
+.g5-alternador__botao {
+  font: 600 12px/1 var(--g5-sans);
+  padding: 8px 14px;
+  border: 0;
+  border-left: 1px solid var(--g5-navy);
+  background: var(--g5-white);
+  color: var(--g5-navy);
+  cursor: pointer;
+}
+.g5-alternador__botao:first-child { border-left: 0; }
+.g5-alternador__botao:hover { background: var(--g5-bg-soft); }
+.g5-alternador__botao[aria-pressed="true"] { background: var(--g5-navy); color: var(--g5-white); }
+
 .positivo { color: var(--g5-positive); }
 .negativo { color: var(--g5-negative); }
 
@@ -428,6 +470,9 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-alvo { fill: transparent; }
 .g5-com-dica:hover .g5-alvo { fill: var(--g5-bg-soft); }
 .g5-com-dica:hover rect:not(.g5-alvo) { opacity: 0.85; }
+/* Alvo desenhado por cima das marcas (grafico de colunas com linha): o
+   destaque tem de ser translucido, senao cobre o que deveria realcar. */
+.g5-com-dica:hover .g5-alvo--sobre { fill: rgba(35, 36, 107, 0.06); }
 .g5-dica {
   position: fixed;
   z-index: 50;
@@ -555,7 +600,7 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   @page { size: A4 landscape; margin: 10mm; }
   html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body { font-size: 10pt; }
-  .g5-sidebar, .g5-topbar__acoes, .g5-tabela-ferramentas, .g5-pular { display: none; }
+  .g5-sidebar, .g5-topbar__acoes, .g5-tabela-ferramentas, .g5-pular, .g5-alternador__botoes { display: none; }
   .g5-parametros { break-inside: avoid; }
   .g5-main { margin: 0; padding: 0; max-width: none; }
   .g5-topbar { border-bottom: 0; padding-bottom: 0; margin-bottom: var(--g5-space-2); }

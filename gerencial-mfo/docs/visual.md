@@ -172,15 +172,18 @@ mecanismo. **Mexer nessa razão é mexer na altura de todo gráfico de série do
 
 O gráfico continua estático: quem quer hover marca o grupo SVG com `data-dica`, um JSON
 `{titulo, linhas: [[rótulo, valor, cor]]}` já formatado no build, e o `app.js` exibe um
-balão único junto ao ponteiro. Linha sem cor é o total, separada por um fio. Hoje só
-`barras_horizontais_empilhadas()` usa (Regiões).
+balão único junto ao ponteiro. Linha sem cor, ou com o quarto item `true`, é o total,
+separada por um fio. Usam hoje: `barras_horizontais_empilhadas()` (Regiões) e `combo()`
+com `formatador_dica` (fluxo do Net In/Out — IN, OUT e, como total, o NET do mês).
 
 - **Tooltip complementa, não esconde.** Todo número do balão está numa tabela da página.
   Por isso a barra empilhada horizontal escreve só o total no fim da pilha: a parcela menor
   quase nunca tem largura para o próprio número, e o balão é onde ela se abre.
 - **A área de hover é a faixa inteira da categoria** (`.g5-alvo`, retângulo transparente),
-  não só a tinta: a parcela offshore tem poucos pixels. A faixa sob o ponteiro ganha fundo
-  `--g5-bg-soft` e a barra clareia, para mostrar que respondeu.
+  não só a tinta: a parcela offshore tem poucos pixels, e o ponto da linha tem 3px. Na barra
+  horizontal o alvo fica atrás das marcas e ganha fundo `--g5-bg-soft`; no `combo` ele
+  fica **por cima** de barras e linha (`.g5-alvo--sobre`), e o destaque é translúcido para
+  não cobrir o que realça.
 - **Valor antes do rótulo, chave em traço.** No balão o leitor já sabe a série e quer o
   número: valor em destaque e alinhado à direita, rótulo depois, e a cor da série num traço
   curto em vez de quadrado.

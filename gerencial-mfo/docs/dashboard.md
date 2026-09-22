@@ -81,14 +81,23 @@ YTD por grupo econômico          (io_grupos, colunas J–O)   ← visão princi
 Mesmo padrão nas demais páginas: administrador → portfólios do administrador → custos;
 officer → grupos → portfólios; categoria/faixa PL → veículos.
 
-**Implementado hoje:** captação por grupo (YTD → mês a mês) e officer → detalhe do mês
+**Implementado hoje:** captação por grupo (YTD → mês a mês), officer → detalhe do mês
 (AUM por segmento, receita, ROA, IN/OUT, portfólios por tipo, grupos como titular e como
-backup). O terceiro nível da captação (movimentações individuais de `info_grupos`) e os
+backup) e, no Net In/Out, tipo de veículo → abertura (início no ano, clientes antigos,
+finalidade, ROA). O terceiro nível da captação (movimentações individuais de `info_grupos`) e os
 drill-downs de administrador e de categoria ainda não existem.
 
 A mecânica é a mesma em toda parte: a linha-pai leva `data-abre`, as filhas levam
 `data-detalhe` com o mesmo alvo, e o `app.js` alterna o `hidden`. Uma aba nova ganha
 drill-down usando `linha_expansivel()` e `linha_detalhe()` do `ui.py`, sem tocar no script.
+`expandir_todos(id_da_tabela)` põe acima da tabela o botão que abre ou fecha tudo de uma
+vez; o rótulo acompanha o estado real ("Recolher tudo" quando todas estão abertas, mesmo
+que o leitor tenha aberto uma a uma).
+
+**Versões do mesmo gráfico** (consolidado · onshore · offshore no Net In/Out) usam
+`alternador()` do `ui.py`: todos os painéis são renderizados no build, os botões só trocam
+o `hidden`. Sem JS fica a primeira opção, que deve ser a leitura principal. Na impressão os
+botões somem e sai o painel ativo.
 
 ## 5.1 Piso de qualidade
 

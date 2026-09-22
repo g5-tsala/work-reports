@@ -101,6 +101,11 @@ Não reabrir sem motivo novo.
   varridos e ~110 KB no HTML. Se voltar a ser pedida, o `git log` tem o extrator pronto.
 - **A região `-` da aba `regiao` aparece como `G5`** em Regiões (gráficos e tabelas). É
   onde caem os fundos de alocação, e o negócio lê a linha como o grupo G5.
+- **Net In/Out tem três faixas de KPI** — consolidado em R$ (a principal), onshore e
+  offshore (de apoio, menores) — e um seletor entre os mesmos três universos no fluxo
+  mensal. O consolidado converte o offshore pelo câmbio de cada mês, a regra da própria
+  planilha ([calculos.md](calculos.md) §3.6). O gráfico de saídas por finalidade saiu; a
+  finalidade segue no detalhe, recolhida sob cada tipo de veículo.
 - Nomes reais. Marca de confidencialidade na impressão.
 - Distribuição por link para download hoje; `<iframe>` num portal no futuro.
 

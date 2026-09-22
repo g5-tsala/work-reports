@@ -76,16 +76,21 @@ def kpi(
     classe_delta: str = "",
     referencia: str = "",
     detalhe: str = "",
+    classe_valor: str = "",
 ) -> str:
     """`referencia` e a base de comparacao do delta — `vs. jul/26`.
 
     Ela fecha a linha do delta, em cinza: um numero com sinal sem a base contra
     a qual ele foi medido nao quer dizer nada, e jogar essa base uma linha
     abaixo separava a pergunta da resposta.
+
+    `classe_valor` pinta o proprio numero — `formato.classe_sinal()` para um
+    fluxo que pode fechar negativo.
     """
+    classe = f"g5-kpi__value {classe_valor}".strip()
     partes = [
         f'<span class="g5-kpi__label">{esc(rotulo)}</span>',
-        f'<span class="g5-kpi__value">{esc(valor)}</span>',
+        f'<span class="{classe}">{esc(valor)}</span>',
     ]
     if delta or referencia:
         marca_ref = f'<span class="g5-kpi__ref">({esc(referencia)})</span>' if referencia else ""
@@ -98,9 +103,50 @@ def kpi(
     return f'<div class="g5-kpi">{"".join(partes)}</div>'
 
 
-def faixa_kpis(*blocos: str) -> str:
-    """Nunca mais de quatro KPIs por linha — o CSS trava em 4 colunas."""
-    return f'<div class="g5-kpis">{"".join(blocos)}</div>'
+def faixa_kpis(*blocos: str, titulo: str = "", secundaria: bool = False) -> str:
+    """Nunca mais de quatro KPIs por linha — o CSS trava em 4 colunas.
+
+    `titulo` nomeia a faixa quando a pagina empilha mais de uma (consolidado,
+    onshore, offshore). `secundaria` e a faixa de apoio: numero menor e
+    cartao mais baixo, para que a principal continue sendo a primeira leitura.
+    """
+    classe = "g5-kpis g5-kpis--secundaria" if secundaria else "g5-kpis"
+    faixa = f'<div class="{classe}">{"".join(blocos)}</div>'
+    if not titulo:
+        return faixa
+    return f'<div class="g5-kpis-bloco"><h3 class="g5-kpis__titulo">{esc(titulo)}</h3>{faixa}</div>'
+
+
+def alternador(identificador: str, rotulo: str, opcoes: Sequence[tuple[str, str, str]]) -> str:
+    """Botões que alternam entre versões do mesmo conteúdo — uma visível por vez.
+
+    `opcoes` traz `(chave, rótulo do botão, HTML do painel)`. Tudo já vem
+    renderizado do build; o `app.js` só troca o `hidden`. Sem JS fica a
+    primeira opção, que deve ser a leitura principal.
+    """
+    botoes, paineis = [], []
+    for indice, (chave, texto, conteudo) in enumerate(opcoes):
+        ativo = indice == 0
+        botoes.append(
+            f'<button type="button" class="g5-alternador__botao" data-alterna="{esc(chave)}" '
+            f'aria-pressed="{"true" if ativo else "false"}">{esc(texto)}</button>'
+        )
+        oculto = "" if ativo else " hidden"
+        paineis.append(f'<div data-painel="{esc(chave)}"{oculto}>{conteudo}</div>')
+    return (
+        f'<div class="g5-alternador" data-alternador="{esc(identificador)}">'
+        f'<div class="g5-alternador__botoes" role="group" aria-label="{esc(rotulo)}">'
+        f'{"".join(botoes)}</div>{"".join(paineis)}</div>'
+    )
+
+
+def expandir_todos(tabela: str) -> str:
+    """Botão que abre ou fecha, de uma vez, todo drill-down da tabela `tabela`."""
+    return (
+        f'<div class="g5-tabela-ferramentas">'
+        f'<button type="button" class="g5-btn g5-btn--secondary g5-btn--pequeno" data-expande-todos="{esc(tabela)}" '
+        f'aria-expanded="false">Expandir tudo</button></div>'
+    )
 
 
 def faixa_parametros(itens: Sequence[tuple[str, str, str]]) -> str:
