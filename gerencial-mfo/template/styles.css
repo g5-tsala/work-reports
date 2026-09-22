@@ -375,7 +375,20 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 .g5-table thead th[aria-sort]::after { content: " ▲"; font-size: 9px; }
 .g5-table thead th[aria-sort="descending"]::after { content: " ▼"; }
 .g5-table tbody td { padding: 2px 6px; border-bottom: 1px solid var(--g5-line); }
+/* Zebra pelas linhas que o leitor ve, nao pelas que existem no DOM. O
+   `nth-child(even)` puro conta as sub-linhas ocultas do drill-down e as linhas
+   que o filtro escondeu, e a paridade embaralha. Com `of`, contam so as linhas
+   de nivel principal visiveis — e a zebra se refaz sozinha a cada ordenacao e
+   filtro. `:where` zera a especificidade, para subtotal/total/detalhe abaixo
+   continuarem vencendo. O `nth-child(even)` puro fica de reserva para navegador
+   sem suporte a `of`. */
 .g5-table tbody tr:nth-child(even) td { background: var(--g5-bg-soft); }
+@supports selector(:nth-child(1 of a)) {
+  .g5-table tbody tr:nth-child(even) td { background: none; }
+  .g5-table tbody tr:nth-child(even of :where(:not([hidden], [data-detalhe]))) td {
+    background: var(--g5-bg-soft);
+  }
+}
 .g5-table tbody tr.subtotal td { background: var(--g5-bg-band); font-weight: 600; }
 .g5-table tbody tr.total td {
   background: var(--g5-bg-band);

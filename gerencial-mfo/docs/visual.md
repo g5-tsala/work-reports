@@ -63,6 +63,11 @@ Duas alternativas foram testadas e descartadas, e não vale reabrir sem motivo n
 Largura automática pura (`.g5-table { width: auto }`) também funciona — a tabela termina
 onde o dado termina —, mas deixa branco à direita nas tabelas de poucas colunas.
 
+**Zebra conta só as linhas visíveis de nível principal** (`nth-child(even of …)`): sub-linha
+de drill-down, aberta ou fechada, e linha escondida pelo filtro ficam fora da contagem. Com
+o `nth-child(even)` puro, as sub-linhas ocultas entravam na paridade e a zebra embaralhava
+— em Captação › Grupos, onde cada grupo tem um número diferente de meses, ficava aleatória.
+
 ## 2. Gráficos
 
 Módulo SVG próprio, sem biblioteca externa — **gerado no build, em Python**
