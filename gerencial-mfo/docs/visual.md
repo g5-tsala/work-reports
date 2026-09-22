@@ -95,6 +95,15 @@ Quatro decisões que já custaram uma rodada de conserto:
   medir duas alturas no mesmo desenho.
 - **Cor por sinal só em série que oscila em torno do zero** — variação, fluxo, resultado.
   Em nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
+- **Cor por família em ranking** (`barras_horizontais(cores=…)`) quando as barras pertencem
+  a grupos que o leitor reconhece — família de produto, G5 contra terceiros. A cor carrega o
+  grupo e dispensa reordenar o gráfico para agrupá-lo, mantendo a ordem por grandeza. Vale o
+  mesmo teto de cinco: acima disso a legenda deixa de ser memorizável.
+
+**Dois gráficos lado a lado compartilham a ordem**, e a ordem sai de um deles (no Resumo, do
+AUM). Ordenado cada um pelo próprio valor, o mesmo item cai em alturas diferentes e comparar
+vira procurar o rótulo; ordenados juntos, a linha horizontal já é a comparação — e onde as
+duas barras discordam está a métrica derivada (ali, o ROA).
 
 ### 2.2 Rótulo direto
 
