@@ -524,6 +524,8 @@ def combo(
     rotular_ultimo: bool = False,
     eixo_proprio: bool = False,
     formatador_dica: Callable[[float], str] | None = None,
+    formatador_dica_linha: Callable[[float], str] | None = None,
+    linha_e_total: bool = True,
 ) -> str:
     """Barras com uma linha por cima.
 
@@ -537,7 +539,10 @@ def combo(
     Com `formatador_dica`, cada categoria ganha tooltip com o valor de todas
     as séries naquele ponto — barras primeiro, a linha por último, como total.
     A área de hover é a faixa inteira da categoria, por cima de barras e linha:
-    o leitor mira o mês, não um ponto de 3px.
+    o leitor mira o mês, não um ponto de 3px. Com `eixo_proprio` as duas séries
+    falam unidades diferentes, e `formatador_dica_linha` formata a da linha.
+    `linha_e_total` separa a linha por um fio no tooltip — certo quando ela é o
+    resultado das barras (NET de IN e OUT), errado quando é outra grandeza.
     """
     margem_direita = MARGEM["direita"] + (56 if eixo_proprio else 0)
     partes, y_barra, x, largura_faixa = _desenhar_barras(
@@ -600,9 +605,9 @@ def combo(
             + [
                 [
                     serie_linha.rotulo,
-                    _valor_dica(serie_linha, posicao, formatador_dica),
+                    _valor_dica(serie_linha, posicao, formatador_dica_linha or formatador_dica),
                     serie_linha.cor or SERIES[1],
-                    True,
+                    linha_e_total,
                 ]
             ]
             for posicao in range(len(categorias))

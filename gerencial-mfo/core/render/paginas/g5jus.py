@@ -41,23 +41,16 @@ def render(ctx: Contexto) -> str:
 
 
 def _kpis(ctx: Contexto, bloco: dict[str, Any], posicao: int) -> str:
+    """Quatro números, sem subtexto — o mesmo desenho dos cards do Resumo."""
     total = bloco["total"] or {"aum": [], "receita": []}
     aum = total["aum"][posicao] if posicao < len(total["aum"]) else None
     receita = total["receita"][posicao] if posicao < len(total["receita"]) else None
-    anterior = ctx.posicao(bloco, ctx.mes_anterior)
-    aum_anterior = total["aum"][anterior] if anterior is not None and anterior < len(total["aum"]) else None
-    variacao = ctx.variacao(aum, aum_anterior)
 
     return faixa_kpis(
         kpi("Veículos", formato.inteiro(len(bloco["linhas"]))),
-        kpi(
-            "AUM",
-            formato.milhoes(aum),
-            delta=formato.variacao(variacao),
-            classe_delta=formato.classe_sinal(variacao),
-            detalhe=f"vs. {formato.mes_curto(ctx.mes_anterior)}",
-        ),
-        kpi("Receita do mês", formato.numero(receita, 0), detalhe="R$"),
+        kpi("AUM", formato.milhoes(aum)),
+        kpi("Receita do mês", formato.reais(receita, 0)),
+        # Taxa anual: a receita do mês vezes doze sobre o AUM.
         kpi("ROA anualizado", formato.percentual(receita * 12 / aum if aum and receita else None)),
     )
 
@@ -73,7 +66,9 @@ def _grafico(ctx: Contexto, bloco: dict[str, Any]) -> str:
         titulo="AUM e receita do G5 JUS",
         empilhado=False,
         eixo_proprio=True,
-        rotular_ultimo=True,
+        formatador_dica=lambda v: formato.milhoes(v),
+        formatador_dica_linha=lambda v: formato.reais(v, 0),
+        linha_e_total=False,
     )
     return grafico(
         svg,
