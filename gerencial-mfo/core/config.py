@@ -17,8 +17,8 @@ DIR_OUTPUTS = RAIZ / "outputs"
 
 VERSAO_EXTRATOR = "1.0.0"
 
-#: Contrato do JSON intermediario. Subir a cada mudanca de formato que quebre
-#: o consumo pelo renderizador (etapa 2).
+#: Contrato do JSON intermediario (`docs/contrato-json.md`). Subir a cada
+#: mudanca de formato que quebre o consumo pelo renderizador.
 VERSAO_CONTRATO = 1
 
 #: Os checks embutidos na planilha sao diferencas que deveriam ser zero. Sobra
@@ -33,10 +33,6 @@ PADRAO_MES = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 def mes_valido(mes: str) -> bool:
     return bool(PADRAO_MES.match(mes))
-
-
-def dir_input(mes: str) -> Path:
-    return DIR_INPUTS / mes
 
 
 def caminho_planilha(mes: str) -> Path:

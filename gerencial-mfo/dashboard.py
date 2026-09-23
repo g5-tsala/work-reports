@@ -9,8 +9,10 @@ Script centralizador do build. Orquestra as etapas, todas em `core/`:
         -> core.render     -> outputs/YYYY-MM/dashboard-YYYY-MM.html
 
 Uso:
-    python dashboard.py 2026-07                  # pipeline completo
-    python dashboard.py 2026-07 --etapa extrair  # so a extracao + validacao
+    python dashboard.py 2026-07                     # pipeline completo
+    python dashboard.py 2026-07 --etapa extrair     # extracao + validacao
+    python dashboard.py 2026-07 --etapa validar     # revalida o JSON ja gerado
+    python dashboard.py 2026-07 --etapa renderizar  # JSON -> HTML
 """
 
 from __future__ import annotations

@@ -1,8 +1,8 @@
 /* Gerencial MFO — comportamento do dashboard.
-   Seis coisas, e nada mais: navegar entre as abas, filtrar, ordenar, abrir
-   o detalhe de uma linha (uma a uma ou todas), alternar entre versões de um
-   mesmo gráfico e exibir o tooltip dos gráficos. Os números já vêm
-   calculados do build; nada aqui recalcula valor de negócio.
+   Só interação: navegar entre as abas, filtrar, ordenar, abrir o detalhe de
+   uma linha (uma a uma ou todas), alternar entre versões de um conteúdo,
+   exibir o tooltip dos gráficos e imprimir. Os números já vêm calculados do
+   build; nada aqui recalcula valor de negócio.
 
    Restrições do projeto: precisa rodar dentro de um <iframe>, então nada de
    window.top, e nada de localStorage — o estado vive em memória. */

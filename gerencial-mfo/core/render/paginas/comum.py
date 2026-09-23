@@ -1,10 +1,9 @@
 """Peças compartilhadas por abas irmãs.
 
-Só entra aqui o que duas abas usam **do mesmo jeito** — a tabela de portfólios
-(onshore e offshore) e os gráficos de AUM e receita
-consolidados (Histórico, com a série inteira; Visão Geral, com o recorte). Cada aba continua dona da sua
-composição; isto evita que uma correção precise ser feita duas vezes em
-arquivos gêmeos.
+Só entra aqui o que duas abas usam **do mesmo jeito**: a tabela e a composição
+de portfólios (onshore e offshore) e os gráficos de AUM e receita consolidados
+(Histórico com a série inteira, Visão Geral com o recorte). Cada aba continua
+dona da própria composição.
 """
 
 from __future__ import annotations
@@ -31,8 +30,8 @@ DIMENSOES_PORTFOLIO = (
 def tabela_portfolios(ctx: Contexto, base: dict[str, Any], identificador: str) -> str:
     """Uma linha por portfólio: dimensões, AUM e receita do mês e ROA.
 
-    A série mensal completa fica no JSON; despejar 927 linhas × 8 meses na tela
-    contraria o princípio de consolidado no nível zero, detalhe sob demanda.
+    Só o mês-base: a série mensal completa fica no JSON — centenas de linhas
+    × todos os meses na tela contrariam o consolidado no nível zero.
     """
     moeda = base["moeda"]
     posicao = ctx.posicao(base, ctx.mes_base)

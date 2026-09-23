@@ -1,191 +1,47 @@
 # Ambiente e execução
 
-> [← Índice](../CLAUDE.md) · Relacionados: [validacao.md](validacao.md)
+## 1. uv
 
-## 1. Gerenciamento de ambiente — uv
+Ambiente e dependências só pelo **uv** — nada de `pip`, `venv`, `requirements.txt` ou conda.
 
-O ambiente e as dependências são centralizados no **uv**. Não usar `pip`, `venv`,
-`requirements.txt` ou conda neste projeto.
-
-- Dependências declaradas em `pyproject.toml`; versões travadas em `uv.lock`.
-- **`uv.lock` é versionado.** É o que garante que o build de agosto rode com as mesmas
-  versões do build de julho.
-- `.venv/` fica fora do controle de versão.
-- Adicionar dependência: `uv add <pacote>` (nunca editar o `pyproject.toml` na mão para isso
-  — o comando resolve e atualiza o lock).
-- Rodar qualquer coisa no ambiente: `uv run python ...`. Nunca ativar a venv manualmente.
-
-Python mínimo 3.11 para o projeto. A instalação do próprio `uv` é feita por
-`pip install uv`, o que **pressupõe um Python já presente na máquina** — é a via escolhida
-por ser a que passa mais limpo em ambiente corporativo, sem depender de winget nem de
-instalador que baixa binário de fora. Máquina sem Python nenhum é um pré-requisito não
-atendido, e o `.bat` diz isso explicitamente em vez de tentar resolver sozinho.
-
-Uma vez instalado, o `uv` cuida do interpretador do *projeto*: se o Python da máquina for
-mais antigo que 3.11, o `uv sync` baixa e usa um 3.11+ apenas para este projeto, sem tocar
-na instalação do sistema.
+- Dependências em `pyproject.toml`, travadas em `uv.lock` (**versionado**: garante as mesmas
+  versões entre builds de meses diferentes). `.venv/` fora do git.
+- Adicionar dependência: `uv add <pacote>` (resolve e atualiza o lock). Rodar: `uv run python …`;
+  nunca ativar a venv.
+- Python ≥ 3.11 para o projeto; se a máquina tiver um mais antigo, `uv sync` baixa um 3.11+ só
+  para o projeto.
+- O próprio `uv` é instalado com `pip install uv` — passa limpo em máquina corporativa, sem
+  winget nem binário externo — e invocado como `<python> -m uv`, o que dispensa mexer no `PATH`.
+  Pressupõe um Python na máquina; sem nenhum, os scripts dizem isso e param.
 
 ## 2. Pontos de entrada
 
-Há dois, com o mesmo fluxo e as mesmas mensagens:
+`gerar-dashboard.bat` (Windows, dois cliques — entregável do usuário final) e
+`gerar-dashboard.sh` (Linux/WSL, dev). **Mesmo fluxo e mesmas mensagens: mudou um, muda o
+outro.** Nenhum abre o HTML — imprimem o caminho absoluto de JSON e HTML e param.
 
-| Script | Ambiente | Uso |
-|---|---|---|
-| `gerar-dashboard.bat` | Windows | dois cliques, sem terminal — é o do usuário final |
-| `gerar-dashboard.sh` | Linux / WSL | `./gerar-dashboard.sh` ou `./gerar-dashboard.sh 2026-07` |
+Fluxo: localizar/instalar o `uv` → `uv sync` → listar `inputs/YYYY-MM` marcando quais têm a
+planilha → pedir o mês e validar pasta e nome exato do arquivo → `uv run python dashboard.py
+<mês>` → mostrar os caminhos gerados.
 
-O fluxo é o mesmo nos dois e deve ser alterado em conjunto. **Nenhum dos dois abre o HTML** —
-a responsabilidade termina no arquivo gerado, com o caminho absoluto impresso na tela.
+### 2.1 Regras do `.bat`
 
-### 2.1 `gerar-dashboard.bat`
+- **ASCII puro, sem acento** — a codepage do console corporativo é imprevisível.
+- **CRLF obrigatório** — com LF, `goto`/labels quebram em silêncio. Ao editar do Unix, converter
+  antes de gravar.
+- `cd /d "%~dp0"` na primeira linha; nenhum caminho absoluto; nada exige administrador.
+- Todo erro tem label próprio e mensagem acionável e cai em `:fim`, que espera ENTER
+  (`set /p "DUMMY=Digite ENTER para finalizar..."`) — a janela nunca fecha sozinha.
+- Expansão atrasada (`!VAR!`) em tudo que é atribuído dentro de bloco `if`/`for`; `%VAR%` ali lê
+  o valor de antes do bloco e falha em silêncio (por isso a invocação fica em `!UV!`).
+- Busca do `uv`: `PATH` → `py -3 -m uv` → `python -m uv` → `pip install --upgrade uv`.
 
-O usuário final não abre terminal. **Dois cliques no `.bat` fazem tudo**, nesta ordem:
+### 2.2 Diferenças do `.sh`
 
-1. Localiza o `uv`. Se não estiver no `PATH`, procura um Python (`py -3`, depois `python`)
-   e instala com `pip install --upgrade uv`. Passa a invocar como `<python> -m uv`, o que
-   dispensa mexer no `PATH` — o executável do `uv` costuma cair no diretório `Scripts` do
-   Python, que raramente está no `PATH` de máquina corporativa.
-2. `uv sync` — cria a venv e sincroniza as dependências a partir do lock.
-3. Lista as subpastas `inputs/YYYY-MM` existentes, marcando quais já têm a planilha no lugar.
-4. Pede o mês-base por `set /p` e valida: pasta existe e planilha com o nome exato existe.
-5. `uv run python dashboard.py <YYYY-MM>`.
-6. Em caso de sucesso, mostra os caminhos absolutos do JSON e do HTML gerados.
-7. `set /p` com "Digite ENTER para finalizar..." no final — a janela nunca fecha sozinha,
-   nem no caminho de erro, e o usuário consegue ler as mensagens antes de fechar.
-
-**Regras ao mexer no `.bat`:**
-
-- **ASCII puro, sem acentos.** Codepage do console no Windows corporativo é imprevisível e
-  acento em `.bat` vira lixo na tela. As mensagens são em português sem acentuação.
-- **CRLF obrigatório.** Batch com terminação LF quebra `goto`/labels de forma silenciosa.
-  Ao editar de um ambiente Unix, converter antes de gravar.
-- Todo caminho de erro tem label próprio, mensagem acionável e cai no `:fim` com `pause`.
-- Nenhum caminho absoluto: `cd /d "%~dp0"` na primeira linha ancora tudo na pasta do script.
-- Nada exige privilégio de administrador.
-- Expansão atrasada (`!VAR!`) em tudo que é atribuído dentro de bloco `if`/`for`. Usar `%VAR%`
-  nesses pontos lê o valor de antes do bloco e falha em silêncio — foi por isso que a
-  invocação do `uv` ficou na variável `!UV!`.
-
-### 2.2 `gerar-dashboard.sh`
-
-Os mesmos passos do `.bat`, adaptados ao Linux/WSL. As diferenças que importam:
-
-- **Aceita o mês como argumento** (`./gerar-dashboard.sh 2026-07`) e só pergunta se ele não
-  vier. Isso permite rodar sem TTY, em automação.
-- Valida o **formato** do mês por regex (`YYYY-MM`, mês de 01 a 12) antes de olhar o disco.
-- Busca do `uv`, em ordem: `PATH` → `~/.local/bin/uv` → `python3 -m uv` →
-  `pip install --user uv`. O `--user` evita esbarrar no PEP 668 (ambiente gerenciado) das
-  distros recentes; se ainda assim falhar, a mensagem sugere `pipx install uv`.
-- `set -euo pipefail` ligado; todo caminho de erro passa pela função `erro`, que escreve em
-  `stderr` e sai com status 1.
-- **UTF-8 com acento é permitido aqui** — a restrição de ASCII vale só para o `.bat`.
-  Ainda assim, as mensagens de console foram mantidas sem acento para ficarem idênticas às
-  do `.bat`; o que tem acento é só o comentário do código.
-- Não há espera por ENTER no final: o terminal continua aberto por natureza.
-
-Para desenvolvimento, o atalho direto continua valendo:
-
-```bash
-uv run python dashboard.py 2026-07                     # pipeline completo
-uv run python dashboard.py 2026-07 --etapa extrair     # planilha -> JSON + validação
-uv run python dashboard.py 2026-07 --etapa validar     # revalida o JSON já gerado
-uv run python dashboard.py 2026-07 --etapa renderizar  # JSON -> HTML
-```
-
-Códigos de saída: `2` erro de uso (mês inválido, planilha ausente), `3` base reprovada no
-checklist, `4` etapa de renderização ainda não implementada.
-
-## 3. Pipeline
-
-Três estágios, nesta ordem, orquestrados por `dashboard.py`:
-
-1. **Extração** — lê `inputs/YYYY-MM/Gerencial MFO YYYY-MM.xlsx` com `openpyxl`
-   (`data_only=True`, os valores calculados já estão gravados) e emite
-   `outputs/YYYY-MM/data-YYYY-MM.json`.
-2. **Validação** — confere os checks embutidos na planilha e a consistência de totais
-   ([validacao.md](validacao.md) §1). Falha ruidosamente; nunca gera HTML a partir de base
-   inconsistente.
-3. **Renderização** — injeta o JSON e os assets de `template/` em `base.html` e escreve
-   `outputs/YYYY-MM/dashboard-YYYY-MM.html`.
-
-## 3.1 Organização do código
-
-`dashboard.py` na raiz só orquestra e trata argumentos e códigos de saída. O trabalho vive
-em `core/`:
-
-| Módulo | Papel |
-|---|---|
-| `core/config.py` | caminhos, versões e tolerâncias. Sem layout de planilha. |
-| `core/planilha.py` | abertura do xlsx, intervalos, nomes definidos e limpeza de valores. |
-| `core/extracao/` | etapa 1, um módulo por domínio (ver abaixo). |
-| `core/validacao.py` | o checklist bloqueante, rodando **sobre o JSON**, não sobre o xlsx. |
-| `core/render/` | etapa 3, o HTML (ver abaixo). |
-| `core/json_io.py` | leitura e escrita do JSON intermediário. |
-
-Dentro de `core/extracao/`: `parametros` (aba `info`), `consolidado` (`resumo` +
-`CEO-Dashboard`), `historico` (`aum_receita`), `officers`
-(`cons_officer`), `carteira` (bases de posição, grupos, regiões), `captacao` (`net_in_out`,
-`io_*`, blocos do `Dashboard`), `estrutura` (administradores, `G5JUS`), `checks` (os checks
-embutidos) e `comum` (leitura de blocos rotulados, compartilhada).
-
-**Cada extrator carrega as coordenadas que ele lê**, como constantes no topo do próprio
-módulo e com a referência da célula no comentário. Nenhum mapa central de layout: quando a
-geradora mexer numa aba, a mudança fica confinada a um arquivo.
-
-Duas coisas são lidas da planilha em vez de escritas no código, e não devem virar lista
-fixa: os **rótulos de linha** (viram `rotulo` + `chave`) e o **recuo da célula**, que dá o
-nível de hierarquia usado no drill-down. Detalhe em
-[contrato-json.md](contrato-json.md) §3.1.
-
-A validação roda sobre o JSON — e não sobre a planilha — de propósito: assim
-`--etapa validar` confere uma base já gerada, e a etapa de renderização nunca recebe base
-que não passou pelo checklist.
-
-## 3.2 O renderizador — `core/render/`
-
-| Módulo | Papel |
-|---|---|
-| `paginas/<aba>.py` | **uma aba do dashboard por arquivo.** É o único arquivo a abrir para mudar o que aparece numa aba. |
-| `paginas/comum.py` | o que abas irmãs (onshore/offshore) usam do mesmo jeito. Não é aba, não se registra. |
-| `pagina.py` | o registro: decorador `@pagina(...)`, grupos do menu e ordenação. |
-| `ui.py` | componentes — seção, KPI, tabela, cartão, legenda, nota de fonte. |
-| `graficos.py` | SVG inline gerado no build, sem biblioteca. |
-| `formato.py` | números e datas em PT-BR. |
-| `contexto.py` | atalhos de leitura do JSON. |
-| `layout.py` | esqueleto, menu e a costura do HTML final. |
-
-Uma aba nova são três passos: escrever `paginas/nome.py`, decorar a função de render com
-`@pagina(identificador=…, titulo=…, grupo=…, ordem=…)` e importar o módulo em
-`paginas/__init__.py`. O menu, o roteamento e a impressão vêm de graça.
-
-**Todo texto vindo da planilha é escapado por padrão.** A célula de tabela escapa sozinha; o
-fragmento de HTML montado por nós precisa pedir explicitamente, com `ui.html(...)`, e aí é
-responsabilidade de quem chama passar `esc()` em cada pedaço que veio do dado. Não é
-paranoia: a base de hoje já traz `Rose & Oud`, `Grupo DD&L` e `Heitor Sant'anna Martins` —
-sem escapar, o `&` corrompe o HTML, e um nome com marcação viraria execução de script num
-arquivo que carrega nome de cliente.
-
-Os assets ficam em `template/` (`base.html`, `styles.css`, `app.js`, `logo-g5.txt`) e são
-**inlined** no HTML final. O logo é data URI porque caminho relativo some quando o arquivo é
-enviado por e-mail. O `app.js` faz seis coisas e nada mais: navegar, filtrar, ordenar,
-abrir detalhe (uma linha ou todas), alternar versões de um gráfico e exibir o tooltip —
-sem `localStorage` e sem `window.top`, para funcionar dentro de um `<iframe>`.
-
-**Regras invioláveis do pipeline:**
-
-- O build de um mês lê **apenas** `inputs/YYYY-MM/`. Nunca lê meses anteriores nem escreve
-  fora de `outputs/YYYY-MM/`. A planilha já carrega todo o histórico e o comparativo M-1
-  dentro dela.
-- Correções retroativas aparecem só na versão mais recente. Não reconciliar contra HTMLs
-  antigos, não versionar diffs de números.
-- O mês de fechamento vem do **nome da subpasta em `inputs/`**, não do conteúdo. As séries de 2026 já trazem
-  colunas de meses futuros zeradas — truncar em `YYYY-MM` e nunca plotar zeros futuros.
-- Nada de CDN. O HTML tem que abrir de qualquer lugar, offline, em rede corporativa
-  restritiva. CSS, JS e gráficos são inlined. Sem webfonts externas — usar a pilha de
-  fallback do design system.
-- O HTML precisa funcionar dentro de um `<iframe>` (planejado para um portal futuro).
-  Nada de `window.top`, `localStorage` ou navegação que assuma ser documento de topo.
-
----
-
-[← Índice](../CLAUDE.md)
+- Aceita o mês como argumento e só pergunta se faltar (roda sem TTY); valida o formato
+  `YYYY-MM` por regex antes de olhar o disco.
+- Busca do `uv`: `PATH` → `~/.local/bin/uv` → `python3 -m uv` → `pip install --user uv`
+  (`--user` evita o PEP 668; se falhar, sugere `pipx install uv`).
+- `set -euo pipefail`; todo erro passa por `erro()`, que escreve em `stderr` e sai com 1.
+- UTF-8 é permitido, mas as mensagens seguem sem acento para ficarem idênticas às do `.bat`.
+- Não espera ENTER no final.

@@ -1,177 +1,118 @@
-# Modelo de dados
+# Modelo de dados da planilha
 
-Estrutura das abas, dimensões e bases da planilha. Para **como cada número é calculado**,
-ver [calculos.md](calculos.md).
+Abas, dimensões, nomes definidos e grade temporal. Como cada número é calculado:
+[calculos.md](calculos.md).
 
-> [← Índice](../CLAUDE.md) · Relacionados: [calculos.md](calculos.md), [metricas.md](metricas.md)
+28 abas: 14 visíveis (fórmulas sobre as ocultas) e 14 ocultas (bases). Ler preferencialmente a
+visível; ir à oculta só quando ela tiver granularidade que a visível agrega.
 
-28 abas: **14 visíveis** (viram páginas do dashboard) e **14 ocultas** (bases de cálculo).
-Na planilha, tudo que é visível é fórmula referenciando as ocultas. No dashboard, ler
-preferencialmente a aba visível; recorrer à oculta só quando ela contiver granularidade que
-a visível agrega.
+## 1. Abas visíveis
 
-## 1. Abas visíveis → páginas
-
-| Aba | Conteúdo | Página do dashboard |
+| Aba | Conteúdo | Uso no dashboard |
 |---|---|---|
-| `CEO-Dashboard` | 4 KPIs consolidados, split On/Offshore, tabela por officer | Visão Geral |
-| `Dashboard` | Resultado e run rate, captação cliente, NET executado por mês | Visão Geral + Captação |
-| `resumo` | ROA por Categoria/Faixa PL e por Grupo/Faixa PL, 4 donuts | Resumo |
-| `aum_receita` | Série AUM × Receita × ROA, onshore e offshore, 2018→hoje | Histórico |
-| `ar_grupos` | Top 10 AUM por grupo econômico, mês a mês | Grupos Econômicos |
-| `ar_adm_on` | AUM × Receita × Custos por administrador, onshore (R$) | — (extraído no JSON, sem aba) |
-| `ar_adm_off` | AUM × Receita × Custos por administrador, offshore (US$) | — (extraído no JSON, sem aba) |
-| `ar_onshore` | 939 portfólios com todas as dimensões, AUM e receita mensais | Portfólios Onshore |
-| `ar_offshore` | 166 portfólios offshore (US$) | Portfólios Offshore |
-| `G5JUS` | AUM × Receita dos FIDCs G5 JUS | G5 JUS |
-| `net_in_out` | IN/OUT mensal decomposto por tipo de veículo e finalidade | Captação |
-| `io_grupos` | Movimentações por grupo econômico, visão mensal e YTD | Captação › Grupos |
-| `io_portfolios` | IN/OUT por portfólio com taxa e receita aproximada | — (extraído no JSON, sem aba) |
+| `CEO-Dashboard` | cartões de KPI, split on/offshore, tabela por officer | Visão Geral (variação M-1), Officers |
+| `resumo` | KPIs, ROA por Categoria/Faixa PL e por Grupo/Faixa PL | Visão Geral, Resumo |
+| `aum_receita` | série AUM × Receita × ROA on/offshore, 2018→hoje | Visão Geral, Histórico |
+| `ar_grupos` | Top 10 por AUM e por receita, série por grupo | Grupos Econômicos |
+| `ar_onshore` | uma linha por portfólio, dimensões + AUM/receita mensais (R$) | Portfólios Onshore; checklist |
+| `ar_offshore` | idem, em US$ | Portfólios Offshore; checklist |
+| `net_in_out` | IN/OUT mensal por tipo de veículo e finalidade | Net In/Out |
+| `Dashboard` | §2 Captação Cliente (mês, ano, incremento de receita) · §3 NET executado por segmento | Net In/Out |
+| `io_grupos` | movimentação por grupo econômico, mensal e YTD | Captação › Grupos |
+| `G5JUS` | AUM × receita dos FIDCs G5 JUS | G5 JUS |
+| `ar_adm_on` / `ar_adm_off` | AUM × receita × custos por administrador (R$ / US$) | só no JSON |
+| `io_portfolios` | IN/OUT por portfólio com taxa e receita aproximada | só no JSON |
 
 ## 2. Abas ocultas relevantes
 
 | Aba | Papel |
 |---|---|
-| `regiao` | Distribuição geográfica (AUM, receita, % e qtd. grupos), onshore / offshore / consolidado. Alimenta os gráficos da aba `resumo`. É a única fonte do corte por região — usar diretamente. |
-| `custos_adm_on` / `custos_adm_off` | Custo de administração por portfólio. Alimentam `ar_adm_*`. Usar para o drill-down de custo por administrador. |
-| `info_grupos` | Movimentações individuais (Data, Portfolio, IN/OUT, Finalidade, Grupo, Officer, Lead, LeadG5, Segmento) + ano de início de cada grupo. É o nível mais fino do drill-down de captação. |
-| `cons_officer` | Consolidação por officer que alimenta a tabela da `CEO-Dashboard`. Mapeia apelido → login (ex.: `Abrahão` → `amendes`). |
-| `cotas` | Cotização da própria base de AUM tratada como portfólio (AUM indexado, rendimento, var. %, cota) vs CDI acumulado, desde 2018-01. **Backlog** — vira uma página "Performance da Base" depois que as análises principais estiverem prontas. Prioridade baixa. |
-| `fees_indiretos` | Receitas indiretas (rebates, Icatu). **Fora de escopo** — zeradas/TBD em 2026. |
-| `CHECK`, `check_net`, `info`, `in_out`, `info_net_in_out`, `in_out_cons`, `APRESENTACAO` | Encanamento e validação. Não expor. |
+| `regiao` | AUM, receita, % e qtd. de grupos por região (on/offshore/consolidado). Única fonte do corte geográfico → aba Regiões. |
+| `cons_officer` | consolidação por officer que alimenta a `CEO-Dashboard` → drill-down de Officers. |
+| `info` | parâmetros do mês e de-para login → apelido ([calculos.md](calculos.md) §2). |
+| `info_grupos` | movimentações individuais (Data, Portfolio, IN/OUT, Finalidade, Grupo, Officer, Lead, LeadG5, Segmento) + ano de início do grupo. **Não extraída** (backlog: 3º nível do drill-down de captação). |
+| `custos_adm_on` / `custos_adm_off` | custo de administração por portfólio; alimentam `ar_adm_*`. Não extraídas. |
+| `cotas` | cotização da base de AUM vs CDI desde 2018-01. Backlog. |
+| `fees_indiretos` | receitas indiretas (rebates, Icatu). Fora de escopo — zeradas/TBD em 2026. |
+| `CHECK`, `check_net`, `in_out`, `info_net_in_out`, `in_out_cons`, `APRESENTACAO` | encanamento e validação. Não expor. |
 
 ## 3. Eixos de análise
 
-Duas taxonomias diferentes que não devem ser confundidas:
+Duas taxonomias distintas — não confundir:
 
 - **Tipo de veículo** (`ar_onshore` col. C): Carteira, Fundo, Fundo/Previdência, Estruturado,
   Alocação, Alocação/Previdência, Externo, Offshore.
 - **Segmento** (col. I): MFO, Institucional, Estruturado, Alocação.
 
-Demais dimensões por portfólio: `Adm` (administrador), `Grupo` (grupo econômico),
-`Officer`, `Backup`, `Região`.
+Demais dimensões por portfólio: Adm, Grupo econômico, Officer, Backup, Região.
 
 ## 4. Grade temporal
 
-Nas abas de série longa (`aum_receita`, `ar_adm_on`), o cabeçalho de datas
-está na **linha 5** e a **linha 4 traz a contagem de dias úteis** do período — é o que
-sustenta a mensalização da receita.
-
-- Colunas C→R: pontos **semestrais**, 2018-06 a 2025-12.
-- Colunas S→AD: pontos **mensais**, 2026-01 a 2026-12.
-
-O eixo X não é uniforme. Nos gráficos históricos, tratar como categórico ordenado, nunca
-como escala temporal linear — senão os 8 anos semestrais comprimem os meses de 2026.
+Em `aum_receita` e `ar_adm_on`: datas na **linha 5**, dias úteis do período na **linha 4**.
+Colunas C→R são **semestrais** (2018-06 a 2025-12); S→AD são **mensais** (2026-01 a 2026-12).
+Eixo não uniforme: plotar como categórico ordenado, nunca como escala temporal.
 
 ## 5. Nomes definidos
 
-O motor da planilha são nomes definidos, não referências diretas. Reproduzi-los no extrator
-torna o código legível e resistente a deslocamento de linhas.
+O motor da planilha são nomes definidos; o extrator os usa para resistir a deslocamento de linhas.
 
-### Bases de posição
+**Bases de posição**
 
 | Nome | Intervalo | Conteúdo |
 |---|---|---|
-| `ar_on` | `ar_onshore!J5:AI931` | matriz de valores (AUM e Receita alternados por mês) |
-| `ar_on_datas` | `ar_onshore!J3:AI3` | data de cada coluna (repetida em pares) |
+| `ar_on` | `ar_onshore!J5:AI931` | valores, AUM e Receita alternados por mês |
+| `ar_on_datas` | `ar_onshore!J3:AI3` | data de cada coluna (repetida no par) |
 | `ar_on_headers` | `ar_onshore!J4:AI4` | `"AUM"` ou `"Receita"` |
-| `ar_on_info` | `ar_onshore!B5:I931` | dimensões, 8 colunas (ver 3.1) |
+| `ar_on_info` | `ar_onshore!B5:I931` | 8 dimensões (tabela abaixo) |
 | `ar_on_total` | `ar_onshore!J933:AI933` | linha de total |
-| `ar_off*` | `ar_offshore!…162` | idêntico, em US$ |
-| `custos_on` / `custos_off` | `custos_adm_*` | AUM e Custos por portfólio |
-| `grupos` | `ar_grupos!C54:AB500` | AUM e Receita por grupo econômico |
-| `grupos_info` | `ar_grupos!B54:B500` | nome do grupo |
+| `ar_off*` | `ar_offshore!…` | idem, em US$ |
+| `grupos` · `grupos_info` · `grupos_datas` · `grupos_headers` | `ar_grupos!…` (`C54:AB500`, `B54:B500`) | AUM/receita por grupo, nome, datas, cabeçalhos |
+| `custos_on` / `custos_off` | `custos_adm_*` | AUM e custos por portfólio |
 | `cotas` | `cotas!B5:U500` | série de cotização |
 
-### Bases de movimentação
+**Bases de movimentação**
 
 | Nome | Intervalo | Conteúdo |
 |---|---|---|
-| `in_onshore` | `in_out!B6:K5001` | **todas** as entradas onshore |
-| `out_onshore` | `in_out!M6:W5001` | **todas** as saídas onshore |
-| `in_offshore` | `in_out!Y6:AJ5000` | todas as entradas offshore |
-| `out_offshore` | `in_out!AL6:AX5000` | todas as saídas offshore |
-| `in_net_onshore` | `info_net_in_out!B6:K5001` | entradas **de cliente** |
-| `out_net_onshore` | `info_net_in_out!M6:W5000` | saídas **de cliente** |
-| `in_net_offshore` | `info_net_in_out!Y6:AJ5000` | idem, offshore |
-| `out_net_offshore` | `info_net_in_out!AL6:AX5000` | idem, offshore |
+| `in_onshore` / `out_onshore` | `in_out!B6:K5001` / `M6:W5001` | **todas** as entradas / saídas onshore |
+| `in_offshore` / `out_offshore` | `in_out!Y6:AJ5000` / `AL6:AX5000` | idem, offshore |
+| `in_net_onshore` / `out_net_onshore` | `info_net_in_out!B6:K5001` / `M6:W5000` | só **cliente** |
+| `in_net_offshore` / `out_net_offshore` | `info_net_in_out!Y6:AJ5000` / `AL6:AX5000` | só cliente, offshore |
 
-### Séries consolidadas
+**Séries consolidadas:** `aum_receita_on` = `aum_receita!B5:AD35` · `aum_receita_off` =
+`aum_receita!B39:AD50` · `io_cons_on` = `in_out_cons!B5:O79` · `io_cons_off` =
+`in_out_cons!B82:P108`.
 
-| Nome | Intervalo |
-|---|---|
-| `aum_receita_on` | `aum_receita!B5:AD35` |
-| `aum_receita_off` | `aum_receita!B39:AD50` |
-| `io_cons_on` | `in_out_cons!B5:O79` |
-| `io_cons_off` | `in_out_cons!B82:P108` |
+**Colunas de `ar_on_info` / `ar_off_info`:** 1 Portfolio · 2 Tipo · 3 Adm · 4 Grupo econômico ·
+5 **Officer** · 6 Backup · 7 Região · 8 **Segmento**.
 
-### Colunas de `ar_on_info` / `ar_off_info`
+**Colunas das bases de movimentação:**
 
-| # | Campo |
-|---|---|
-| 1 | Portfolio |
-| 2 | Tipo (Carteira, Fundo, Fundo/Previdência, Estruturado, Alocação, Alocação/Previdência, Externo, Offshore) |
-| 3 | Adm (administrador) |
-| 4 | Grupo econômico |
-| 5 | **Officer** |
-| 6 | Backup |
-| 7 | Região |
-| 8 | **Segmento** (MFO, Institucional, Estruturado, Alocação) |
+| # | IN (10 col. on / 12 off) | OUT (11 col. on / 13 off) |
+|---|---|---|
+| 1–4 | Mês · Portfolio · Valor (R$ on / US$ off) · Officer | idem |
+| 5 | **Taxa (% a.a.)** | idem |
+| 6–8 | Tipo · Segmento · Grupo | idem |
+| 9 | **Ano Início** | idem |
+| 10 | Novo? | **Finalidade** (`Uso pessoal` \| `Saída para concorrência` \| `Alocação`) |
+| 11 | Dólar *(off)* | Final? |
+| 12 | **Valor (R$)** *(off)* | Dólar *(off)* |
+| 13 | — | **Valor (R$)** *(off)* |
 
-### Colunas das bases de movimentação
+## 6. `in_out` × `info_net_in_out`
 
-Onshore IN (10 col.) e offshore IN (12 col.):
+Schema idêntico, conteúdo diferente — a armadilha número um do modelo:
 
-| # | Campo | | # | Campo |
-|---|---|---|---|---|
-| 1 | Mês | | 6 | Tipo |
-| 2 | Portfolio | | 7 | Segmento |
-| 3 | Valor (R$ onshore / US$ offshore) | | 8 | Grupo |
-| 4 | Officer | | 9 | **Ano Início** |
-| 5 | **Taxa (% a.a.)** | | 10 | Novo? |
-| | | | 11 | Dólar *(só offshore)* |
-| | | | 12 | **Valor (R$)** *(só offshore)* |
-
-Onshore OUT (11 col.) e offshore OUT (13 col.): mesma ordem até 9, e depois
-
-| # | Campo |
-|---|---|
-| 10 | **Finalidade** (`Uso pessoal` \| `Saída para concorrência` \| `Alocação`) |
-| 11 | Final? |
-| 12 | Dólar *(só offshore)* |
-| 13 | **Valor (R$)** *(só offshore)* |
-
-## 6. `in_out` vs `info_net_in_out` — a distinção que mais confunde
-
-São duas bases com **schema idêntico** e conteúdo diferente:
-
-- **`in_out`** — todas as movimentações, inclusive as dos veículos do próprio grupo G5
-  (fundos de alocação). Em jul/26: 781 linhas de IN onshore, R$ 4,50 bi, das quais 238 são
-  do grupo `G5`.
-- **`info_net_in_out`** — apenas movimentação **de cliente**: as linhas do grupo `G5` foram
-  removidas. Em jul/26: 479 linhas, R$ 1,92 bi, **zero** do grupo `G5`.
-
-Consequência direta:
+- **`in_out`**: todas as movimentações, inclusive as dos veículos do grupo G5. Jul/26: 781
+  linhas de IN onshore, R$ 4,50 bi, 238 do grupo `G5`.
+- **`info_net_in_out`**: só **cliente**, sem as linhas do G5. Jul/26: 479 linhas, R$ 1,92 bi.
 
 | Visão | Base | Aba |
 |---|---|---|
-| **Captação Cliente** | `*_net_*` (sem G5) | `net_in_out`, `io_portfolios`, `Dashboard §2` |
-| **NET Executado** | `*_net_*` (sem G5) — offshore pelas col. 12/13, em R$ | `Dashboard §3` |
-| Consolidação com G5 | `in_out` (com G5) | `in_out_cons` |
-| Série `IN/OUT` de `aum_receita` | `io_cons_*`, ou seja `in_out` (com G5) | `aum_receita!S8` |
+| Captação Cliente | `*_net_*` | `net_in_out`, `io_portfolios`, `Dashboard` §2 |
+| NET Executado | `*_net_*`; offshore pelas col. 12/13, em R$ | `Dashboard` §3 (fórmulas a partir de `Dashboard!C37`) |
+| Consolidação com G5 | `in_out` | `in_out_cons` |
+| Série `IN/OUT` de `aum_receita` | `io_cons_*` → `in_out` | `aum_receita!S8` |
 
-**`Dashboard §3` (NET Executado) é base de cliente**, não `in_out`: as fórmulas
-(`Dashboard!C37` em diante) somam `in_net_onshore` col. 3 com `in_net_offshore` col. 12, e
-`out_net_*` do mesmo jeito. Por isso o NET do mês e do ano do §3 batem no centavo com o §2 e
-com `net_in_out` consolidado (ago/26: R$ 29,52 mi no mês, R$ 230,98 mi no ano). Uma versão
-anterior desta tabela dizia o contrário, e o dashboard chegou a separar as duas numa aba
-cada, com aviso de "bases diferentes".
-
-Trocar uma pela outra produz números plausíveis e errados. É a armadilha número um deste
-modelo.
-
----
-
----
-
-[← Índice](../CLAUDE.md)
+Por isso o NET do mês e do ano de `Dashboard` §2, §3 e `net_in_out` consolidado batem no centavo
+(ago/26: R$ 29,52 mi no mês, R$ 230,98 mi no ano). Não somar um com o outro.

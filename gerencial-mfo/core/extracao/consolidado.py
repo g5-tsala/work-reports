@@ -184,10 +184,8 @@ def _total_faixa(ws, linha: int, colunas: dict[str, int]) -> dict[str, float | N
 
 #: `CEO-Dashboard` — a nota de rodape e procurada **abaixo do rotulo**
 #: `Total Ex- Fdos Alocacao`, o ultimo da tabela de officers, e nao numa linha
-#: fixa da aba. A tabela cresce e encolhe conforme entra e sai officer, e a nota
-#: desce e sobe junto: o extrator apontava para B41 e em 2026-08 ela estava em
-#: B40 — a nota sumiu do dashboard sem nenhum erro. Ancorada no rotulo, a
-#: distancia e estavel: na pratica a nota cai sempre em +2.
+#: fixa: a tabela cresce e encolhe conforme entra e sai officer, e uma
+#: coordenada fixa perde a nota sem erro. Na pratica ela cai em +2.
 NOTA_DESLOCAMENTO_INICIAL, NOTA_DESLOCAMENTO_FINAL = 2, 6
 
 

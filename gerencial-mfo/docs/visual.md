@@ -1,196 +1,105 @@
 # Padrão visual
 
-> [← Índice](../CLAUDE.md) · Relacionados: [dashboard.md](dashboard.md)
+A skill **`g5-design-system`** é a fonte de verdade de cores, tipografia, espaçamento, tabelas e
+gráficos — não inventar hex. Aqui só o que este projeto acrescenta. Navegação e interação:
+[dashboard.md](dashboard.md).
 
-Usar a skill **`g5-design-system`** para qualquer decisão visual. Ela é a fonte de verdade
-de cores, tipografia, espaçamento, tabelas e regras de gráfico. Não inventar hex.
+- Navy estrutura, wine pontua (≤ 5% da área), neutros sustentam. Sem gradiente, sem dark mode.
+- Tabela G5: header navy com rótulo branco em caixa alta, zebra `--g5-bg-soft`, números à
+  direita e tabulares, sem régua vertical.
+- Séries na ordem canônica (`graficos.SERIES`), no máximo 5. Composição com mais de 5 partes
+  vai em barra horizontal, não em donut.
+- Negativo em `--g5-negative`, positivo em `--g5-positive`, nunca sobre navy.
+- Todo gráfico e toda tabela de origem levam `ui.fonte()`:
+  `Fonte: Gerencial MFO — aba <nome>. Base: <mês>.` Legenda de série vai acima do gráfico.
 
-Pontos que este projeto reforça:
+## 1. Números — PT-BR sempre (`core/render/formato.py`)
 
-- Navy estrutura, wine pontua (≤5% da área), neutros sustentam. Sem gradiente, sem dark mode.
-- Tabelas no padrão G5: header navy com rótulo branco em caixa alta, zebra `--g5-bg-soft`,
-  numéricos à direita e tabulares, sem régua vertical.
-- Séries de gráfico na ordem canônica do design system. Máximo 5 séries, máximo 5 fatias
-  em donut — acima disso, barra horizontal.
-- Toda variação negativa em `--g5-negative`, positiva em `--g5-positive`, nunca sobre navy.
-- Todo gráfico carrega legenda de fonte: `Fonte: Gerencial MFO — aba <nome>. Base: <mês>.`
-
-## 1. Números (PT-BR, sem exceção)
-
-- Milhar `.`, decimal `,`. `R$ 42,78 bi` · `0,24%` · `+2,46 p.p.`
-- Escala: AUM em **R$ bi** no nível MFO e **R$ mi** no nível officer/grupo/portfólio;
-  receita e run rate em **R$ mi**; ROA em **%** com 2 casas.
-- Uma escala por tabela, declarada no cabeçalho da coluna (`AUM (R$ mi)`), nunca por célula.
-- **Variação não herda a escala do nível.** O AUM consolidado é R$ bi, mas o que ele varia
-  num mês cabe entre -0,1 e 1,0 bi: em bilhões a série inteira vira casa decimal. Delta de
-  AUM no mês vai em **R$ mi**.
+- Milhar `.`, decimal `,`: `R$ 42,78 bi` · `0,24%` · `+2,46 p.p.`
+- Escala: AUM em **R$ bi** no nível MFO e **R$ mi** em officer/grupo/portfólio; receita e run
+  rate em **R$ mi**; ROA em % com 2 casas.
+- Uma escala por tabela, declarada no cabeçalho (`AUM (R$ mi)`), nunca por célula.
+- Variação não herda a escala do nível: o AUM é R$ bi, mas o delta do mês vai em **R$ mi**.
 - Diferença entre percentuais é **p.p.**, nunca `%`.
-- Zero é `0,00`. Traço `—` significa "não aplicável". Célula vazia significa "dado ausente".
-  São coisas diferentes e alguém vai perguntar.
+- Zero é `0,00`; `—` é "não aplicável"; célula vazia é "dado ausente". São coisas diferentes.
 
-## 1.1 Largura de coluna nas tabelas
+## 1.1 Tabelas
 
-Não há largura declarada por coluna — `Coluna(largura=…)` existe em `ui.py` e ninguém usa. O
-layout é `auto`: o navegador mede o conteúdo. A decisão de verdade é **para onde vai a
-folga**, porque `.g5-table` é `width: 100%` e quase sempre sobra largura.
+- **Sem largura declarada por coluna.** Layout `auto`;
+  a folga de `width: 100%` é distribuída por padding: `.num` 8px de cada lado e 32px à direita
+  só da **primeira** coluna (o rótulo da linha). Em toda `.text`, a folga multiplica pelas oito
+  colunas de texto da tabela de portfólios e espreme nomes longos.
+- Descartados, não reabrir: `th:not(.num) { width: 100% }` (vão de 700px no ranking) e
+  `width: 20%` (quebra a tabela de portfólios). `width: auto` na tabela funciona, mas deixa
+  branco à direita nas tabelas estreitas.
+- **Zebra conta só linhas visíveis de nível principal** (`nth-child(even of …)`): sub-linha de
+  drill-down e linha filtrada ficam fora da paridade.
 
-Sem instrução, o navegador espalha a sobra proporcional à largura natural de cada coluna — e
-como o `th` é `nowrap`, quem levava a maior fatia era a coluna de **cabeçalho** mais longo
-(`Δ Receita M-1 (%)` ficou a mais larga da tabela sem ter o que mostrar). O conserto é
-padding, não largura declarada:
+## 2. Gráficos (`core/render/graficos.py`)
 
-```css
-.g5-table .num { padding-left: 8px; padding-right: 8px; }
-.g5-table .text:first-child { padding-right: 32px; }
-```
+SVG gerado no build, cores como `var(--g5-*)` (o SVG inline herda os tokens). Tipos: `linhas`,
+`barras` (agrupada/empilhada), `combo` (barra + linha, eixo compartilhado ou próprio),
+`barras_horizontais`, `barras_horizontais_empilhadas`. Sem donut nem waterfall.
 
-Ele alarga por igual e deixa a distribuição do resto com o navegador. As colunas saem de
-`Coluna` com a classe `num` ou `text`, conforme `numerica`.
+### 2.1 Eixos e cor
 
-A folga de 32px é da **primeira** coluna, não de toda coluna de texto: é ela que carrega o
-rótulo da linha e precisa se descolar do bloco de números. Aplicada a `.text` inteiro, ela
-multiplica pelo número de colunas de texto — na tabela de portfólios são oito, e
-`Companhia Estadual de Águas e Esgotos CEDAE` cai para três linhas.
-
-Duas alternativas foram testadas e descartadas, e não vale reabrir sem motivo novo:
-
-- `th:not(.num) { width: 100% }` joga a folga inteira na coluna de texto — o ranking fica
-  com um vão de 700px entre o nome e o primeiro número.
-- `th:not(.num) { width: 20% }` conserta o ranking e **quebra a tabela de portfólios**: lá
-  são oito colunas de texto, que passam a dividir a fatia em partes iguais, e
-  `SP - São Paulo - Grande SP` cai de duas para três linhas.
-
-Largura automática pura (`.g5-table { width: auto }`) também funciona — a tabela termina
-onde o dado termina —, mas deixa branco à direita nas tabelas de poucas colunas.
-
-**Zebra conta só as linhas visíveis de nível principal** (`nth-child(even of …)`): sub-linha
-de drill-down, aberta ou fechada, e linha escondida pelo filtro ficam fora da contagem. Com
-o `nth-child(even)` puro, as sub-linhas ocultas entravam na paridade e a zebra embaralhava
-— em Captação › Grupos, onde cada grupo tem um número diferente de meses, ficava aleatória.
-
-## 2. Gráficos
-
-Módulo SVG próprio, sem biblioteca externa — **gerado no build, em Python**
-(`core/render/graficos.py`), não em JavaScript no cliente. Os dados são fixos no momento em
-que o HTML é escrito, então o gráfico pode ser vetor estático: imprime bem, abre com o JS
-desligado e não depende de rede.
-
-Tipos disponíveis: linha, barra vertical (agrupada e empilhada), combo barra + linha com
-segundo eixo, barra horizontal (simples e empilhada) e donut. Waterfall ainda não existe — a captação usa barra
-empilhada com linha de NET.
-
-As cores saem como `var(--g5-*)` dentro do SVG inline, que herda os tokens do CSS: trocar a
-paleta continua sendo mexer num arquivo só. Tooltip não pede biblioteca (§2.4). Se algum
-dia for preciso interatividade real (brushing, seletor que redesenha), aí sim entra
-biblioteca — minificada e inline, nunca via CDN.
-
-### 2.1 Regras de eixo
-
-Quatro decisões que já custaram uma rodada de conserto:
-
-- **Barra é ancorada no zero; linha não.** Barra codifica magnitude por área — cortar a base
-  mente. Linha codifica variação: forçar o zero num AUM que anda 2% ao mês achata a série
-  numa reta e esconde justamente o que ela existe para mostrar. `barras()` não tem opção;
-  `linhas()` tem `ancorar_zero`, que nasce `False`.
-- **A última marca do eixo é sempre ≥ o maior valor.** Se ficar abaixo, a barra sai da área
-  de plotagem e o `viewBox` corta — sem nenhum sinal visível de que faltou dado.
-- **Segundo eixo só quando as unidades são mesmo diferentes.** `combo()` compartilha o eixo
-  por padrão; `eixo_proprio=True` é para o caso legítimo (G5 JUS: AUM em R$ mi contra
-  receita em R$). IN, OUT e NET são todos R$ mi — dois eixos ali fariam a mesma grandeza
-  medir duas alturas no mesmo desenho.
-- **Cor por sinal só em série que oscila em torno do zero** — variação, fluxo, resultado.
-  Em nível (AUM, receita) inventaria uma leitura de bom/ruim que o dado não tem.
-- **Série longa pede rótulo de eixo inclinado** (`rotulos_inclinados`), não rótulo pulado.
-  Sem ele, `_passo_de_rotulos` mostra de N em N para não sobrepor, e num histórico de 24
-  pontos metade das datas some — justo o que faz o leitor localizar o ponto que está vendo.
-  Girado em -45°, com um ponto a menos de corpo, cabem todas.
-- **Cor por família em ranking** (`barras_horizontais(cores=…)`) quando as barras pertencem
-  a grupos que o leitor reconhece — família de produto, G5 contra terceiros. A cor carrega o
-  grupo e dispensa reordenar o gráfico para agrupá-lo, mantendo a ordem por grandeza. Vale o
-  mesmo teto de cinco: acima disso a legenda deixa de ser memorizável.
-
-**Dois gráficos lado a lado compartilham a ordem**, e a ordem sai de um deles (no Resumo, em
-Officers, em Grupos Econômicos e nos Portfólios, do AUM). Quando os itens vêm de dois rankings que não
-coincidem — os Top 10 por AUM e por receita —, o par mostra a união dos dois. Ordenado cada um pelo próprio valor, o mesmo item cai em alturas diferentes e comparar
-vira procurar o rótulo; ordenados juntos, a linha horizontal já é a comparação — e onde as
-duas barras discordam está a métrica derivada (ali, o ROA).
+- **Barra ancorada no zero; linha não.** Barra codifica magnitude por área. Linha codifica
+  variação: zero forçado achata um AUM que anda 2% ao mês. `barras()` não tem opção;
+  `linhas(ancorar_zero=False)` por padrão.
+- **A última marca do eixo é ≥ o maior valor**, senão o `viewBox` corta a marca sem aviso.
+- **Segundo eixo só com unidades realmente distintas:** `combo(eixo_proprio=True)` (G5 JUS: AUM
+  em R$ mi × receita em R$). IN, OUT e NET são todos R$ mi → eixo compartilhado.
+- **Cor por sinal só em série que oscila em torno do zero** (variação, fluxo). Em nível (AUM,
+  receita) inventaria leitura de bom/ruim.
+- **Série longa: `rotulos_inclinados`** (-45°, todas as categorias) em vez de pular rótulos.
+- **Cor por família em ranking** (`barras_horizontais(cores=…)`) quando o leitor reconhece os
+  grupos (família de produto, G5 × terceiros). Mesmo teto de 5 cores.
+- **Par lado a lado compartilha a ordem**, tirada do AUM (Resumo, Officers, Grupos, Regiões,
+  Portfólios). Rankings que não coincidem (Top 10 por AUM e por receita) → o par mostra a união.
+  Na mesma ordem, a linha horizontal já é a comparação, e a discordância entre barras é o ROA.
+- **Empilhar é para parcela de um total** (AUM e receita on + off: o topo é o consolidado);
+  **razão é linha** (ROA — somar taxas não dá taxa).
 
 ### 2.2 Rótulo direto
 
-O número escrito no desenho dispensa o vaivém até o eixo e é o que mantém o gráfico legível
-impresso em preto e branco, onde o azul e o wine viram o mesmo cinza. Três formas, e a
-escolha é pelo tamanho da série:
+Mantém o gráfico legível impresso em P&B, onde azul e wine viram o mesmo cinza.
 
 | Opção | Onde | Quando |
 |---|---|---|
 | `rotular_ultimo` | `linhas()`, `combo()` | série longa: só o valor de fechamento |
-| `rotular_pontos` | `linhas()` | quando o número exato de cada ponto importa. Marca o ponto com um círculo maior e alterna as séries acima e abaixo do traço — duas séries próximas empilhariam os rótulos justamente onde se cruzam |
-| `rotular` | `barras()` | o valor vai **fora** da barra solta (acima se positivo, abaixo se negativo) e **dentro** de cada segmento empilhado, em branco |
+| `rotular_pontos` | `linhas()` | o número de cada ponto importa. Ponto marcado maior; séries alternam acima/abaixo do traço para não empilhar rótulos onde se cruzam |
+| `rotular` | `barras()` | solta: fora da barra (acima se +, abaixo se −), na cor da barra. Empilhada: dentro de cada segmento, em branco, e o total acima da pilha. Segmento menor que `ALTURA_MINIMA_ROTULO` fica sem rótulo |
 
-`formatador_rotulo` separa a escala do rótulo da do eixo: o eixo aceita marca redonda
-(`45 bi`), o rótulo costuma querer a casa decimal (`39,7 bi`). Sem ele, os dois usam
-`formatador`.
+- `formatador_rotulo` separa a escala do rótulo (`39,7 bi`) da do eixo (`45 bi`).
+- O rótulo herda a cor da marca que descreve; na linha, com halo branco (`paint-order: stroke`).
+- Cor do texto via `style="fill:…"`, não atributo `fill`: atributo de apresentação perde para
+  qualquer regra CSS (`.g5-valor-barra` declara `fill`).
 
-Em barra empilhada o rótulo vai **dentro** porque é o segmento que precisa ser identificado
-— fora dele não haveria a qual parcela o número se refere. Segmento mais curto que
-`ALTURA_MINIMA_ROTULO` fica sem rótulo: o eixo e a tabela respondem, e um texto que
-transborda passaria a rotular a parcela vizinha.
+### 2.3 Altura
 
-**O rótulo herda a cor da marca que ele descreve** — a cor da série na linha, a cor da barra
-na barra. Com marcas de cores diferentes lado a lado, rótulo cinza obriga a mirar a coluna
-para saber de quem é o número. A exceção é o rótulo dentro da barra, que é branco: ali o
-fundo é a cor cheia da série. Na linha ele leva halo branco (`paint-order: stroke`), senão
-cai em cima do próprio traço quando a série termina achatada.
-
-**Empilhar é para parcela de um total; linha é para razão.** AUM e receita de duas origens
-empilham — o topo da barra é o consolidado, que é o número que o leitor veio buscar, e em
-duas linhas separadas ele teria de somar de cabeça. ROA não: somar taxas não produz taxa.
-
-Detalhe de implementação: a cor sai como `style="fill:…"`, não como atributo `fill`.
-Atributo de apresentação perde para qualquer regra CSS, e `.g5-valor-barra` declara um
-`fill` próprio — com o atributo, o rótulo da barra voltaria silenciosamente para o cinza.
-
-### 2.3 Altura: dois tipos de gráfico, duas regras
-
-O SVG ocupa 100% da largura e a **altura sai da proporção do `viewBox`** — não de um valor
-em pixel. Numa coluna de 1.344px (`.g5-main` no máximo), a proporção antiga de 880×300
-rendia 450px de altura: um gráfico comia a dobra sozinho.
-
-Os dois tipos crescem em eixos diferentes e por isso têm classes CSS diferentes:
+O SVG ocupa 100% da largura; a altura sai da proporção do `viewBox`.
 
 | Classe | Tipos | Cresce | Teto |
 |---|---|---|---|
-| `.g5-grafico--serie` | linha, barra vertical, combo | na horizontal (o eixo do tempo se alonga) | `max-height: 250px` |
-| `.g5-grafico--ranking` | barra horizontal | na vertical (um item por linha) | nenhum — teto cortaria item |
-| `.g5-grafico--donut` | donut | nenhum (é quadrado) | `max-height: 260px` |
+| `.g5-grafico--serie` | linha, barra vertical, combo | na horizontal | `max-height: 250px` |
+| `.g5-grafico--ranking` | barras horizontais | na vertical (um item por linha) | nenhum — cortaria item |
 
-`LARGURA`/`ALTURA` em `graficos.py` valem 1200×224 justamente para que a altura natural de
-um gráfico de série caia em ~250px na largura máxima — o teto é rede de segurança, não o
-mecanismo. **Mexer nessa razão é mexer na altura de todo gráfico de série do dashboard**; um
-`altura=` avulso numa página quebra a calibragem e cai no teto com letterbox nas laterais.
-
----
-
-[← Índice](../CLAUDE.md)
+`LARGURA × ALTURA` = 1200 × 224 faz a série cair em ~250px na largura máxima de `.g5-main`
+(1.344px): o teto é rede de segurança. Mudar essa razão muda todo gráfico de série; `altura=`
+avulso numa página quebra a calibragem (letterbox lateral).
 
 ### 2.4 Tooltip
 
-O gráfico continua estático: quem quer hover marca o grupo SVG com `data-dica`, um JSON
-`{titulo, linhas: [[rótulo, valor, cor]]}` já formatado no build, e o `app.js` exibe um
-balão único junto ao ponteiro. Linha sem cor, ou com o quarto item `true`, é o total,
-separada por um fio. Usam hoje: `barras_horizontais_empilhadas()` (Regiões) e `combo()`
-com `formatador_dica` (fluxo do Net In/Out — IN, OUT e, como total, o NET do mês).
+O grupo SVG leva `data-dica` = JSON `{titulo, linhas: [[rótulo, valor, cor, total?]]}` já
+formatado no build; o `app.js` exibe um balão único junto ao ponteiro. Linha sem cor ou com o
+4º item `true` é total, separada por um fio. Ligado por `formatador_dica` em `barras()` e
+`combo()` e sempre em `barras_horizontais_empilhadas()`. Em uso: Regiões, fluxo mensal e
+incremento de receita do Net In/Out, G5 JUS.
 
-- **Tooltip complementa, não esconde.** Todo número do balão está numa tabela da página.
-  Por isso a barra empilhada horizontal escreve só o total no fim da pilha: a parcela menor
-  quase nunca tem largura para o próprio número, e o balão é onde ela se abre.
-- **A área de hover é a faixa inteira da categoria** (`.g5-alvo`, retângulo transparente),
-  não só a tinta: a parcela offshore tem poucos pixels, e o ponto da linha tem 3px. Na barra
-  horizontal o alvo fica atrás das marcas e ganha fundo `--g5-bg-soft`; no `combo` ele
-  fica **por cima** de barras e linha (`.g5-alvo--sobre`), e o destaque é translúcido para
-  não cobrir o que realça.
-- **Valor antes do rótulo, chave em traço.** No balão o leitor já sabe a série e quer o
-  número: valor em destaque e alinhado à direita, rótulo depois, e a cor da série num traço
-  curto em vez de quadrado.
-- **Texto por `textContent`**, nunca `innerHTML`: o rótulo vem da planilha.
-- Some na impressão.
+- **Complementa, não esconde:** todo número do balão está numa tabela da página. Por isso a
+  barra horizontal empilhada escreve só o total; as parcelas se abrem no balão.
+- **Área de hover = faixa inteira da categoria** (`.g5-alvo`, transparente). Na barra
+  horizontal fica atrás das marcas; no `combo`/`barras` fica por cima (`.g5-alvo--sobre`), com
+  destaque translúcido.
+- Valor em destaque e à direita, rótulo depois, chave de cor em traço curto.
+- Texto por `textContent`, nunca `innerHTML` (rótulo vem da planilha). Some na impressão.

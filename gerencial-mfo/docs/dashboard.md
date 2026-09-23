@@ -1,145 +1,94 @@
 # Arquitetura do dashboard
 
-> [← Índice](../CLAUDE.md) · Relacionados: [visual.md](visual.md), [metricas.md](metricas.md)
+Navegação, abas, interação e impressão. Números, tabelas e gráficos: [visual.md](visual.md).
 
-## 1. Navegação — sidebar
+## 1. Navegação
 
-Menu lateral fixo (~240px, colapsável), conteúdo renderizado ao centro. Item ativo marcado
-com barra wine à esquerda. Agrupamento:
-
-```
-VISÃO EXECUTIVA     Visão Geral · Resumo · Histórico AUM × Receita
-CARTEIRA            Officers · Grupos Econômicos · Regiões · Portfólios On · Portfólios Off
-CAPTAÇÃO            Net In/Out · Grupos
-OUTROS              G5 JUS
-```
-
-**Uma aba = um script.** Cada item acima é um módulo em `core/render/paginas/`, registrado
-pelo decorador `@pagina(...)` com grupo e ordem. O menu e o roteamento saem do registro —
-para mexer no conteúdo de uma aba, abre-se o arquivo dela e mais nada.
-
-**Net In/Out reúne a captação de cliente inteira**: KPIs de `net_in_out`, a tabela
-*Captação Cliente* (`Dashboard §2`, com o incremento de receita), o fluxo mensal e o NET
-executado por segmento (`Dashboard §3`). Os três blocos vêm da mesma base sem o G5 e fecham
-entre si. Já houve uma aba "NET Executado" separada, sob a premissa errada de que o §3 usava
-a base com o G5 — ver [modelo-de-dados.md](modelo-de-dados.md) §6.
-
-## 1.1 Page furniture — o regime do fechamento
-
-Abaixo do título, uma faixa fixa com **mês-base · dias úteis · câmbio · CDI do mês**, cada
-um com o papel que cumpre: "base da mensalização", "converte todo o offshore". Não é
-enfeite de cabeçalho — são os parâmetros que governam metade dos números da tela, e viviam
-escondidos numa linha de subtítulo. Quem abre o relatório e estranha uma receita já tem ali
-o divisor que a produziu.
-
-## 2. Página inicial
-
-Os quatro indicadores principais, com ênfase e **nesta ordem**: **AUM → Run Rate → Projeção
-Ano → ROA**. Cada um com valor, variação M-1 (absoluta e %) e cor de sinal. Abaixo, split
-Onshore/Offshore; AUM e receita consolidados lado a lado e a linha do Run Rate, todos de
-dezembro do ano anterior ao mês-base. A série longa fica no Histórico e o ranking por
-officer na aba Officers — a página leva um link para cada (`ui.link_aba()`, atributo
-`data-ir-para`, que o `app.js` trata só como navegação; `data-vai-para` é do menu).
-
-A base da comparação fecha a **mesma linha** do delta, em cinza (`kpi(referencia=…)`):
-`+1,70% · +0,73 bi · (vs. jul/26)`. Um número com sinal sem a base contra a qual foi medido
-não quer dizer nada, e jogar essa base uma linha abaixo separava a pergunta da resposta.
-
-**Officer marcado.** O ranking da aba Officers pinta de wine, com asterisco, o officer que a `CEO-Dashboard`
-traz colorido, e repete a nota da planilha na mesma cor. É estado do fechamento — carteira
-de quem já saiu e ainda não migrou —, e ele chega pelo `marcado` do JSON
-([contrato-json.md](contrato-json.md) §3.3), não por lista de nomes no código.
-
-## 3. Períodos
-
-Toda visão temporal oferece **MTD, Trimestre e YTD**. Não há meta ou orçamento nesta
-análise — isso é discutido em outro fórum comercial. O acompanhamento é de **evolução**,
-não de atingimento. Não inventar linha de meta.
-
-## 4. Filtros
-
-**Implementado:** busca textual por tabela, que casa contra a linha inteira e mostra quantos
-registros restaram; ordenação por qualquer coluna, com a ordenação numérica lendo o valor
-cru de `data-valor` em vez do texto formatado.
-
-**Ainda não implementado:** a barra de filtros ágeis combináveis
-(**Officer · Tipo de veículo · Segmento · Onshore/Offshore**) e o **toggle global
-Ex-Fdos Alocação**. O toggle exige recalcular proporções, ROA médio e rankings no cliente —
-enquanto não existir, cada página que compara com o total mostra a linha
-`Total Ex- Fdos Alocação` que a própria planilha traz.
-
-## 5. Drill-down
-
-Princípio: **consolidado no nível zero, detalhe sob demanda**. Nunca despejar 939 linhas na
-abertura. Linha clicável expande a composição inline.
-
-Exemplo canônico (captação):
+Menu lateral fixo; item ativo com barra wine à esquerda. Grupos e ordem saem de
+`@pagina(grupo=…, ordem=…)` e de `GRUPOS` em `core/render/pagina.py`:
 
 ```
-YTD por grupo econômico          (io_grupos, colunas J–O)   ← visão principal
-  └─ mês a mês do grupo          (io_grupos, colunas B–H)
-       └─ movimentações do mês   (info_grupos, colunas N–V)
-          Data · Portfolio · Valor · Finalidade · Officer · Segmento
+VISÃO EXECUTIVA   Visão Geral · Resumo · Histórico AUM × Receita
+CARTEIRA          Officers · Grupos Econômicos · Regiões · Portfólios Onshore · Portfólios Offshore
+CAPTAÇÃO          Net In/Out · Captação › Grupos
+OUTROS            G5 JUS
 ```
 
-Mesmo padrão nas demais páginas: administrador → portfólios do administrador → custos;
-officer → grupos → portfólios; categoria/faixa PL → veículos.
+Link entre abas no meio do conteúdo: `ui.link_aba()` → atributo `data-ir-para` (só navega).
+`data-vai-para` é exclusivo do menu, que também marca o item ativo e troca o título.
 
-**Implementado hoje:** captação por grupo (YTD → mês a mês), officer → detalhe do mês
-(AUM por segmento, receita, ROA, IN/OUT, portfólios por tipo, grupos como titular e como
-backup) e, no Net In/Out, tipo de veículo → abertura (início no ano, clientes antigos,
-finalidade, ROA). O terceiro nível da captação (movimentações individuais de `info_grupos`) e os
-drill-downs de administrador e de categoria ainda não existem.
+**Faixa de parâmetros** abaixo do título, fixa: mês-base · dias úteis · câmbio · CDI do mês,
+cada um com o papel que cumpre ("base da mensalização", "converte todo o offshore").
 
-A mecânica é a mesma em toda parte: a linha-pai leva `data-abre`, as filhas levam
-`data-detalhe` com o mesmo alvo, e o `app.js` alterna o `hidden`. Uma aba nova ganha
-drill-down usando `linha_expansivel()` e `linha_detalhe()` do `ui.py`, sem tocar no script.
-`expandir_todos(id_da_tabela)` põe acima da tabela o botão que abre ou fecha tudo de uma
-vez; o rótulo acompanha o estado real ("Recolher tudo" quando todas estão abertas, mesmo
-que o leitor tenha aberto uma a uma).
+## 2. Abas
 
-**Versões do mesmo conteúdo** (consolidado · onshore · offshore nos KPIs e no fluxo
-mensal do Net In/Out) usam
-`alternador()` do `ui.py`: todos os painéis são renderizados no build, os botões só trocam
-o `hidden`. Sem JS fica a primeira opção, que deve ser a leitura principal. Na impressão os
-botões somem e sai o painel ativo.
+| Aba (`paginas/`) | Conteúdo |
+|---|---|
+| Visão Geral (`visao_geral`) | 4 KPIs · split on/offshore · AUM e receita empilhados desde dez do ano anterior · linha do Run Rate · links para Histórico e Officers |
+| Resumo (`resumo`) | 4 KPIs · ROA por categoria × faixa de PL e por grupo × faixa de PL, cada um com tabela e par de barras AUM × receita |
+| Histórico (`historico`) | AUM e receita empilhados desde 2018 · ROA on/offshore · tabelas do ano corrente (on em R$, off em US$) |
+| Officers (`officers`) | ranking da `CEO-Dashboard` com drill-down para o bloco de `cons_officer` · officer marcado · par AUM × receita |
+| Grupos Econômicos (`grupos`) | KPIs de concentração · Top 10 por AUM e por receita · par da união dos dois · base completa com Δ M-1 |
+| Regiões (`regioes`) | par de barras horizontais empilhadas on + off, com tooltip · tabelas consolidado / on / off |
+| Portfólios On/Offshore (`portfolios_*`) | KPIs · composição por tipo (e segmento, no on) · tabela de portfólios filtrável (off em US$) |
+| Net In/Out (`captacao_net`) | KPIs com alternador consolidado · onshore · offshore (off mostra R$ ao lado do US$) · tabela *Captação Cliente* (`Dashboard` §2) + incremento de receita por segmento · fluxo mensal com alternador · detalhe por segmento (`Dashboard` §3) |
+| Captação › Grupos (`captacao_grupos`) | KPIs do ano · maiores NETs positivos e negativos · YTD por linha de `io_grupos` → mês a mês |
+| G5 JUS (`g5jus`) | 4 KPIs · combo AUM × receita com eixo próprio e tooltip · tabela de veículos |
 
-## 5.1 Piso de qualidade
+**KPI com delta** (AUM e Run Rate na Visão Geral): variação % e absoluta, cor de sinal, e a
+base da comparação na mesma linha, em cinza — `+1,70% · +0,73 bi · (vs. jul/26)`
+(`kpi(referencia=…)`). Projeção Ano mostra o realizado no ano; ROA mostra a fórmula.
 
-Não é opcional e não aparece em screenshot:
+**Officer marcado** (`marcado` do JSON, nunca lista de nomes no código): linha em wine com
+asterisco e a nota da planilha repetida abaixo do ranking, na mesma cor. Sem marcado no mês, a
+nota some.
 
-- **Foco de teclado visível** em wine, com `outline-offset`. O contorno default do navegador
-  é preto e some sobre o navy do cabeçalho de tabela.
-- **`prefers-reduced-motion` respeitado.**
-- **Menu em tela estreita vira trilha horizontal rolável.** Empilhados, os itens do menu
-  empurravam o primeiro número para baixo da dobra — num relatório executivo aberto no
-  celular, isso é o defeito mais caro da página.
-- Tabela financeira **não reflui em cards** abaixo de 768px: rola na horizontal, porque
-  linha reflowada deixa de ser comparável com a de cima.
+## 3. Drill-down
 
-## 6. Impressão e distribuição
+Consolidado no nível zero, detalhe sob demanda — nunca centenas de linhas abertas na abertura.
 
-Distribuição inicial por link para download e abertura local. Em `@media print`: marca
-"CONFIDENCIAL — USO INTERNO" no cabeçalho, mês-base e data de geração no rodapé, sidebar e
-ferramentas de tabela ocultas.
+Existentes: Officers (officer → métricas do mês, incluindo grupos como titular e como backup) ·
+Captação › Grupos (linha YTD → mês a mês) · Net In/Out (*Captação Cliente*: ingresso/retirada →
+segmentos; detalhe por segmento: mês → início no ano, clientes antigos, uso pessoal, saída para
+concorrência). Não existe ainda: 3º nível da captação (`info_grupos`), categoria/faixa →
+veículos.
 
-**Imprime apenas a aba aberta**, não o relatório inteiro: o botão é lido como "imprimir o
-que estou vendo". Quem quiser o caderno completo passa aba a aba. Na prática, `.g5-pagina`
-escondida continua escondida no papel — o `@media print` não reabre nada.
+Mecânica: linha-pai com `ui.linha_expansivel(alvo)` (`data-abre`), filhas com
+`ui.linha_detalhe(alvo)` (`data-detalhe`, `hidden`); o `app.js` alterna. `ui.expandir_todos(id)`
+põe acima da tabela o botão "Expandir tudo", cujo rótulo segue o estado real. Ordenação move as
+filhas junto com o pai e mantém `total` no pé.
 
-**A impressão respeita o layout da tela.** Duas regras sustentam isso e não podem ser
-afrouxadas:
+**Versões do mesmo conteúdo** (`ui.alternador()`): todos os painéis renderizados no build, os
+botões só trocam `hidden`. Sem JS fica o primeiro, que deve ser a leitura principal. Na
+impressão os botões somem e sai o painel ativo.
 
-1. As media queries responsivas são `@media screen and (max-width: …)`. Sem o `screen`, a
-   largura da folha (A4 retrato dá ~700px) cai no breakpoint de 768px e a grade de KPIs e
-   de colunas empilha — o relatório sai com cara de celular.
-2. `print-color-adjust: exact` no `html, body`, senão o navegador descarta o navy do
-   cabeçalho de tabela, a faixa de total e o verde/vermelho do delta.
+## 4. Filtros e períodos
 
-O que muda no papel é escala, não estrutura: fontes em `pt`, KPI menor, `@page` A4
-paisagem. Tabela longa quebra entre páginas repetindo o `thead` (`display:
-table-header-group`); card, figura e KPI não quebram no meio.
+Existe: busca textual por tabela (`tabela(filtravel=True)`, casa contra a linha inteira e mostra
+a contagem) e ordenação por coluna, numérica pelo valor cru de `data-valor`.
 
----
+Não existe (backlog em [MEMORY.md](MEMORY.md)): filtros combináveis (officer · tipo · segmento ·
+on/offshore), toggle global Ex-Fdos Alocação (enquanto isso, a linha `Total Ex- Fdos Alocação`
+da planilha é a referência) e seletor MTD · trimestre · YTD. Sem meta ou orçamento.
 
-[← Índice](../CLAUDE.md)
+## 5. Piso de qualidade
+
+- Foco de teclado visível em wine com `outline-offset` (o default preto some sobre o navy).
+- `prefers-reduced-motion` respeitado.
+- Tela estreita (≤ 1024px): menu vira trilha horizontal rolável numa linha só — empilhado,
+  empurrava o primeiro número para baixo da dobra.
+- Tabela financeira não reflui em cards abaixo de 768px: rola na horizontal, para a linha
+  continuar comparável com a de cima.
+
+## 6. Impressão
+
+- Imprime **só a aba aberta**: `.g5-pagina[hidden]` continua escondida no `@media print`.
+- Marca "CONFIDENCIAL — USO INTERNO" no topo; sidebar, ferramentas de tabela, alternadores,
+  links entre abas e tooltip ocultos.
+- **Mesmo layout da tela**, em outra escala (fontes em `pt`, KPI menor, A4 paisagem). Duas regras
+  sustentam isso e não podem ser afrouxadas:
+  1. Media queries responsivas são `@media screen and (max-width: …)` — sem `screen`, a largura
+     da folha (~700px em A4 retrato) cai no breakpoint e a grade empilha.
+  2. `print-color-adjust: exact` em `html, body`, senão o navegador descarta o navy do
+     cabeçalho, a faixa de total e as cores de sinal.
+- Tabela longa quebra entre páginas repetindo o `thead`; KPI, card e figura não quebram no meio.

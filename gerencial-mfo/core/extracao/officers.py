@@ -82,15 +82,11 @@ _CORES_NEUTRAS = frozenset({"FF000000", "00000000"})
 def _marcado(celula) -> bool:
     """`True` quando o officer esta pintado na CEO-Dashboard.
 
-    A planilha marca com cor de fonte (hoje `C00000`, o vermelho do Office) o
-    officer que ja saiu mas ainda tem cliente vinculado — e a nota de rodape
-    `B41` explica o que a cor quer dizer. E dado de fechamento, nao formatacao:
-    quem le o ranking precisa saber que aquele AUM esta em transicao.
-
-    Lido pela cor porque e o unico lugar onde a planilha registra isso; nao ha
-    coluna de status. Qualquer cor explicita que nao seja preto conta — a
-    regra nao depende do tom exato, que muda de mes para mes na mao de quem
-    edita.
+    A planilha marca com cor de fonte o officer que ja saiu mas ainda tem
+    cliente vinculado; a nota logo abaixo da tabela explica a cor. E dado de
+    fechamento, nao formatacao, e a cor e o unico registro (nao ha coluna de
+    status). Qualquer cor explicita que nao seja preto conta: o tom muda de mes
+    para mes na mao de quem edita.
     """
     cor = celula.font.color if celula.font else None
     if cor is None or cor.type != "rgb":

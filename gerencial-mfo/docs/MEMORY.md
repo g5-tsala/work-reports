@@ -1,201 +1,117 @@
 # Memória do projeto
 
-Documento vivo. Estado atual, decisões fechadas e pendências abertas. **Ler no início de
-qualquer sessão** e atualizar sempre que uma decisão for tomada ou um fato mudar.
+Estado, decisões fechadas, armadilhas e backlog. Substitui a memória de sessão: o que vale para
+o projeto fica aqui, versionado. **Só entra o que ainda vale** — defeito corrigido e regerado
+sai; histórico é do `git log`. Atualize ao tomar decisão ou quando um fato mudar.
 
-Este arquivo substitui a memória de sessão do Claude: o conhecimento do projeto vive aqui,
-versionado junto com o código, não em um armazenamento externo.
+## Estado — 2026-09-23
 
-**Só entra o que ainda vale.** Defeito corrigido na fonte, cujo snapshot foi regerado, sai
-daqui — carregar história morta em todo início de sessão custa atenção e não muda decisão
-nenhuma. O histórico de quem mudou o quê é trabalho do `git log`.
+- Pipeline completo, rodando ponta a ponta em `2026-07` e `2026-08`; os dois passam 10/10 no
+  checklist (ago/26: 1.057 portfólios, 362 grupos distintos).
+- 11 abas: Visão Geral · Resumo · Histórico AUM × Receita · Officers · Grupos Econômicos ·
+  Regiões · Portfólios Onshore · Portfólios Offshore · Net In/Out · Captação › Grupos · G5 JUS.
+- Não iniciados: toggle Ex-Fdos Alocação, filtros combináveis, seletor de período (ver Backlog).
 
-> [← Índice](../CLAUDE.md)
-
-## 1. Estado atual
-
-**2026-08-18** — pipeline completo. Planilha → JSON → HTML, rodando ponta a ponta sobre
-`2026-07`.
-
-| Item | Situação |
-|---|---|
-| `AGENTS.md` + `docs/` | pronto |
-| `gerar-dashboard.bat` · `gerar-dashboard.sh` · `pyproject.toml` · `uv.lock` | pronto |
-| **Etapa 1 — extração** | **pronta.** `outputs/2026-07/data-2026-07.json`, ~1,8 MB |
-| **Etapa 2 — validação** | **pronta.** 10/10 no checklist |
-| **Etapa 3 — renderização** | **pronta.** 11 abas, `dashboard-2026-07.html`, ~1,7 MB |
-| Filtros combináveis e toggle Ex-Fdos | **não iniciados** (backlog) |
-
-O build de `2026-07` passa nos **10 itens do checklist** de
-[validacao.md](validacao.md) §1, incluindo os dois caros: 1.051 portfólios batem entre
-`resumo`, `CEO-Dashboard` e a contagem nas bases; e o recálculo de Qtd. Grupos reproduz os
-20 officers e os 361 grupos distintos.
-
-O HTML foi conferido em navegador: as abas trocam, a busca filtra, a ordenação numérica
-lê o valor cru, o drill-down abre e não há erro de console.
-
-Próximo passo: revalidar a decisão dos gráficos SVG (agora que existe protótipo) e decidir
-se os filtros combináveis entram.
-
-## 2. Decisões fechadas
+## Decisões fechadas
 
 Não reabrir sem motivo novo.
 
-### Ambiente e pipeline
+**Técnicas**
+- `uv` sempre; `.bat` é o entregável do usuário final, `.sh` é o irmão de dev — detalhes em
+  [ambiente.md](ambiente.md). Nenhum dos dois abre o HTML.
+- Validação roda sobre o JSON, não sobre o xlsx: `--etapa validar` confere base já gerada e o
+  render nunca recebe base reprovada.
+- Rótulo e hierarquia vêm da planilha: linhas viram `{rotulo, chave, nivel, pai}`, com `nivel`
+  lido do recuo da célula. Quebra nova na geradora aparece no JSON sem mexer no extrator.
+- Cada extrator é dono das coordenadas que lê; não existe mapa central de layout.
+- Gráficos são SVG gerado no build em Python, sem biblioteca: imprime, abre sem JS, sem rede.
+  Tooltip não justifica biblioteca (o SVG leva `data-dica`, o `app.js` só exibe). Biblioteca só
+  para interatividade real, e então minificada inline.
+- Regras de eixo (barra no zero, linha com eixo ajustado, segundo eixo só com unidades
+  distintas) em [visual.md](visual.md) §2.1.
+- A faixa de parâmetros do fechamento (mês · dias úteis · câmbio · CDI) é fixa no topo: é o
+  regime que governa metade dos números.
 
-- **uv, sempre.** Nada de `pip`, `venv`, `requirements.txt` ou conda. `uv.lock` versionado.
-- O próprio `uv` é instalado por `pip install uv` (não winget) e invocado como
-  `python -m uv`, o que dispensa mexer no `PATH`.
-- Ponto de entrada é o `.bat`, dois cliques, sem terminal. **ASCII puro e CRLF** — acento
-  vira lixo no console corporativo e terminação LF quebra `goto` em silêncio.
-- **Existe também o `gerar-dashboard.sh`**, para desenvolvimento em Linux/WSL, com o mesmo
-  fluxo do `.bat`. Os dois são irmãos: mudou o fluxo em um, muda no outro. O `.bat`
-  continua sendo o entregável do usuário final.
-- **Nenhum dos dois scripts abre o HTML.** A função deles acaba na geração; imprimem o
-  caminho absoluto e param. O `.bat` fecha com `set /p "DUMMY=Digite ENTER para
-  finalizar..."`, só para a janela não sumir antes de o usuário ler as mensagens.
-- `inputs/` e `outputs/` fora do git. Só código é versionado.
-- Pipeline em três estágios: extração → validação → renderização, com
-  `data-YYYY-MM.json` auditável no meio.
-- **`dashboard.py` na raiz orquestra; `core/` faz o trabalho.** Um módulo de extração por
-  domínio, cada um dono das coordenadas que lê — sem mapa central de layout.
-  O contrato do JSON está em [contrato-json.md](contrato-json.md).
-- **A validação roda sobre o JSON, não sobre a planilha.** Assim `--etapa validar` confere
-  uma base já gerada e a renderização nunca recebe base reprovada.
-- **Rótulo e hierarquia vêm da planilha, não do código.** As linhas viram
-  `{rotulo, chave, nivel, pai}`, com `nivel` lido do recuo da célula. Uma quebra nova na
-  geradora aparece no JSON sem alterar o extrator.
-- **Uma aba do dashboard = um arquivo em `core/render/paginas/`**, registrado por decorador.
-  O menu e o roteamento saem do registro; mexer numa aba não encosta em nenhuma outra.
-- **Comentário em `styles.css` é genérico.** A folha é compartilhada por todas as abas: um
-  comentário que cita a tabela, a coluna ou o dado que motivou a regra amarra uma classe
-  reutilizável a um layout específico e envelhece na primeira mudança de página. O comentário
-  explica o mecanismo CSS e o porquê da escolha; o caso concreto que a motivou vive em
-  [visual.md](visual.md). O mesmo vale para o `app.js`.
-- **Texto da planilha é escapado por padrão no HTML.** A célula escapa sozinha; HTML montado
-  por nós entra só por `ui.html(...)`, e quem chama escapa os pedaços que vieram do dado. A
-  base já tem `&` e apostrofo em nome de grupo — não é hipótese.
-- **Barra ancorada no zero, linha com eixo ajustado, segundo eixo só com unidades
-  distintas.** Detalhe e motivo em [visual.md](visual.md) §2.1 — as três já erraram uma vez.
-- **A faixa de parâmetros do fechamento** (mês · dias úteis · câmbio · CDI) é page furniture
-  fixa, não decoração: é o regime que governa metade dos números da tela.
-- **Gráficos são SVG gerado no build, em Python** — não `charts.js`. Os dados são fixos
-  quando o HTML é escrito, então vetor estático basta: imprime, abre sem JS e não depende de
-  rede. Biblioteca só se aparecer necessidade de interatividade real. **Tooltip não é
-  esse caso:** o SVG leva o conteúdo em `data-dica` e o `app.js` só o exibe — sem JS o
-  gráfico perde o hover e nada mais. Detalhe em [visual.md](visual.md) §2.4.
+**Produto**
+- Menu lateral (a lista não cabe no topo). KPIs da home nesta ordem: **AUM → Run Rate →
+  Projeção Ano → ROA**.
+- Fdos Alocação sempre nos totais; o toggle "Ex-Fdos Alocação" só recalcularia proporções.
+- Períodos-alvo: MTD, trimestre, YTD. **Sem meta ou orçamento** — acompanhamento é de evolução,
+  não de atingimento; não inventar linha de meta.
+- Drill-down sob demanda: consolidado no nível zero, detalhe ao clicar.
+- Net In/Out é a aba única da captação de cliente (composição em [dashboard.md](dashboard.md)
+  §2). Alocação entra só no incremento de receita: o IN/OUT dos fundos de alocação não é
+  captação de cliente e sai "—".
+- Fora do HTML, mas ainda extraídos no JSON: Captação › Portfólios e Administradores
+  (on/offshore) — saíram em 2026-09-23. O `git log` tem as páginas.
+- Fora do HTML **e** do JSON: aba `roa_historico` (corte de escopo; o `git log` tem o extrator).
+- Removidos a pedido do negócio em 2026-09-22: seção "Rede de backup" de Officers (a contagem
+  por pessoa segue no drill-down) e a ressalva do ROA MFO na interface (a ressalva continua
+  valendo — ver Armadilhas).
+- Região `-` da aba `regiao` aparece como **G5** em Regiões: é onde caem os fundos de alocação.
+- Nomes reais; marca de confidencialidade na impressão. Distribuição por link hoje; `<iframe>`
+  num portal no futuro.
 
-### Produto
+## Armadilhas
 
-- Menu lateral, não abas no topo — a lista não cabe numa faixa no alto da tela.
-- KPIs da home nesta ordem: **AUM → Run Rate → Projeção Ano → ROA**.
-- Fdos Alocação sempre nos totais, com toggle global "Ex-Fdos Alocação" para proporções.
-- Períodos MTD, Trimestre e YTD. **Não há meta ou orçamento** nesta análise — isso é
-  discutido em outro fórum comercial. O acompanhamento é de evolução, não de atingimento.
-- Drill-down sob demanda: consolidado no nível zero, detalhe ao clicar na linha.
-- Filtros ágeis por officer, tipo de veículo e segmento.
-- **A aba `roa_historico` da planilha fica de fora** — nem aba no dashboard, nem bloco no
-  JSON. O corte é de escopo, não técnico: a leitura de ROA que o fechamento usa é a da aba
-  Resumo (categoria e faixa de PL no mês) e a série de ROA do Histórico. A série longa por
-  categoria não entrou em nenhuma conversa de decisão, e extraí-la custava dez blocos
-  varridos e ~110 KB no HTML. Se voltar a ser pedida, o `git log` tem o extrator pronto.
-- **A região `-` da aba `regiao` aparece como `G5`** em Regiões (gráficos e tabelas). É
-  onde caem os fundos de alocação, e o negócio lê a linha como o grupo G5.
-- **Net In/Out é a aba única da captação de cliente**, em ordem: uma faixa de KPI com
-  seletor consolidado · onshore · offshore (offshore mostra o R$ ao lado do US$), a tabela *Captação
-  Cliente* (`Dashboard §2`) ao lado do incremento de receita por segmento, o fluxo mensal
-  com seletor consolidado · onshore · offshore, e o detalhe por segmento (`Dashboard §3`,
-  o antigo "NET Executado", em R$ mi). O consolidado converte o offshore pelo câmbio de
-  cada mês ([calculos.md](calculos.md) §3.6). As tabelas de detalhe onshore/offshore por
-  tipo de veículo saíram — o corte por segmento é o que o negócio usa.
-- **Alocação só tem incremento de receita** no §2: o IN/OUT dos fundos de alocação não é
-  captação de cliente e fica "—" em mês e ano, mas o incremento de receita entra — e
-  entra no gráfico e na soma do Net.
-- **Sem abas de Captação › Portfólios e de Administradores (onshore e offshore)** — saíram
-  do HTML em 2026-09-23 por decisão do negócio. A extração continua: `captacao.portfolios`
-  e `estrutura.administradores` seguem no JSON, e o `git log` tem as páginas prontas se
-  voltarem a ser pedidas.
-- Nomes reais. Marca de confidencialidade na impressão.
-- Distribuição por link para download hoje; `<iframe>` num portal no futuro.
+Redescobrir custa caro. Fórmulas em [calculos.md](calculos.md).
 
-### Técnicas em aberto para revisão
+1. **`in_out` ≠ `info_net_in_out`.** Mesmo schema; a segunda exclui o grupo G5. IN onshore
+   jul/26: R$ 4,50 bi × R$ 1,92 bi — trocar dá número plausível e errado por 2,3×. Toda a
+   captação do dashboard (`net_in_out`, `Dashboard` §2 e §3) é **cliente**
+   ([modelo-de-dados.md](modelo-de-dados.md) §6).
+2. **Mensalização só no onshore**: competência ÷ dias úteis × 21 (a planilha também escreve
+   `× 252` = 21 × 12). Aplicar ao offshore infla por `21/nwdays`.
+3. **ROA MFO** conta todo o offshore como MFO e não mensaliza o numerador. Replicar assim; não
+   é comparável ao ROA lado a lado.
+4. **Câmbio arredondado:** `resumo!B4` exibe 5,08; as contas usam 5,0773 (`info!AQ3`, também em
+   `resumo!U26`). Nunca extrair do texto.
+5. **Linha de `io_grupos` YTD não é grupo:** é grupo + officer + lead externo + lead G5 +
+   segmento. Mês a mês casa pela combinação inteira; gráficos e KPIs contam por grupo.
+6. **Não somar Qtd. Grupos entre officers** (376 × 361 distintos em jul/26): um grupo pode ter
+   portfólios sob titulares diferentes. Total correto: `resumo!AA17`.
+7. **Officers e backups são conjuntos diferentes.** Há quem seja só backup (`Yan`, `Felipe F.`,
+   `Mathias`, `Dudu`, `Luiz`) e officers que não fazem backup de ninguém. Backup `#N/D` ou vazio
+   = sem backup atribuído → `null`, nunca uma pessoa.
+8. **Cor da fonte na `CEO-Dashboard` é dado:** officer pintado = já saiu e ainda tem cliente
+   vinculado. Regra: qualquer cor explícita que não seja preto (o tom muda entre meses). Vira
+   `officers.tabela_ceo[].marcado`.
+9. **Abaixo da tabela de officers da `CEO-Dashboard`, coordenada absoluta é frágil:** a tabela
+   cresce e encolhe. A nota de rodapé é buscada de +2 a +6 linhas abaixo do rótulo
+   `Total Ex- Fdos Alocação`.
+10. **Variação M-1 de `Total Ex- Fdos Alocação`** (`CEO-Dashboard` D39/G39) compara contra o
+    **total** do mês anterior (`Z39`): sem significado, exibir "—".
+11. **Bloco de `cons_officer` invade o nome do próximo** (`$C$31:$O$63` termina no rótulo do
+    officer seguinte): descartar a linha seguida de `Data`.
+12. **`resumo!X`/`AH` (Qtd 0)** já estão descontados do `Qtd` exibido — extrair como
+    `qtd_zerados`, nunca somar de volta.
+13. **`GV Atacama` e `Daycoval` repetem AUM e receita** em `ar_adm_on` (marcador `GVA/Daycoval`
+    em `agrupamento`); só custos são próprios. A soma da coluna de AUM não é o AUM da casa.
+14. **Meses futuros vêm zerados**, não vazios. `#DIV/0!`, `#N/D`, `TBD` → `null`; traço some em
+    número mas sobrevive em texto (o officer dos Fdos Alocação é `-`).
+15. **Onshore e offshore de `aum_receita` têm cabeçalhos de data próprios** (divergem em 2023):
+    alinhar por mês, nunca por índice.
+16. **Ranking de `ar_grupos` é por valor:** empate devolve o mesmo nome duas vezes — casar por
+    posição.
 
-- **Gráficos em módulo SVG próprio**, sem biblioteca. Decisão *provisória*, a revalidar
-  depois do primeiro protótipo. Se o custo de manutenção pesar, a alternativa é embarcar
-  uma biblioteca minificada inline — nunca via CDN.
+## Fatos de negócio
 
-## 3. Achados que custaram trabalho
+- Fdos Alocação: ~33% do AUM (R$ 14,2 bi em jul/26) com ROA ~0,12%, uma ordem de grandeza abaixo
+  dos officers — é o que justifica o toggle.
+- A rede de backup não aparece em métrica nenhuma e é grande: em jul/26 João tinha 3 grupos como
+  titular e 66 como backup; Fabietti 39/69; Gau 19/44; Rodrigo M. o inverso, 60/10.
 
-Guardados aqui porque redescobri-los é caro. Detalhe em [calculos.md](calculos.md).
+## Backlog
 
-- **`in_out` vs `info_net_in_out`** — duas bases de schema idêntico e conteúdo diferente. A
-  segunda exclui as movimentações do próprio grupo G5. Em jul/26: R$ 4,50 bi contra
-  R$ 1,92 bi no IN onshore. Trocar uma pela outra produz número plausível e errado por um
-  fator de 2,3. É a armadilha número um do modelo. **O `Dashboard §3` (NET Executado) é
-  de cliente**, não `in_out` — conferido na fórmula (`Dashboard!C37`). Já foi documentado
-  errado aqui e custou uma aba duplicada.
-- **Uma linha de `io_grupos` YTD não é um grupo**: é grupo + officer + lead externo +
-  lead G5 + segmento (em ago/26, 289 grupos em mais linhas que isso — `Vieira` tem duas, uma
-  por lead externo). O mês a mês casa pela combinação inteira; casando só pelo grupo, as
-  duas linhas abriam o mesmo detalhe, com os meses das duas somados. Gráficos e o KPI de
-  grupos contam por grupo.
-- **Mensalização** = competência ÷ dias úteis × 21, **só no onshore**. A planilha escreve
-  `/nwdays*21` num lugar e `/nwdays*252` em outro — são a mesma coisa, 21 × 12 = 252.
-- **ROA MFO** tem dois desvios frente ao ROA: conta todo o offshore como MFO (sem filtro de
-  segmento) e não mensaliza o numerador. Replicar assim para os números baterem. A página
-  de Officers **não** exibe mais essa ressalva (retirada a pedido do negócio em 2026-09-22);
-  o registro fica aqui e em [calculos.md](calculos.md) §3.5.
-- **Câmbio arredondado.** `resumo!B4` exibe 5,08; as contas usam 5,0773 (`info!AQ3`).
-- **A cor da fonte na `CEO-Dashboard` é dado, não formatação.** O officer pintado de
-  vermelho é o que já saiu e ainda tem cliente vinculado; não existe coluna de status, a cor
-  é o único registro. Vira `officers.tabela_ceo[].marcado`
-  ([contrato-json.md](contrato-json.md) §3.3). A regra é "cor explícita que não seja preto",
-  não o tom exato — quem edita troca de vermelho entre os meses.
-- **A nota de rodapé da `CEO-Dashboard` anda de linha.** Estava fixa em `B41` no extrator e
-  em 2026-08 apareceu em `B40`: a nota desce e sobe conforme entra e sai officer da tabela,
-  e a referência fixa simplesmente perdia a nota, sem erro. Hoje é varrida de +2 a +6 abaixo
-  do rótulo `Total Ex- Fdos Alocação` — âncora que anda junto com a tabela. Vale a regra
-  geral: **nesta aba, coordenada absoluta abaixo da tabela de officers é frágil.**
-- **O intervalo de cada bloco de `cons_officer` invade o nome do bloco seguinte.**
-  `$C$31:$O$63` termina na linha 63, que é o rótulo `Alexandre` do próximo officer. Sem
-  descartar essa linha, o JSON ganha uma "métrica" com o nome de uma pessoa.
-- **`resumo!X` e `resumo!AH` (Qtd 0)** são a contagem de veículos zerados já descontada do
-  `Qtd` exibido — extrair como `qtd_zerados`, nunca somar de volta.
-- **`GV Atacama` e `Daycoval` repetem o mesmo AUM e a mesma receita** em `ar_adm_on`; só os
-  custos são próprios. A planilha marca o par com `GVA/Daycoval` na linha acima do nome do
-  bloco. **A soma da coluna de AUM por administrador não é o AUM da casa** — o extrator
-  guarda o marcador em `agrupamento` e a página avisa.
-- **A variação M-1 da linha `Total Ex- Fdos Alocação`** (`CEO-Dashboard` D39/G39) compara o
-  ex-fundos do mês contra o **total** do mês anterior (`Z39` ≈ total). Dá -31% sem
-  significado. O dashboard exibe "—" nessas duas células.
-
-## 4. Fatos de negócio úteis
-
-- **Officers e backups são conjuntos diferentes.** Cinco pessoas aparecem só como backup,
-  sem carteira própria: `Yan` (47 grupos), `Felipe F.` (13), `Mathias`, `Dudu` (3),
-  `Luiz` (1). E seis officers não fazem backup de ninguém: Alexandre, Daniel, Waldemar,
-  Tainá, Diego, Michael G. O dashboard não pode assumir subconjunto.
-- **A rede de backup não aparece em nenhuma métrica atual.** João tem 3 grupos como titular
-  e **66 como backup**; Fabietti tem 39 e 69; Gau, 19 e 44. Rodrigo M. é o inverso: 60
-  titular, 10 backup. A seção "Rede de backup" chegou a existir na página de Officers e foi
-  **removida a pedido do negócio em 2026-09-22**; a contagem por pessoa segue só no
-  drill-down de cada officer.
-- **Não somar Qtd. Grupos entre officers.** A soma dá 376 contra 361 grupos distintos —
-  um grupo pode ter portfólios sob titulares diferentes. O total correto é `resumo!AA17`.
-- **Fdos Alocação** são ~33% do AUM (R$ 14,2 bi em jul/26) com ROA de 0,12%, uma ordem de
-  grandeza abaixo dos officers reais. É o que justifica o toggle.
-
-## 5. Pendências e backlog
-
-- [ ] **Toggle global Ex-Fdos Alocação** — exige recalcular proporções, ROA médio e
-      rankings no cliente. Hoje cada página mostra a linha `Total Ex- Fdos Alocação` da
-      planilha como referência.
-- [ ] **Filtros combináveis** (officer · tipo · segmento · on/offshore). Existe busca
-      textual e ordenação por coluna em cada tabela.
-- [ ] **Drill-down de terceiro nível na captação** — as movimentações individuais vivem na
-      aba oculta `info_grupos`, que **ainda não é extraída**. Hoje o detalhe para no mês a
-      mês do grupo.
-- [ ] Revalidar a decisão de gráficos SVG próprios agora que há protótipo.
-- [ ] Página **Performance da Base** a partir da aba oculta `cotas` — cotiza o AUM como se
-      fosse um portfólio e compara com CDI desde 2018-01. Prioridade baixa, mas é a análise
-      mais interessante que nenhuma aba visível mostra hoje.
+- [ ] **Toggle global Ex-Fdos Alocação** — recalcular proporções, ROA médio e rankings no
+      cliente. Hoje cada página mostra a linha `Total Ex- Fdos Alocação` da planilha.
+- [ ] **Filtros combináveis** (officer · tipo · segmento · on/offshore). Hoje: busca textual e
+      ordenação por coluna.
+- [ ] **Seletor de período** MTD · trimestre · YTD.
+- [ ] **Drill-down de 3º nível na captação** — movimentações individuais da aba oculta
+      `info_grupos`, ainda não extraída.
+- [ ] **Página Performance da Base** a partir da aba oculta `cotas` (AUM cotizado × CDI desde
+      2018-01, [calculos.md](calculos.md) §3.10). Prioridade baixa.
+- [ ] **Verificar:** o ROA das tabelas de portfólio (`paginas/comum.py`) e dos KPIs de
+      Portfólios Onshore é receita por competência × 12 ÷ AUM, sem mensalizar — diverge do ROA
+      da planilha (`resumo!R9` mensaliza). Confirmar com o negócio se é intencional.

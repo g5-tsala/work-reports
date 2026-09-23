@@ -1,94 +1,84 @@
 # Gerencial MFO — Dashboard
 
-Transforma a planilha gerencial mensal da área de MFO (Multi-Family Office) da G5 Partners
-em um dashboard HTML autocontido, no padrão visual G5 e com leitura de BI.
+Planilha gerencial mensal da área de MFO (G5 Partners) → dashboard HTML autocontido, padrão
+visual G5, leitura de BI.
 
-- **Público:** executivos da área de negócio e board. Não é material de cliente.
-- **Idioma:** PT-BR em toda a interface, incluindo eixos de gráfico e rótulos.
-- **Confidencialidade:** dados nominais reais (clientes, grupos econômicos, officers).
-  O HTML gerado herda a mesma classificação do xlsx de origem — uso interno restrito.
-- **Cadência:** mensal. Uma subpasta `inputs/YYYY-MM/` por mês.
+- **Público:** executivos e board. Não é material de cliente.
+- **Confidencialidade:** dados nominais reais (clientes, grupos, officers). O HTML herda a
+  classificação do xlsx — uso interno restrito.
+- **Cadência:** mensal, uma pasta `inputs/YYYY-MM/` por mês.
+- **Idioma:** PT-BR em tudo, inclusive eixos e rótulos (regras de idioma no `AGENTS.md` da raiz).
 
-## Como rodar
-
-- **Windows:** dois cliques em `gerar-dashboard.bat`.
-- **Linux / WSL:** `./gerar-dashboard.sh` (ou `./gerar-dashboard.sh 2026-07`).
-
-Os dois instalam o `uv` se preciso, sincronizam o ambiente, pedem o mês e geram.
-Para desenvolvimento:
+## Rodar
 
 ```bash
-uv run python dashboard.py 2026-07                  # pipeline completo
-uv run python dashboard.py 2026-07 --etapa extrair  # só planilha -> JSON (+ validação)
+./gerar-dashboard.sh [2026-08]                          # Linux/WSL (Windows: 2 cliques no .bat)
+uv run python dashboard.py 2026-08                      # pipeline completo
+uv run python dashboard.py 2026-08 --etapa extrair      # xlsx -> JSON + validação
+uv run python dashboard.py 2026-08 --etapa validar      # revalida o JSON existente
+uv run python dashboard.py 2026-08 --etapa renderizar   # JSON -> HTML
 ```
 
-## Onde está o quê
+Saída: `2` erro de uso (mês inválido, arquivo ausente) · `3` base reprovada no checklist ·
+`4` falha na renderização.
 
-| Doc | Leia quando for |
+## Pipeline e código
+
+`inputs/YYYY-MM/Gerencial MFO YYYY-MM.xlsx` → **extração** → `outputs/YYYY-MM/data-YYYY-MM.json`
+→ **validação** (bloqueante, roda sobre o JSON) → **renderização** →
+`outputs/YYYY-MM/dashboard-YYYY-MM.html`. `dashboard.py` só orquestra; o trabalho vive em `core/`.
+
+| Caminho | Papel |
 |---|---|
-| [docs/MEMORY.md](docs/MEMORY.md) | **Começar qualquer sessão.** Estado atual, decisões fechadas, pendências abertas. |
-| [docs/ambiente.md](docs/ambiente.md) | Mexer no `uv`, no `.bat` ou no fluxo de build. |
-| [docs/modelo-de-dados.md](docs/modelo-de-dados.md) | Entender abas, dimensões, bases e a grade temporal da planilha. |
-| [docs/metricas.md](docs/metricas.md) | Saber o que uma métrica significa para o negócio. |
-| [docs/calculos.md](docs/calculos.md) | Implementar ou depurar o cálculo de um número. |
-| [docs/dashboard.md](docs/dashboard.md) | Mexer em navegação, filtros, drill-down ou layout. |
-| [docs/visual.md](docs/visual.md) | Escolher cor, tipografia, formato numérico ou tipo de gráfico. |
-| [docs/contrato-json.md](docs/contrato-json.md) | Ler ou escrever o `data-YYYY-MM.json` — a fronteira entre extrator e template. |
-| [docs/validacao.md](docs/validacao.md) | Um número não bater, ou antes de dar um build por bom. |
+| `core/config.py` | caminhos, versões (`VERSAO_CONTRATO`), tolerâncias. Sem layout de planilha. |
+| `core/planilha.py` | abre o xlsx (`openpyxl`, `data_only=True`), nomes definidos, limpeza (`numero()` ≠ `texto()`). |
+| `core/extracao/` | um módulo por domínio: `parametros` (`info`), `consolidado` (`resumo`, `CEO-Dashboard`), `historico` (`aum_receita`), `officers` (`cons_officer`), `carteira` (`ar_*`, `regiao`), `captacao` (`net_in_out`, `io_*`, `Dashboard`), `estrutura` (`ar_adm_*`, `G5JUS`), `checks`, `comum` (blocos rotulados). Cada módulo declara no topo as coordenadas que lê. |
+| `core/validacao.py` | checklist de [docs/validacao.md](docs/validacao.md) §1, um item por função. |
+| `core/render/paginas/` | **uma aba do dashboard por arquivo**, registrada por `@pagina(identificador, titulo, grupo, ordem)`; `comum.py` guarda peças de abas irmãs e não se registra. |
+| `core/render/` | `ui.py` componentes · `graficos.py` SVG · `formato.py` PT-BR · `contexto.py` leitura do JSON · `pagina.py` registro/menu · `layout.py` costura o HTML. |
+| `template/` | `base.html`, `styles.css`, `app.js`, `logo-g5.txt` (data URI) — tudo inlined no HTML. |
+| `inputs/`, `outputs/` | **fora do git** (nomes reais). `inputs/Gerencial MFO.xlsm` é a geradora, origem das fórmulas. |
 
-## Estrutura
-
-```
-gerencial-mfo/
-├── CLAUDE.md                            # este arquivo — índice e regras invioláveis
-├── docs/                                # versionado
-├── gerar-dashboard.bat                  # ponto de entrada Windows (2 cliques)
-├── gerar-dashboard.sh                   # ponto de entrada Linux/WSL
-├── pyproject.toml · uv.lock             # ambiente (uv)
-├── dashboard.py                         # script centralizador do build (CLI)
-├── core/                                # etapas do pipeline
-│   ├── config.py · planilha.py · json_io.py
-│   ├── extracao/                        # etapa 1 — xlsx -> JSON, um módulo por domínio
-│   ├── validacao.py                     # checklist bloqueante
-│   └── render/                          # etapa 2 — JSON -> HTML
-│       ├── paginas/                     # UMA ABA DO DASHBOARD POR ARQUIVO
-│       ├── ui.py · graficos.py · formato.py
-│       └── layout.py · pagina.py · contexto.py
-├── template/                            # base.html, styles.css, app.js, logo-g5.txt
-├── inputs/                              # FORA do git
-│   ├── Gerencial MFO.xlsm                # geradora (macros) — origem das fórmulas
-│   └── YYYY-MM/Gerencial MFO YYYY-MM.xlsx
-└── outputs/                             # FORA do git — gerado
-    └── YYYY-MM/{data,dashboard}-YYYY-MM.{json,html}
-```
+Aba nova: criar `paginas/<nome>.py`, decorar o render com `@pagina(...)`, importar em
+`paginas/__init__.py`. Menu, roteamento e impressão vêm do registro.
 
 ## Regras invioláveis
 
-1. **Não deduzir contas.** A lógica de cálculo está documentada em
-   [docs/calculos.md](docs/calculos.md), derivada das fórmulas reais da geradora, com a
-   célula de origem de cada regra. Se algo não estiver lá, ler a geradora e documentar —
-   nunca inferir.
-2. **Código é versionado; dado não.** `inputs/` e `outputs/` estão no `.gitignore` porque
-   carregam nomes reais de clientes. Versiona-se `dashboard.py`, `core/`, `template/`,
-   `docs/`, `pyproject.toml` e `uv.lock`.
-3. **Um build lê apenas o mês dele.** `inputs/YYYY-MM/`, nunca meses anteriores; escreve
-   apenas em `outputs/YYYY-MM/`. A planilha já traz todo o histórico e o comparativo M-1.
-4. **O mês de fechamento vem do nome da pasta**, não do conteúdo. Colunas de meses futuros
-   vêm zeradas e devem ser truncadas.
-5. **Build não gera dashboard sobre base inconsistente.** O checklist de
-   [docs/validacao.md](docs/validacao.md) é bloqueante.
-6. **Sem CDN.** HTML autocontido, offline, e funcional dentro de um `<iframe>`.
-7. **A fronteira extrator/template é sagrada.** Mudou a planilha, mexe só em
-   `core/extracao/`; mudou o layout, mexe só em `core/render/` e `template/`. O
-   `data-YYYY-MM.json` é o contrato entre os dois — ver
-   [docs/contrato-json.md](docs/contrato-json.md). Dentro do renderizador vale a mesma
-   regra em escala menor: **mudou uma aba, mexe só no arquivo dela** em
-   `core/render/paginas/`.
-8. **Documentação anda junto com o código.** Alterou comportamento, atualiza o doc na mesma
-   leva e registra em [docs/MEMORY.md](docs/MEMORY.md).
+1. **Não deduzir contas.** Toda regra de cálculo está em [docs/calculos.md](docs/calculos.md),
+   com a célula de origem. Faltou, ler a geradora e documentar — nunca inferir.
+2. **Extrair, não recalcular.** Número que a planilha entrega pronto é lido, não refeito.
+   Conta feita no render (ROA de uma linha, consolidado do Net In/Out, série do Run Rate) segue a
+   fórmula documentada.
+3. **Um build lê só o próprio mês** (`inputs/YYYY-MM/`) e escreve só em `outputs/YYYY-MM/`. A
+   planilha já traz histórico e M-1. Não reconciliar contra HTMLs antigos.
+4. **O mês-base vem do nome da pasta**, não do conteúdo. Colunas de meses futuros vêm zeradas:
+   truncar, nunca plotar.
+5. **Base inconsistente não vira dashboard.** O checklist é bloqueante.
+6. **Sem CDN nem webfont.** HTML offline, funcional em `<iframe>`: nada de `window.top`,
+   `localStorage` ou navegação que assuma documento de topo.
+7. **O JSON é a fronteira.** Mudou a planilha → só `core/extracao/`; mudou o layout → só
+   `core/render/` e `template/`; mudou uma aba → só o arquivo dela. Quebrou o formato → sobe
+   `VERSAO_CONTRATO` e atualiza [docs/contrato-json.md](docs/contrato-json.md).
+8. **Texto da planilha é escapado por padrão.** Células e componentes de `ui.py` escapam
+   sozinhos. `nota()` e `secao(descricao=)` recebem HTML nosso: passar `esc()` em cada pedaço
+   vindo do dado (a base tem `&` e apóstrofo em nomes).
+9. **Comentário de `styles.css`/`app.js` é genérico:** explica o mecanismo e o porquê, sem citar
+   a tabela ou aba que motivou a regra — o caso concreto vai em [docs/visual.md](docs/visual.md).
+10. **Doc anda com o código.** Mudou comportamento → atualiza o doc do tema e o
+    [docs/MEMORY.md](docs/MEMORY.md) na mesma leva.
 
-## Padrão visual
+## Docs
 
-Usar a skill **`g5-design-system`** para qualquer decisão visual — é a fonte de verdade de
-cores, tipografia, espaçamento e regras de gráfico. O que este projeto acrescenta está em
-[docs/visual.md](docs/visual.md).
+| Doc | Abrir quando |
+|---|---|
+| [docs/MEMORY.md](docs/MEMORY.md) | sempre — estado, decisões fechadas, armadilhas, backlog |
+| [docs/calculos.md](docs/calculos.md) | glossário de métricas; implementar ou depurar um número |
+| [docs/modelo-de-dados.md](docs/modelo-de-dados.md) | abas, dimensões, nomes definidos, grade temporal da planilha |
+| [docs/contrato-json.md](docs/contrato-json.md) | ler ou escrever o `data-YYYY-MM.json` |
+| [docs/validacao.md](docs/validacao.md) | número não bate; antes de dar um build por bom |
+| [docs/dashboard.md](docs/dashboard.md) | navegação, abas, drill-down, filtros, impressão |
+| [docs/visual.md](docs/visual.md) | números, tabelas, gráficos, tooltip |
+| [docs/ambiente.md](docs/ambiente.md) | `uv`, `.bat`, `.sh` |
+
+Decisão visual: skill **`g5-design-system`** é a fonte de verdade (cores, tipografia, gráficos);
+`docs/visual.md` só acrescenta o que é deste projeto.

@@ -1,49 +1,46 @@
 # Contrato do `data-YYYY-MM.json`
 
-> [← Índice](../AGENTS.md) · Relacionados: [modelo-de-dados.md](modelo-de-dados.md), [ambiente.md](ambiente.md), [validacao.md](validacao.md)
-
-O JSON é a **fronteira sagrada** entre as duas etapas (regra inviolável 7). Mudou a
-planilha, mexe só no extrator; mudou o layout, mexe só no template. Quem quebrar o formato
-sobe `VERSAO_CONTRATO` em `core/config.py`.
-
-Auditar com `jq`:
+Fronteira entre extração e renderização (regra inviolável 7). Quebrou o formato → sobe
+`VERSAO_CONTRATO` em `core/config.py`. Auditar com `jq`:
 
 ```bash
-jq '.consolidado.aum' outputs/2026-07/data-2026-07.json
-jq -r '.avisos[]'     outputs/2026-07/data-2026-07.json
+jq '.consolidado.aum' outputs/2026-08/data-2026-08.json
+jq -r '.avisos[]'     outputs/2026-08/data-2026-08.json
 ```
 
 ## 1. Princípios
 
-1. **Extrair, nunca recalcular.** Os números já vêm calculados da geradora. A única
-   aritmética do extrator é a conferência da etapa de validação.
-2. **Moeda preservada.** O offshore sai em US$, como na planilha; a conversão é do
-   consumidor, com `parametros.dolar`. Converter na extração esconderia a origem.
-3. **Nada de meses futuros.** Toda série é truncada pelo mês-base (regra inviolável 4).
-4. **Erro do Excel vira `null`.** `#DIV/0!`, `#N/D` e `TBD` nunca chegam ao JSON. Traço
-   (`-`) some em campo numérico, mas **sobrevive em campo de texto** — o officer dos
-   Fdos Alocação é literalmente `-`.
+1. **Extrair, nunca recalcular.** A única aritmética sobre o JSON é a da validação.
+2. **Moeda preservada.** O extrator não converte: offshore sai na moeda em que a planilha o
+   traz (US$ nas bases; as linhas em R$ que a própria planilha calcula, como `aum_rs` de
+   `aum_receita` offshore ou `total_reais` de `net_in_out`, vêm prontas). Conversão é do
+   consumidor, com `parametros.dolar`.
+3. **Sem meses futuros.** Toda série é truncada no mês-base.
+4. **Erro do Excel vira `null`** (`#DIV/0!`, `#N/D`, `TBD`). Traço some em campo numérico e
+   sobrevive em texto — o officer dos Fdos Alocação é literalmente `-`.
 
 ## 2. Blocos de primeiro nível
 
 | Chave | Origem | Conteúdo |
 |---|---|---|
-| `meta` | — | mês-base, arquivo de origem, versões, marca de confidencialidade |
-| `parametros` | `info` | `dolar`, `cdi_mes`, `nwdays_mes`, de-para `login → apelido` |
-| `consolidado` | `resumo`, `CEO-Dashboard` | KPIs, ROA por categoria e por grupo, notas |
-| `historico` | `aum_receita` | série longa 2018→mês-base |
-| `officers` | `CEO-Dashboard`, `cons_officer` | tabela do ranking e o bloco mensal de cada officer |
-| `carteira` | `ar_onshore`, `ar_offshore`, `ar_grupos`, `regiao` | portfólios, grupos e regiões |
-| `captacao` | `net_in_out`, `io_grupos`, `io_portfolios`, `Dashboard` | IN/OUT cliente e NET executado |
-| `estrutura` | `ar_adm_on`, `ar_adm_off`, `G5JUS` | administradores e FIDCs |
-| `checks_planilha` | várias | os checks embutidos, com `ok` por célula |
-| `avisos` | — | defeitos conhecidos tratados na extração |
+| `meta` | — | mês-base, arquivo de origem, `gerado_em`, versões, confidencialidade |
+| `parametros` | `info` | `dolar`, `cdi_mes`, `nwdays_mes`, `officers_de_para` |
+| `consolidado` | `resumo`, `CEO-Dashboard` | `aum`, `receita_mens`, `receita_ano_competencia`, `run_rate`, `projecao_ano`, `roa` (on/off/total), `cambio_exibido`, `kpis_ceo`, `roa_categoria`, `roa_grupo`, `notas` |
+| `historico.aum_receita` | `aum_receita` | `onshore` (+ `dias_uteis`) e `offshore` (+ `dolar`), 2018→mês-base |
+| `officers` | `CEO-Dashboard`, `cons_officer` | `tabela_ceo` (ranking) e `blocos` (métricas mensais por officer) |
+| `carteira` | `ar_onshore`, `ar_offshore`, `ar_grupos`, `regiao` | `portfolios`, `grupos.{rankings,serie}`, `regioes` (+ `dolar_offshore`) |
+| `captacao` | `net_in_out`, `io_grupos`, `io_portfolios`, `Dashboard` | `net_in_out.{onshore,offshore}`, `grupos.{mensal,ytd}`, `portfolios`, `captacao_cliente`, `net_executado` |
+| `estrutura` | `ar_adm_on`, `ar_adm_off`, `G5JUS` | `administradores.{onshore,offshore}`, `g5jus` |
+| `checks_planilha` | várias | um item por célula de check, com `ok` |
+| `avisos` | — | defeitos da fonte tratados na extração |
 
-## 3. Dois formatos que se repetem
+## 3. Formatos recorrentes
 
 ### 3.1 Bloco de linhas rotuladas
 
-Usado em `aum_receita`, `cons_officer`, `ar_adm_*` e `net_in_out`:
+`aum_receita`, `cons_officer`, `ar_adm_*` e `net_in_out` (que acrescenta `secao` e `total`).
+`captacao_cliente` é uma lista direta de linhas no mesmo formato, com `mes`, `ano`,
+`incremento_receita_mi_ano` e `roa_incremental` no lugar de `valores`.
 
 ```json
 {
@@ -56,23 +53,22 @@ Usado em `aum_receita`, `cons_officer`, `ar_adm_*` e `net_in_out`:
 }
 ```
 
-- `chave` é o slug ASCII do rótulo. `R$`→`rs`, `US$`→`usd`, `%`→`pct`, `Δ`→`delta` — sem
-  isso `AUM (R$)` e `Δ AUM` colidiriam na mesma chave.
-- `nivel` vem do **recuo da célula** na planilha; `pai` é a chave da linha acima com nível
-  menor. É o que sustenta o drill-down sem lista de pais/filhos escrita no código, e é o
-  que distingue os três `Carteira` de `aum_receita` (sob `IN/OUT`, sob `Receita` e sob
-  `Receita Mens.`).
-- `linha` é o número da linha na aba — serve para conferir contra a planilha.
-- **Rótulos repetem; chaves repetem.** Casar por `(pai, chave)`, nunca só por `chave`.
+- `chave`: slug ASCII do rótulo; `R$`→`rs`, `US$`→`usd`, `%`→`pct`, `Δ`→`delta` (evita colisão
+  entre `AUM (R$)` e `Δ AUM`).
+- `nivel`: recuo da célula na planilha. `pai`: chave da linha acima com nível menor. Sustenta o
+  drill-down sem lista de pais no código.
+- `linha`: número da linha na aba, para conferência.
+- **Rótulos e chaves repetem** (`Carteira` aparece sob `IN/OUT`, `Receita` e `Receita Mens.`):
+  casar por `(pai, chave)` — `Contexto.linha(bloco, chave, pai)`.
 
 ### 3.2 Base de posição
 
-`carteira.portfolios.onshore` e `.offshore`, com uma linha por portfólio:
+`carteira.portfolios.{onshore,offshore}`, uma linha por portfólio:
 
 ```json
 {
   "moeda": "R$",
-  "meses": ["2025-12", "…", "2026-07"],
+  "meses": ["2025-12", "…", "2026-08"],
   "linhas": [
     {"portfolio": "…", "tipo": "Fundo", "adm": "BTG", "grupo": "…",
      "officer": "…", "backup": "…", "regiao": "…", "segmento": "MFO",
@@ -82,49 +78,28 @@ Usado em `aum_receita`, `cons_officer`, `ar_adm_*` e `net_in_out`:
 }
 ```
 
-Os pares AUM/Receita são conferidos contra a linha de cabeçalho da planilha antes de
-serem lidos: uma coluna trocada na geradora viraria uma série invertida sem sintoma.
-`backup` vem `null` quando a planilha traz `#N/D` — é "sem backup atribuído", nunca uma
-pessoa.
+Os pares AUM/Receita são conferidos contra o cabeçalho antes da leitura (par trocado vira
+aviso e é ignorado). `backup` é `null` quando a planilha traz `#N/D`. A receita é por competência.
 
-### 3.3 Officer marcado na planilha
+### 3.3 Officer marcado
 
-`officers.tabela_ceo[].marcado` é `true` quando o nome do officer está **pintado** na
-`CEO-Dashboard` — hoje no vermelho `C00000` do Office. A cor é o único registro que a
-planilha tem desse estado (não existe coluna de status), e a nota de rodapé logo abaixo da
-tabela diz o que ela significa: *"Ainda existem clientes vinculados"* — officer que já saiu
-mas cuja carteira ainda não migrou.
-
-A regra é **qualquer cor de fonte explícita que não seja preto**, não o tom exato: quem
-edita a planilha troca de vermelho de um mês para o outro. A nota correspondente entra em
-`consolidado.notas`, procurada de **+2 a +6 linhas abaixo do rótulo `Total Ex- Fdos
-Alocação`** — o pé da tabela de officers. A âncora é o rótulo, não um número de linha,
-porque a tabela cresce e encolhe conforme entra e sai officer e a nota desce e sobe junto;
-na prática ela cai sempre em +2.
+`officers.tabela_ceo[].marcado = true` quando o nome tem cor de fonte explícita diferente de
+preto na `CEO-Dashboard` ([MEMORY.md](MEMORY.md), armadilha 8). A nota que explica a marca
+(`"* Ainda existem clientes vinculados"`) entra em `consolidado.notas`, lida de +2 a +6 linhas
+abaixo do rótulo `Total Ex- Fdos Alocação`.
 
 ### 3.4 Bloco de administrador
 
-`estrutura.administradores.{onshore,offshore}.blocos[]` traz, além das linhas rotuladas, o
-campo **`agrupamento`** — o marcador que a planilha escreve na linha acima do nome do bloco.
-Quando dois administradores compartilham o mesmo marcador (`GVA/Daycoval`), a geradora
-**repete o AUM e a receita** entre eles; só os custos são próprios. Somar a coluna nesse
-caso superestima o AUM.
+`estrutura.administradores.{onshore,offshore}.blocos[]` traz, além das linhas rotuladas,
+`agrupamento` — o marcador da linha acima do nome. Mesmo marcador (`GVA/Daycoval`) = AUM e
+receita repetidos entre os blocos; somar superestima o AUM.
 
 ## 4. Pontos de atenção do consumidor
 
-- **`captacao.net_in_out`, `captacao.captacao_cliente` e `captacao.net_executado` são
-  todos cliente (sem G5)** — três cortes da mesma captação, que fecham entre si no mês e no
-  ano. Não somar um com o outro: é contar a mesma entrada duas vezes. A base com o G5
-  (`in_out`) não chega a nenhum destes blocos ([modelo-de-dados.md](modelo-de-dados.md) §6).
-- **`officers.blocos` inclui os Fdos Alocação** com `e_fdos_alocacao: true` e `nome: "-"`.
-  Sempre nos totais; o toggle "Ex-Fdos Alocação" recalcula proporções, não totais.
-- **`roa_mfo`** não é comparável ao `roa` lado a lado — todo o offshore conta como MFO e o
-  numerador não é mensalizado ([calculos.md](calculos.md) §3.5). Sinalizar na interface.
-- **Não somar `qtd_grupos_officer` entre officers**: um grupo pode ter portfólios sob
-  titulares diferentes. O total correto é `consolidado.roa_grupo.total.qtd`.
-- **O eixo de `historico` não é uniforme** (semestral até 2025-12, mensal em 2026). Tratar
-  como categórico ordenado.
-
----
-
-[← Índice](../AGENTS.md)
+- `captacao.net_in_out`, `captacao_cliente` e `net_executado` são **todos cliente** (sem G5):
+  três cortes da mesma captação, que fecham entre si. Não somar um com o outro.
+- `officers.blocos` inclui os Fdos Alocação (`e_fdos_alocacao: true`, `nome: "-"`).
+- `roa_mfo` não é comparável a `roa` ([calculos.md](calculos.md) §3.5); a interface não exibe a
+  ressalva por decisão do negócio.
+- Não somar `qtd_grupos_officer` entre officers; o total é `consolidado.roa_grupo.total.qtd`.
+- `historico` tem eixo não uniforme (semestral até 2025-12, mensal em 2026): categórico ordenado.

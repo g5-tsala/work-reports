@@ -1,17 +1,13 @@
 """Aba: Net In/Out.
 
 Captação **de cliente** — sem as movimentações dos fundos de alocação da G5 —
-em três leituras que vêm da mesma base e por isso fecham entre si:
+em blocos que vêm da mesma base e por isso fecham entre si no mês e no ano:
 
-- faixas de KPI (consolidado em R$, onshore, offshore), de `net_in_out`;
-- a tabela *Captação Cliente* do `Dashboard` (§2): mês, ano e o incremento de
-  receita que a captação produz, por universo e segmento, ao lado do gráfico
-  desse incremento por segmento;
-- o fluxo mensal, com seletor entre os três universos;
-- o *NET executado* por segmento (§3 do `Dashboard`), mês a mês.
-
-O NET do mês e do ano batem nas três: são a mesma captação, cortada de jeitos
-diferentes.
+- KPIs e fluxo mensal de `net_in_out`, com alternador consolidado (R$) ·
+  onshore · offshore;
+- a tabela *Captação Cliente* (`Dashboard` §2): mês, ano e incremento de
+  receita por universo e segmento, ao lado do gráfico desse incremento;
+- o *NET executado* por segmento (`Dashboard` §3), mês a mês.
 """
 
 from __future__ import annotations
@@ -173,8 +169,8 @@ def _kpis(ctx: Contexto, universo: dict[str, Any]) -> str:
     """
     posicao = universo["meses"].index(ctx.mes_base) if ctx.mes_base in universo["meses"] else None
     series, moeda = universo["series"], universo["moeda"]
-    #: Offshore leva o valor em R$ ao lado do US$ — pelo câmbio do mês no mês,
-    #: e o `total_reais` da planilha no ano, as mesmas contas do consolidado.
+    # Offshore leva o valor em R$ ao lado do US$ — pelo câmbio do mês no mês,
+    # e o `total_reais` da planilha no ano, as mesmas contas do consolidado.
     em_reais = universo.get("em_reais")
 
     def do_mes(fonte_: dict[str, Any], secao_: str) -> float | None:

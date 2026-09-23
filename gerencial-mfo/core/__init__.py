@@ -7,7 +7,7 @@ Etapas do pipeline, na ordem em que `dashboard.py` as executa:
 3. `core.render`    — JSON -> `outputs/YYYY-MM/dashboard-YYYY-MM.html`
 
 A fronteira entre 1 e 3 e o JSON: mudou a planilha, mexe so no extrator; mudou
-o layout, mexe so no template.
+o layout, mexe so em `core/render/` e `template/`.
 """
 
 __all__ = ["config", "extracao", "json_io", "planilha", "render", "validacao"]
