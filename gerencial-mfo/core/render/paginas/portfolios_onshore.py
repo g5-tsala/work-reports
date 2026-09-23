@@ -63,6 +63,5 @@ def _kpis(ctx: Contexto, base, posicao: int) -> str:
         kpi("Portfólios ativos", formato.inteiro(len(ativos))),
         kpi("AUM onshore", formato.bilhoes(aum)),
         kpi("Receita do mês (competência)", formato.milhoes(receita)),
-        kpi("ROA anualizado", formato.percentual(receita * 12 / aum if aum and receita else None)),
     )
 

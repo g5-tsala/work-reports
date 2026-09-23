@@ -48,6 +48,8 @@ Não reabrir sem motivo novo.
 - Removidos a pedido do negócio em 2026-09-22: seção "Rede de backup" de Officers (a contagem
   por pessoa segue no drill-down) e a ressalva do ROA MFO na interface (a ressalva continua
   valendo — ver Armadilhas).
+- **Abas de Portfólios não mostram ROA** (2026-09-23): a receita das bases `ar_*` é por
+  competência, e × 12 sem mensalizar distorce a taxa. ROA fica em Resumo, Officers e Grupos.
 - Região `-` da aba `regiao` aparece como **G5** em Regiões: é onde caem os fundos de alocação.
 - Nomes reais; marca de confidencialidade na impressão. Distribuição por link hoje; `<iframe>`
   num portal no futuro.
@@ -112,6 +114,3 @@ Redescobrir custa caro. Fórmulas em [calculos.md](calculos.md).
       `info_grupos`, ainda não extraída.
 - [ ] **Página Performance da Base** a partir da aba oculta `cotas` (AUM cotizado × CDI desde
       2018-01, [calculos.md](calculos.md) §3.10). Prioridade baixa.
-- [ ] **Verificar:** o ROA das tabelas de portfólio (`paginas/comum.py`) e dos KPIs de
-      Portfólios Onshore é receita por competência × 12 ÷ AUM, sem mensalizar — diverge do ROA
-      da planilha (`resumo!R9` mensaliza). Confirmar com o negócio se é intencional.

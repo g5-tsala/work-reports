@@ -28,7 +28,11 @@ DIMENSOES_PORTFOLIO = (
 
 
 def tabela_portfolios(ctx: Contexto, base: dict[str, Any], identificador: str) -> str:
-    """Uma linha por portfólio: dimensões, AUM e receita do mês e ROA.
+    """Uma linha por portfólio: dimensões, AUM e receita do mês.
+
+    Sem ROA: a receita de `ar_onshore` é por competência, e anualizá-la sem
+    mensalizar distorce a taxa. A leitura de ROA fica no Resumo, em Officers e
+    em Grupos, que usam a receita já tratada pela planilha.
 
     Só o mês-base: a série mensal completa fica no JSON — centenas de linhas
     × todos os meses na tela contrariam o consolidado no nível zero.
@@ -42,22 +46,18 @@ def tabela_portfolios(ctx: Contexto, base: dict[str, Any], identificador: str) -
     colunas = [Coluna(rotulo) for _, rotulo in DIMENSOES_PORTFOLIO] + [
         Coluna(f"AUM ({escala})", numerica=True),
         Coluna(f"Receita ({moeda})", numerica=True),
-        Coluna("ROA anual. (%)", numerica=True),
     ]
 
     linhas = []
     for registro in base["linhas"]:
         aum = registro["aum"][posicao]
         receita = registro["receita"][posicao]
-        roa = (receita * 12 / aum) if aum and receita is not None else None
-
         linhas.append(
             Linha(
                 [registro.get(campo) or formato.NAO_APLICAVEL for campo, _ in DIMENSOES_PORTFOLIO]
                 + [
                     num(formato.em_milhoes(aum), ordem=aum),
                     num(formato.numero(receita), ordem=receita),
-                    num(formato.percentual(roa), ordem=roa),
                 ]
             )
         )
@@ -70,7 +70,6 @@ def tabela_portfolios(ctx: Contexto, base: dict[str, Any], identificador: str) -
             + [
                 num(formato.em_milhoes(total_aum)),
                 num(formato.numero(total_receita)),
-                num(formato.percentual(total_receita * 12 / total_aum if total_aum else None)),
             ],
             classe="total",
         )
