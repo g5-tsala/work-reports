@@ -11,6 +11,7 @@ Organizacao:
 - `ui.py` — componentes (secao, KPI, tabela, cartao, legenda de fonte).
 - `graficos.py` — SVG inline, sem biblioteca.
 - `formato.py` — numeros e datas em PT-BR.
+- `pagina.py` — registro das abas (`@pagina`), grupos e ordem do menu.
 - `layout.py` — esqueleto, menu e a costura do HTML final.
 - `contexto.py` — atalhos de leitura do JSON.
 """
@@ -24,8 +25,6 @@ from . import paginas  # noqa: F401  (importar registra as abas)
 from .contexto import Contexto
 from .layout import montar
 
-DISPONIVEL = True
-
 
 def renderizar(dados: dict[str, Any], caminho_html: Path) -> Path:
     """Escreve o dashboard autocontido do mes e devolve o caminho."""
@@ -35,4 +34,4 @@ def renderizar(dados: dict[str, Any], caminho_html: Path) -> Path:
     return caminho_html
 
 
-__all__ = ["DISPONIVEL", "Contexto", "renderizar"]
+__all__ = ["Contexto", "renderizar"]

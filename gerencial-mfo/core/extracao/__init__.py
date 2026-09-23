@@ -5,7 +5,7 @@ devolve o pedaco de JSON que lhe cabe; nenhum deles escreve arquivo.
 
 Principio: **extrair, nunca recalcular.** Os numeros ja vieram calculados da
 geradora e a conferencia deles e trabalho da etapa de validacao. O unico
-tratamento aplicado aqui e o documentado em `docs/validacao.md`: truncar meses
+tratamento aplicado aqui e o de `docs/contrato-json.md` §1: truncar meses
 futuros e anular erros do Excel.
 """
 
@@ -17,7 +17,6 @@ from typing import Any
 
 from core import config
 from core.planilha import Planilha
-from core.planilha import mes as ler_mes
 
 from . import (
     captacao,
@@ -98,4 +97,4 @@ def extrair(caminho_xlsx: Path, mes_base: str) -> dict[str, Any]:
         pl.fechar()
 
 
-__all__ = ["Contexto", "extrair", "ler_mes"]
+__all__ = ["Contexto", "extrair"]

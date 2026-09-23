@@ -41,10 +41,6 @@ class Relatorio:
         return [item for item in self.itens if item.bloqueia]
 
     @property
-    def nao_avaliados(self) -> list[Item]:
-        return [item for item in self.itens if item.ok is None]
-
-    @property
     def ok(self) -> bool:
         return not self.falhas
 

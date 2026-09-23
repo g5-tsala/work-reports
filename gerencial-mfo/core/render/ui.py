@@ -53,10 +53,6 @@ def nota(texto: str) -> str:
     return f'<p class="g5-nota">{texto}</p>'
 
 
-def aviso(texto: str) -> str:
-    return f'<p class="g5-aviso">{texto}</p>'
-
-
 def fonte(aba: str, mes: str, observacao: str = "") -> str:
     """Legenda obrigatoria abaixo de todo grafico e de toda tabela de origem."""
     complemento = f" {observacao}" if observacao else ""
@@ -184,7 +180,6 @@ def faixa_parametros(itens: Sequence[tuple[str, str, str]]) -> str:
 class Coluna:
     rotulo: str
     numerica: bool = False
-    largura: str = ""
     #: Abre um bloco de colunas (um segmento, uma moeda): fio pontilhado à esquerda.
     separador: bool = False
 
@@ -207,19 +202,16 @@ class Celula:
     `Heitor Sant'anna Martins`). Sem escapar, o `&` corrompe o HTML e um nome
     com marcacao viraria execucao de script num arquivo que carrega dado
     nominal de cliente.
-
-    Para o caso raro de fragmento montado por nos, use `html()`.
     """
 
     texto: str
     classe: str = ""
     ordem: float | None = None
     atributos: dict[str, Any] = field(default_factory=dict)
-    eh_html: bool = False
 
     @property
     def conteudo(self) -> str:
-        return self.texto if self.eh_html else esc(self.texto)
+        return esc(self.texto)
 
 
 @dataclass
@@ -242,7 +234,6 @@ def tabela(
     cabecalho = "".join(
         f'<th class="{coluna.classe}"'
         + (f' data-ordena="{coluna.tipo_ordenacao}"' if ordenavel else "")
-        + (f' style="width:{coluna.largura}"' if coluna.largura else "")
         + f">{esc(coluna.rotulo)}</th>"
         for coluna in colunas_tabela
     )
@@ -283,15 +274,6 @@ def tabela(
 def num(texto: str, classe: str = "", ordem: float | None = None) -> Celula:
     """Celula numerica ja formatada, com o valor cru para a ordenacao."""
     return Celula(texto, classe, ordem)
-
-
-def html(fragmento: str, classe: str = "") -> Celula:
-    """Celula com HTML montado por nos — o unico jeito de escapar do escape.
-
-    Quem usar isto e responsavel por passar `esc()` em cada pedaco que veio da
-    planilha.
-    """
-    return Celula(fragmento, classe, eh_html=True)
 
 
 def linha_expansivel(alvo: str) -> dict[str, Any]:

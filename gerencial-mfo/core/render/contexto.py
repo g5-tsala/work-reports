@@ -47,15 +47,6 @@ class Contexto:
         linha = self.linha(bloco, chave, pai)
         return linha["valores"] if linha else []
 
-    def ultimo(self, bloco: dict[str, Any], chave: str, pai: str | None = None) -> float | None:
-        valores = self.serie(bloco, chave, pai)
-        return valores[-1] if valores else None
-
-    def em(self, bloco: dict[str, Any], chave: str, mes: str, pai: str | None = None) -> float | None:
-        valores = self.serie(bloco, chave, pai)
-        posicao = self.posicao(bloco, mes)
-        return valores[posicao] if posicao is not None and posicao < len(valores) else None
-
     @staticmethod
     def posicao(bloco: dict[str, Any], mes: str) -> int | None:
         meses = bloco.get("meses", [])

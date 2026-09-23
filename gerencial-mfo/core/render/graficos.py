@@ -7,9 +7,9 @@ tooltip: o SVG carrega o conteudo em `data-dica` e o `app.js` so o exibe.
 
 Regras do design system aplicadas aqui: paleta na ordem canonica (no maximo 5
 series), gridlines so horizontais em `--g5-line`, eixos em `--g5-slate-aa`
-tamanho caption, barras solidas sem contorno, linha de 2px, donut com no maximo
-5 fatias. As cores saem como `var(--g5-*)` — o SVG e inline, herda os tokens, e
-uma mudanca de paleta continua acontecendo num lugar so.
+tamanho caption, barras solidas sem contorno, linha de 2px. As cores saem como
+`var(--g5-*)` — o SVG e inline, herda os tokens, e uma mudanca de paleta
+continua acontecendo num lugar so.
 """
 
 from __future__ import annotations
@@ -27,7 +27,6 @@ SERIES = (
     "var(--g5-data-wine-light)",
 )
 MAXIMO_SERIES = len(SERIES)
-MAXIMO_FATIAS = 5
 
 #: Cores de sinal, para série que oscila em torno do zero.
 COR_POSITIVO = "var(--g5-positive)"
@@ -181,7 +180,6 @@ def _moldura(
 #: cresce na horizontal (altura tem teto), ranking cresce na vertical (nao tem).
 CLASSE_SERIE = "g5-grafico--serie"
 CLASSE_RANKING = "g5-grafico--ranking"
-CLASSE_DONUT = "g5-grafico--donut"
 
 
 def _svg(conteudo: str, titulo: str, largura: int, altura: int, classe: str = CLASSE_SERIE) -> str:
@@ -256,10 +254,10 @@ def linhas(
     que mantém o gráfico legível impresso em preto e branco, onde o azul e o
     wine viram o mesmo cinza.
 
-    `rotular_pontos` escreve **todos** os pontos, acima do traço e na cor da
-    série. Só cabe em série curta e de uma série só: com oito pontos os rótulos
-    ficam a ~140px um do outro, com trinta eles se sobrepõem e o gráfico fica
-    ilegível. Ele dispensa o `rotular_ultimo`, que vira redundante.
+    `rotular_pontos` escreve **todos** os pontos, na cor da série, alternando
+    as séries acima e abaixo do traço. Com muitas categorias, combine com
+    `rotulos_inclinados`; acima de duas séries os rótulos se sobrepõem. Torna
+    `rotular_ultimo` redundante.
 
     O eixo **não** é ancorado no zero por padrão. Linha codifica variação, não
     magnitude por área: forçar o zero num AUM que anda 2% ao mês achata a série
@@ -738,49 +736,3 @@ def barras_horizontais_empilhadas(
         )
     return _svg("".join(partes), titulo, largura, altura, CLASSE_RANKING)
 
-
-def donut(
-    fatias: Sequence[tuple[str, float | None]],
-    *,
-    formatador: Callable[[float], str],
-    titulo: str = "",
-    tamanho: int = 260,
-) -> str:
-    """No maximo 5 fatias, da maior para a menor no sentido horario."""
-    fatias = [(rotulo, valor) for rotulo, valor in fatias if valor and valor > 0][:MAXIMO_FATIAS]
-    total = sum(valor for _, valor in fatias)
-    if not total:
-        return ""
-
-    raio_externo, raio_interno = tamanho / 2 - 8, tamanho / 2 - 44
-    centro = tamanho / 2
-    angulo = -90.0
-    partes = []
-    for indice, (_, valor) in enumerate(fatias):
-        varredura = valor / total * 360
-        fim = angulo + varredura
-        partes.append(
-            f'<path d="{_setor(centro, centro, raio_externo, raio_interno, angulo, fim)}" '
-            f'fill="{SERIES[indice % MAXIMO_SERIES]}"/>'
-        )
-        angulo = fim
-    partes.append(_texto(centro, centro + 6, formatador(total), "g5-donut-total"))
-    return _svg("".join(partes), titulo, tamanho, tamanho, CLASSE_DONUT)
-
-
-def _setor(cx: float, cy: float, externo: float, interno: float, inicio: float, fim: float) -> str:
-    from math import cos, pi, sin
-
-    def ponto(raio: float, graus: float) -> tuple[float, float]:
-        radianos = graus * pi / 180
-        return cx + raio * cos(radianos), cy + raio * sin(radianos)
-
-    maior = 1 if (fim - inicio) > 180 else 0
-    x1, y1 = ponto(externo, inicio)
-    x2, y2 = ponto(externo, fim)
-    x3, y3 = ponto(interno, fim)
-    x4, y4 = ponto(interno, inicio)
-    return (
-        f"M{x1:.2f},{y1:.2f} A{externo:.2f},{externo:.2f} 0 {maior} 1 {x2:.2f},{y2:.2f} "
-        f"L{x3:.2f},{y3:.2f} A{interno:.2f},{interno:.2f} 0 {maior} 0 {x4:.2f},{y4:.2f} Z"
-    )

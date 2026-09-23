@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from core import config
 
@@ -94,7 +93,6 @@ def _paginas(ctx: Contexto, paginas: list[registro.Pagina]) -> str:
         )
         partes.append(
             f'<section class="g5-pagina" data-pagina="{esc(item.identificador)}" hidden>'
-            f'<h2 class="g5-visualmente-oculto" hidden>{esc(item.titulo)}</h2>'
             f"{descricao}{item.render(ctx)}</section>"
         )
     return "".join(partes)
@@ -108,6 +106,3 @@ def _carimbo(iso: str | None) -> str:
     except ValueError:
         return esc(iso)
 
-
-def dados_validos(dados: dict[str, Any]) -> bool:
-    return bool(dados.get("meta", {}).get("mes_base"))

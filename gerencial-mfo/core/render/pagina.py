@@ -14,10 +14,8 @@ from dataclasses import dataclass
 #: Grupos do menu lateral, na ordem em que aparecem (`docs/dashboard.md` §1).
 GRUPOS = (
     "Visão Executiva",
-    "Performance",
     "Carteira",
     "Captação",
-    "Estrutura",
     "Outros",
 )
 
@@ -30,10 +28,6 @@ class Pagina:
     ordem: int
     subtitulo: str
     render: Callable[..., str]
-
-    @property
-    def ancora(self) -> str:
-        return f"pagina-{self.identificador}"
 
 
 _REGISTRO: list[Pagina] = []

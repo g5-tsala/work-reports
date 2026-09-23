@@ -37,11 +37,6 @@ ERROS_EXCEL = frozenset(
 )
 
 
-def eh_erro(valor: Any) -> bool:
-    """`True` se a celula carrega um erro do Excel."""
-    return isinstance(valor, str) and valor.strip() in ERROS_EXCEL
-
-
 def numero(valor: Any) -> float | None:
     """Converte para float. Erro, texto, traco, `TBD` e vazio viram `None`."""
     if isinstance(valor, bool):
@@ -49,11 +44,6 @@ def numero(valor: Any) -> float | None:
     if isinstance(valor, (int, float)):
         return float(valor)
     return None
-
-
-def inteiro(valor: Any) -> int | None:
-    n = numero(valor)
-    return None if n is None else round(n)
 
 
 def texto(valor: Any) -> str | None:
@@ -131,10 +121,6 @@ class Planilha:
     def linha(self, aba: str, linha: int, col_ini: int, col_fim: int) -> list[Any]:
         ws = self.aba(aba)
         return [ws.cell(linha, coluna).value for coluna in range(col_ini, col_fim + 1)]
-
-    def coluna(self, aba: str, coluna: int, lin_ini: int, lin_fim: int) -> list[Any]:
-        ws = self.aba(aba)
-        return [ws.cell(linha, coluna).value for linha in range(lin_ini, lin_fim + 1)]
 
     # -- nomes definidos -------------------------------------------------
 

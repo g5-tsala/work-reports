@@ -94,13 +94,6 @@ def variacao(fracao: float | None, casas: int = 2) -> str:
     return f"{'+' if fracao >= 0 else ''}{numero(fracao * 100, casas)}%"
 
 
-def pontos_percentuais(diferenca: float | None, casas: int = 2) -> str:
-    """Diferenca entre percentuais e **p.p.**, nunca `%`."""
-    if diferenca is None:
-        return AUSENTE
-    return f"{'+' if diferenca >= 0 else ''}{numero(diferenca * 100, casas)} p.p."
-
-
 def com_sinal(valor: float | None, formatador=numero, **kwargs) -> str:
     if valor is None:
         return AUSENTE

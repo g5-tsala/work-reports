@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.planilha import numero
 from core.planilha import mes as ler_mes
+from core.planilha import numero
 
 from .comum import linhas_rotuladas
 

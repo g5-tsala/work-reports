@@ -266,14 +266,6 @@ h1, h2, h3, h4, p, figure { margin: 0; }
 /* A nota que explica uma marcacao usa a cor da marcacao — senao o leitor tem
    de adivinhar a qual das linhas o asterisco se refere. */
 .g5-nota--marcada { color: var(--g5-wine); }
-.g5-aviso {
-  font-size: 13px;
-  color: var(--g5-graphite);
-  border-left: 3px solid var(--g5-wine);
-  background: var(--g5-bg-soft);
-  padding: var(--g5-space-2) var(--g5-space-3);
-  margin-bottom: var(--g5-space-3);
-}
 .g5-link-aba { margin: var(--g5-space-1) 0 0; font-size: 13px; }
 .g5-link-aba a { color: var(--g5-navy); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--g5-wine-tint); }
 .g5-link-aba a:hover { color: var(--g5-wine); border-bottom-color: var(--g5-wine); }
@@ -455,7 +447,6 @@ h1, h2, h3, h4, p, figure { margin: 0; }
    A proporcao do viewBox e calibrada para que o teto quase nunca atue — quando
    ele atua, sobra faixa vazia nas laterais. */
 .g5-grafico--serie { max-height: 250px; }
-.g5-grafico--donut { max-height: 260px; }
 .g5-grade { stroke: var(--g5-line); stroke-width: 1; }
 .g5-zero { stroke: var(--g5-slate-aa); stroke-width: 1; }
 .g5-linha { stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
@@ -469,7 +460,6 @@ h1, h2, h3, h4, p, figure { margin: 0; }
    pilha, e por isso volta para a cor de texto. */
 .g5-valor-dentro { font: 600 11px var(--g5-sans); fill: var(--g5-white); }
 .g5-total-barra { font: 600 11px var(--g5-sans); fill: var(--g5-navy); }
-.g5-donut-total { font: 600 15px var(--g5-sans); fill: var(--g5-navy); }
 /* Halo branco: o rotulo do ultimo ponto cai em cima da propria linha
    quando a serie termina achatada. */
 .g5-rotulo-ponto {
@@ -647,19 +637,6 @@ h1, h2, h3, h4, p, figure { margin: 0; }
   .g5-table thead th { position: static; }
   .g5-table tr { break-inside: avoid; }
   .g5-tabela-rolagem { overflow: visible; }
-}
-
-.g5-marcador {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--g5-wine);
-  border: 1px solid var(--g5-line);
-  border-radius: var(--g5-radius-sm);
-  padding: 1px 5px;
-  vertical-align: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
