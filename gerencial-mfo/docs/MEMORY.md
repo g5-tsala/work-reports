@@ -23,7 +23,7 @@ nenhuma. O histórico de quem mudou o quê é trabalho do `git log`.
 | `gerar-dashboard.bat` · `gerar-dashboard.sh` · `pyproject.toml` · `uv.lock` | pronto |
 | **Etapa 1 — extração** | **pronta.** `outputs/2026-07/data-2026-07.json`, ~1,8 MB |
 | **Etapa 2 — validação** | **pronta.** 10/10 no checklist |
-| **Etapa 3 — renderização** | **pronta.** 14 abas, `dashboard-2026-07.html`, ~1,7 MB |
+| **Etapa 3 — renderização** | **pronta.** 11 abas, `dashboard-2026-07.html`, ~1,7 MB |
 | Filtros combináveis e toggle Ex-Fdos | **não iniciados** (backlog) |
 
 O build de `2026-07` passa nos **10 itens do checklist** de
@@ -111,6 +111,10 @@ Não reabrir sem motivo novo.
 - **Alocação só tem incremento de receita** no §2: o IN/OUT dos fundos de alocação não é
   captação de cliente e fica "—" em mês e ano, mas o incremento de receita entra — e
   entra no gráfico e na soma do Net.
+- **Sem abas de Captação › Portfólios e de Administradores (onshore e offshore)** — saíram
+  do HTML em 2026-09-23 por decisão do negócio. A extração continua: `captacao.portfolios`
+  e `estrutura.administradores` seguem no JSON, e o `git log` tem as páginas prontas se
+  voltarem a ser pedidas.
 - Nomes reais. Marca de confidencialidade na impressão.
 - Distribuição por link para download hoje; `<iframe>` num portal no futuro.
 

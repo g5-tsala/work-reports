@@ -1,7 +1,7 @@
 """Peças compartilhadas por abas irmãs.
 
 Só entra aqui o que duas abas usam **do mesmo jeito** — a tabela de portfólios
-(onshore e offshore), o bloco de administrador e os gráficos de AUM e receita
+(onshore e offshore) e os gráficos de AUM e receita
 consolidados (Histórico, com a série inteira; Visão Geral, com o recorte). Cada aba continua dona da sua
 composição; isto evita que uma correção precise ser feita duas vezes em
 arquivos gêmeos.
@@ -140,50 +140,6 @@ def par_composicao(
         desenhar("AUM", [aum for _, aum, _ in itens], escala_aum, formatador_aum),
         desenhar("Receita", [receita for _, _, receita in itens], escala_receita, formatador_receita),
     )
-
-
-def bloco_administrador(ctx: Contexto, bloco: dict[str, Any]) -> dict[str, Any] | None:
-    """Resumo do administrador no mês, mais o gráfico da série de AUM."""
-    posicao = ctx.posicao(bloco, ctx.mes_base)
-    if posicao is None:
-        return None
-
-    def valor(chave: str) -> float | None:
-        serie = ctx.serie(bloco, chave)
-        return serie[posicao] if posicao < len(serie) else None
-
-    nome = bloco["administrador"]
-    return {
-        "nome": nome,
-        "agrupamento": bloco.get("agrupamento"),
-        "aum": valor("aum"),
-        "receita": valor("receita_mens") if ctx.linha(bloco, "receita_mens") else valor("receita"),
-        "roa_g5": valor("roa_g5_pct"),
-        "custos": valor("custos"),
-        "roa_adm": valor("roa_adm_pct"),
-        "grafico": graficos.linhas(
-            ctx.rotulos(bloco["meses"]),
-            [graficos.Serie("AUM", ctx.serie(bloco, "aum"))],
-            formatador=lambda v: formato.em_milhoes(v, 0),
-            titulo=f"AUM — {nome}",
-            altura=180,
-            largura=560,
-        ),
-    }
-
-
-def agrupamentos_repetidos(resumos: list[dict[str, Any]]) -> list[str]:
-    """Marcadores que aparecem em mais de um administrador.
-
-    Nesses casos a geradora repete o AUM e a receita entre os blocos, então a
-    soma da coluna **não** é o AUM da casa. Vale dizer isso na cara do leitor.
-    """
-    contagem: dict[str, int] = {}
-    for resumo in resumos:
-        marcador = resumo.get("agrupamento")
-        if marcador:
-            contagem[marcador] = contagem.get(marcador, 0) + 1
-    return [marcador for marcador, quantidade in contagem.items() if quantidade > 1]
 
 
 # --------------------------------------------------------------------------

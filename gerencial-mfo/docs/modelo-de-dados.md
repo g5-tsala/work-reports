@@ -19,14 +19,14 @@ a visível agrega.
 | `resumo` | ROA por Categoria/Faixa PL e por Grupo/Faixa PL, 4 donuts | Resumo |
 | `aum_receita` | Série AUM × Receita × ROA, onshore e offshore, 2018→hoje | Histórico |
 | `ar_grupos` | Top 10 AUM por grupo econômico, mês a mês | Grupos Econômicos |
-| `ar_adm_on` | AUM × Receita × Custos por administrador, onshore (R$) | Administradores Onshore |
-| `ar_adm_off` | AUM × Receita × Custos por administrador, offshore (US$) | Administradores Offshore |
+| `ar_adm_on` | AUM × Receita × Custos por administrador, onshore (R$) | — (extraído no JSON, sem aba) |
+| `ar_adm_off` | AUM × Receita × Custos por administrador, offshore (US$) | — (extraído no JSON, sem aba) |
 | `ar_onshore` | 939 portfólios com todas as dimensões, AUM e receita mensais | Portfólios Onshore |
 | `ar_offshore` | 166 portfólios offshore (US$) | Portfólios Offshore |
 | `G5JUS` | AUM × Receita dos FIDCs G5 JUS | G5 JUS |
 | `net_in_out` | IN/OUT mensal decomposto por tipo de veículo e finalidade | Captação |
 | `io_grupos` | Movimentações por grupo econômico, visão mensal e YTD | Captação › Grupos |
-| `io_portfolios` | IN/OUT por portfólio com taxa e receita aproximada | Captação › Portfólios |
+| `io_portfolios` | IN/OUT por portfólio com taxa e receita aproximada | — (extraído no JSON, sem aba) |
 
 ## 2. Abas ocultas relevantes
 

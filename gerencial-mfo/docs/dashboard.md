@@ -10,8 +10,7 @@ com barra wine à esquerda. Agrupamento:
 ```
 VISÃO EXECUTIVA     Visão Geral · Resumo · Histórico AUM × Receita
 CARTEIRA            Officers · Grupos Econômicos · Regiões · Portfólios On · Portfólios Off
-CAPTAÇÃO            Net In/Out · Grupos · Portfólios
-ESTRUTURA           Administradores Onshore · Administradores Offshore
+CAPTAÇÃO            Net In/Out · Grupos
 OUTROS              G5 JUS
 ```
 
