@@ -156,6 +156,6 @@ echo
 echo "------------------------------------------------------------"
 echo " CONCLUIDO"
 echo "------------------------------------------------------------"
-echo "  Base:      $PWD/outputs/$MES/data-$MES.json"
-echo "  Dashboard: $PWD/outputs/$MES/dashboard-$MES.html"
+echo "  Base:      $PWD/outputs/$MES/gerencial-mfo-$MES.json"
+echo "  Dashboard: $PWD/outputs/$MES/gerencial-mfo-$MES.html"
 echo

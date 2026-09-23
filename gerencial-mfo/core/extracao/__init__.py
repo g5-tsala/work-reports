@@ -1,4 +1,4 @@
-"""Etapa 1 do pipeline: planilha mensal -> `data-YYYY-MM.json`.
+"""Etapa 1 do pipeline: planilha mensal -> `gerencial-mfo-YYYY-MM.json`.
 
 Orquestra os extratores por dominio. Cada um recebe o mesmo `Contexto` e
 devolve o pedaco de JSON que lhe cabe; nenhum deles escreve arquivo.

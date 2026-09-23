@@ -96,10 +96,10 @@ echo.
 echo ------------------------------------------------------------
 echo  CONCLUIDO
 echo ------------------------------------------------------------
-echo   Base:      %CD%\outputs\!MES!\data-!MES!.json
-echo   Dashboard: %CD%\outputs\!MES!\dashboard-!MES!.html
+echo   Base:      %CD%\outputs\!MES!\gerencial-mfo-!MES!.json
+echo   Dashboard: %CD%\outputs\!MES!\gerencial-mfo-!MES!.html
 echo.
-echo   Abra o arquivo dashboard-!MES!.html no navegador para ver o resultado.
+echo   Abra o arquivo gerencial-mfo-!MES!.html no navegador para ver o resultado.
 goto :fim
 
 rem ------------------------------------------------------------

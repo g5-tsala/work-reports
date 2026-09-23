@@ -1,11 +1,11 @@
-# Contrato do `data-YYYY-MM.json`
+# Contrato do `gerencial-mfo-YYYY-MM.json`
 
 Fronteira entre extração e renderização (regra inviolável 7). Quebrou o formato → sobe
 `VERSAO_CONTRATO` em `core/config.py`. Auditar com `jq`:
 
 ```bash
-jq '.consolidado.aum' outputs/2026-08/data-2026-08.json
-jq -r '.avisos[]'     outputs/2026-08/data-2026-08.json
+jq '.consolidado.aum' outputs/2026-08/gerencial-mfo-2026-08.json
+jq -r '.avisos[]'     outputs/2026-08/gerencial-mfo-2026-08.json
 ```
 
 ## 1. Princípios

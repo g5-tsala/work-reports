@@ -4,9 +4,9 @@
 Script centralizador do build. Orquestra as etapas, todas em `core/`:
 
     inputs/YYYY-MM/Gerencial MFO YYYY-MM.xlsx
-        -> core.extracao   -> outputs/YYYY-MM/data-YYYY-MM.json
+        -> core.extracao   -> outputs/YYYY-MM/gerencial-mfo-YYYY-MM.json
         -> core.validacao  -> checklist bloqueante
-        -> core.render     -> outputs/YYYY-MM/dashboard-YYYY-MM.html
+        -> core.render     -> outputs/YYYY-MM/gerencial-mfo-YYYY-MM.html
 
 Uso:
     python dashboard.py 2026-07                     # pipeline completo

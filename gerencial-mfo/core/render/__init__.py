@@ -1,4 +1,4 @@
-"""Etapa 3 do pipeline: `data-YYYY-MM.json` -> `dashboard-YYYY-MM.html`.
+"""Etapa 3 do pipeline: `gerencial-mfo-YYYY-MM.json` -> `gerencial-mfo-YYYY-MM.html`.
 
 O renderizador le **apenas o JSON** — nunca a planilha. Essa e a fronteira
 sagrada do projeto (regra inviolavel 7): mudou a planilha, mexe no extrator;

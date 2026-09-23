@@ -44,8 +44,8 @@ def dir_output(mes: str) -> Path:
 
 
 def caminho_json(mes: str) -> Path:
-    return dir_output(mes) / f"data-{mes}.json"
+    return dir_output(mes) / f"gerencial-mfo-{mes}.json"
 
 
 def caminho_html(mes: str) -> Path:
-    return dir_output(mes) / f"dashboard-{mes}.html"
+    return dir_output(mes) / f"gerencial-mfo-{mes}.html"

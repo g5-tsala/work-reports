@@ -24,9 +24,9 @@ Saída: `2` erro de uso (mês inválido, arquivo ausente) · `3` base reprovada 
 
 ## Pipeline e código
 
-`inputs/YYYY-MM/Gerencial MFO YYYY-MM.xlsx` → **extração** → `outputs/YYYY-MM/data-YYYY-MM.json`
+`inputs/YYYY-MM/Gerencial MFO YYYY-MM.xlsx` → **extração** → `outputs/YYYY-MM/gerencial-mfo-YYYY-MM.json`
 → **validação** (bloqueante, roda sobre o JSON) → **renderização** →
-`outputs/YYYY-MM/dashboard-YYYY-MM.html`. `dashboard.py` só orquestra; o trabalho vive em `core/`.
+`outputs/YYYY-MM/gerencial-mfo-YYYY-MM.html`. `dashboard.py` só orquestra; o trabalho vive em `core/`.
 
 | Caminho | Papel |
 |---|---|
@@ -74,7 +74,7 @@ Aba nova: criar `paginas/<nome>.py`, decorar o render com `@pagina(...)`, import
 | [docs/MEMORY.md](docs/MEMORY.md) | sempre — estado, decisões fechadas, armadilhas, backlog |
 | [docs/calculos.md](docs/calculos.md) | glossário de métricas; implementar ou depurar um número |
 | [docs/modelo-de-dados.md](docs/modelo-de-dados.md) | abas, dimensões, nomes definidos, grade temporal da planilha |
-| [docs/contrato-json.md](docs/contrato-json.md) | ler ou escrever o `data-YYYY-MM.json` |
+| [docs/contrato-json.md](docs/contrato-json.md) | ler ou escrever o `gerencial-mfo-YYYY-MM.json` |
 | [docs/validacao.md](docs/validacao.md) | número não bate; antes de dar um build por bom |
 | [docs/dashboard.md](docs/dashboard.md) | navegação, abas, drill-down, filtros, impressão |
 | [docs/visual.md](docs/visual.md) | números, tabelas, gráficos, tooltip |
